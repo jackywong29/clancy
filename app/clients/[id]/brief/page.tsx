@@ -34,14 +34,14 @@ export default async function BriefPage({
       <Header />
       <main className="mx-auto max-w-2xl px-6 py-8">
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
-        <p className="mb-6 text-sm text-graphite/60">Build brief</p>
+        <p className="mb-6 text-sm text-ivory/60">Build brief</p>
         <ClientTabs clientId={client.id} active="brief" />
 
         <div className="mb-4 flex items-center justify-between">
-          <p className="text-sm text-graphite/60">
+          <p className="text-sm text-ivory/60">
             {progress.percent}% of intake answered
             {progress.blockingMissing.length > 0 && (
-              <span className="text-red-600">
+              <span className="text-red-400">
                 {' '}
                 · {progress.blockingMissing.length} blocking missing
               </span>
@@ -50,11 +50,11 @@ export default async function BriefPage({
           <CopyButton text={brief} />
         </div>
 
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-mist/50 bg-white p-5 font-mono text-xs leading-relaxed">
+        <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-ash/60 bg-carbon p-5 font-mono text-xs leading-relaxed">
           {brief}
         </pre>
 
-        <p className="mt-4 text-xs text-graphite/50">
+        <p className="mt-4 text-xs text-ivory/50">
           Copy this and hand it to Claude with &quot;build{' '}
           {client.company_name}&quot; — it contains everything collected so
           far.

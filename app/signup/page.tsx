@@ -4,7 +4,7 @@ import { GoogleSignIn } from '@/components/GoogleSignIn'
 import { Wordmark } from '@/components/Wordmark'
 
 const inputClass =
-  'w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet'
+  'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
 
 export default async function SignupPage({
   searchParams,
@@ -15,13 +15,13 @@ export default async function SignupPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-mist/50 bg-white p-8">
+      <div className="w-full max-w-sm rounded-2xl border border-ash/60 bg-carbon p-8">
         <div className="mb-6 text-center">
           <Wordmark size="text-3xl" />
-          <p className="mt-2 text-sm text-graphite/60">Create an account</p>
+          <p className="mt-2 text-sm text-ivory/60">Create an account</p>
         </div>
         {params.sent ? (
-          <p className="text-sm leading-relaxed text-graphite/80">
+          <p className="text-sm leading-relaxed text-ivory/80">
             Check your email — we sent a confirmation link. After confirming,
             sign in and Jacky will grant your access.
           </p>
@@ -31,9 +31,9 @@ export default async function SignupPage({
               <>
                 <GoogleSignIn />
                 <div className="my-4 flex items-center gap-3">
-                  <div className="h-px flex-1 bg-mist/60" />
-                  <span className="text-xs text-graphite/40">or</span>
-                  <div className="h-px flex-1 bg-mist/60" />
+                  <div className="h-px flex-1 bg-ash/60" />
+                  <span className="text-xs text-ivory/40">or</span>
+                  <div className="h-px flex-1 bg-ash/60" />
                 </div>
               </>
             )}
@@ -81,7 +81,7 @@ export default async function SignupPage({
                 />
               </div>
               {params.error && (
-                <p className="text-sm text-red-600">
+                <p className="text-sm text-red-400">
                   Couldn&apos;t create the account. Try a different email or a
                   longer password.
                 </p>
@@ -95,9 +95,9 @@ export default async function SignupPage({
             </form>
           </>
         )}
-        <p className="mt-4 text-center text-sm text-graphite/60">
+        <p className="mt-4 text-center text-sm text-ivory/60">
           Already have an account?{' '}
-          <Link href="/login" className="font-medium text-violet-deep">
+          <Link href="/login" className="font-medium text-violet">
             Sign in
           </Link>
         </p>

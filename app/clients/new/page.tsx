@@ -4,7 +4,7 @@ import { Header } from '@/components/Header'
 import type { PipelineStage } from '@/types/database'
 
 const inputClass =
-  'w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet'
+  'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
 
 export default async function NewClientPage({
   searchParams,
@@ -181,7 +181,7 @@ export default async function NewClientPage({
             <textarea id="notes" name="notes" rows={4} className={inputClass} />
           </div>
           {params.error && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-red-400">
               Couldn&apos;t save the client. Check the fields and try again.
             </p>
           )}

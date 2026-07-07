@@ -154,6 +154,86 @@ export async function saveIntake(formData: FormData) {
   redirect(`/clients/${clientId}/intake?${error ? 'error=1' : 'saved=1'}`)
 }
 
+export async function deleteClient(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const clientId = String(formData.get('client_id') ?? '')
+  if (clientId) {
+    await supabase.from('clients').delete().eq('id', clientId)
+  }
+
+  revalidatePath('/pipeline')
+  redirect('/pipeline')
+}
+
+export async function addStage(formData: FormData) {
+  const supabase = await createClient()
+  const organizationId = await requireOrg()
+
+  const name = String(formData.get('name') ?? '').trim()
+  if (name) {
+    const { data: last } = await supabase
+      .from('pipeline_stages')
+      .select('position')
+      .order('position', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    await supabase.from('pipeline_stages').insert({
+      organization_id: organizationId,
+      name,
+      position: (last?.position ?? 0) + 1,
+    })
+  }
+
+  revalidatePath('/stages')
+  revalidatePath('/pipeline')
+  redirect('/stages')
+}
+
+export async function updateStage(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const stageId = String(formData.get('stage_id') ?? '')
+  const name = String(formData.get('name') ?? '').trim()
+  const position = Number(formData.get('position') ?? 0)
+
+  if (stageId && name) {
+    await supabase
+      .from('pipeline_stages')
+      .update({ name, position })
+      .eq('id', stageId)
+  }
+
+  revalidatePath('/stages')
+  revalidatePath('/pipeline')
+  redirect('/stages?saved=1')
+}
+
+export async function deleteStage(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const stageId = String(formData.get('stage_id') ?? '')
+  if (stageId) {
+    const { count } = await supabase
+      .from('clients')
+      .select('id', { count: 'exact', head: true })
+      .eq('stage_id', stageId)
+
+    if ((count ?? 0) > 0) {
+      redirect(`/stages?error=in-use&count=${count}`)
+    }
+    await supabase.from('pipeline_stages').delete().eq('id', stageId)
+  }
+
+  revalidatePath('/stages')
+  revalidatePath('/pipeline')
+  redirect('/stages')
+}
+
 export async function requireAdmin() {
   const supabase = await createClient()
   const { data: profile } = await supabase

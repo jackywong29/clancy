@@ -46,26 +46,26 @@ export default async function PipelinePage() {
       <Header />
       <main className="px-6 py-5">
         <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
-          <div className="rounded-xl border border-mist/50 bg-white p-4">
-            <p className="text-xs text-graphite/60">Total in pipeline</p>
+          <div className="rounded-xl border border-ash/60 bg-carbon p-4">
+            <p className="text-xs text-ivory/60">Total in pipeline</p>
             <p className="mt-1 text-2xl font-medium">{clientList.length}</p>
           </div>
-          <div className="rounded-xl border border-mist/50 bg-white p-4">
-            <p className="text-xs text-graphite/60">Active clients</p>
+          <div className="rounded-xl border border-ash/60 bg-carbon p-4">
+            <p className="text-xs text-ivory/60">Active clients</p>
             <p className="mt-1 text-2xl font-medium">{activeClients.length}</p>
           </div>
-          <div className="rounded-xl border border-mist/50 bg-white p-4">
-            <p className="text-xs text-graphite/60">MRR</p>
+          <div className="rounded-xl border border-ash/60 bg-carbon p-4">
+            <p className="text-xs text-ivory/60">MRR</p>
             <p className="mt-1 text-2xl font-medium">{formatRM(mrr)}</p>
           </div>
-          <div className="rounded-xl border border-mist/50 bg-white p-4">
-            <p className="text-xs text-graphite/60">Stages</p>
+          <div className="rounded-xl border border-ash/60 bg-carbon p-4">
+            <p className="text-xs text-ivory/60">Stages</p>
             <p className="mt-1 text-2xl font-medium">{stageList.length}</p>
           </div>
         </div>
 
         {stageList.length === 0 ? (
-          <p className="text-sm text-graphite/60">
+          <p className="text-sm text-ivory/60">
             No pipeline stages found — run the schema SQL in Supabase first.
           </p>
         ) : (
@@ -77,11 +77,11 @@ export default async function PipelinePage() {
               return (
                 <section
                   key={stage.id}
-                  className="w-64 shrink-0 rounded-xl bg-mist/20 p-3"
+                  className="w-64 shrink-0 rounded-xl bg-carbon/50 p-3"
                 >
                   <h2 className="mb-3 flex items-baseline justify-between px-1 text-sm font-medium">
                     {stage.name}
-                    <span className="text-xs font-normal text-graphite/50">
+                    <span className="text-xs font-normal text-ivory/50">
                       {stageClients.length}
                     </span>
                   </h2>
@@ -89,26 +89,26 @@ export default async function PipelinePage() {
                     {stageClients.map((client) => (
                       <article
                         key={client.id}
-                        className="rounded-lg border border-mist/60 bg-white p-3"
+                        className="rounded-lg border border-ash/60 bg-carbon p-3"
                       >
                         <Link
                           href={`/clients/${client.id}`}
-                          className="text-sm font-medium hover:text-violet-deep"
+                          className="text-sm font-medium hover:text-violet"
                         >
                           {client.company_name}
                         </Link>
-                        <p className="mt-0.5 text-xs text-graphite/60">
+                        <p className="mt-0.5 text-xs text-ivory/60">
                           {[client.vertical, client.tier, client.source]
                             .filter(Boolean)
                             .join(' · ') || '—'}
                         </p>
                         {client.mrr !== null && (
-                          <p className="mt-1 text-xs font-medium text-violet-deep">
+                          <p className="mt-1 text-xs font-medium text-violet">
                             {formatRM(client.mrr)}/mo
                           </p>
                         )}
                         {client.renewal_date && (
-                          <p className="mt-0.5 text-xs text-graphite/50">
+                          <p className="mt-0.5 text-xs text-ivory/50">
                             Renews {client.renewal_date}
                           </p>
                         )}
@@ -119,13 +119,13 @@ export default async function PipelinePage() {
                             )
                             return (
                               <div className="mt-2">
-                                <div className="h-1 rounded-full bg-mist/40">
+                                <div className="h-1 rounded-full bg-ash/50">
                                   <div
                                     className="h-1 rounded-full bg-violet"
                                     style={{ width: `${p.percent}%` }}
                                   />
                                 </div>
-                                <p className="mt-1 text-xs text-graphite/50">
+                                <p className="mt-1 text-xs text-ivory/50">
                                   Intake {p.percent}%
                                   {p.blockingMissing.length > 0 &&
                                     ` · ${p.blockingMissing.length} blocking`}
@@ -145,7 +145,7 @@ export default async function PipelinePage() {
                           <select
                             name="stage_id"
                             defaultValue={stage.id}
-                            className="w-full rounded border border-mist bg-porcelain px-1 py-1 text-xs"
+                            className="w-full rounded border border-ash bg-graphite px-1 py-1 text-xs"
                           >
                             {stageList.map((s) => (
                               <option key={s.id} value={s.id}>
@@ -155,7 +155,7 @@ export default async function PipelinePage() {
                           </select>
                           <button
                             type="submit"
-                            className="rounded border border-mist px-2 py-1 text-xs hover:border-violet hover:text-violet-deep"
+                            className="rounded border border-ash px-2 py-1 text-xs hover:border-violet hover:text-violet"
                           >
                             Move
                           </button>
@@ -163,7 +163,7 @@ export default async function PipelinePage() {
                       </article>
                     ))}
                     {stageClients.length === 0 && (
-                      <p className="px-1 py-2 text-xs text-graphite/40">
+                      <p className="px-1 py-2 text-xs text-ivory/40">
                         Empty
                       </p>
                     )}

@@ -1,8 +1,11 @@
 @import "tailwindcss";
 
 @theme {
-  --color-porcelain: #F7F6F3;
   --color-graphite: #1E1D21;
+  --color-carbon: #26252B;
+  --color-ash: #3A3940;
+  --color-ivory: #F4EFE6;
+  --color-porcelain: #F7F6F3;
   --color-violet: #6D5EF0;
   --color-violet-deep: #5646E5;
   --color-mist: #C9C7D4;
@@ -10,7 +13,7 @@
 }
 
 body {
-  background: #F7F6F3;
-  color: #1E1D21;
+  background: #1E1D21;
+  color: #F4EFE6;
   font-family: var(--font-sans);
 }

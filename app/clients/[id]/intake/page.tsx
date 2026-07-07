@@ -7,7 +7,7 @@ import { INTAKE_SECTIONS, intakeProgress, type IntakeData } from '@/lib/intake'
 import type { Client, Intake } from '@/types/database'
 
 const inputClass =
-  'w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet'
+  'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
 
 export default async function IntakePage({
   params,
@@ -38,25 +38,50 @@ export default async function IntakePage({
       <Header />
       <main className="mx-auto max-w-2xl px-6 py-8">
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
-        <p className="mb-6 text-sm text-graphite/60">Intake</p>
+        <p className="mb-6 text-sm text-ivory/60">Intake</p>
         <ClientTabs clientId={client.id} active="intake" />
 
-        <div className="mb-6 rounded-xl border border-mist/50 bg-white p-4">
+        <details className="mb-4 rounded-xl border border-ash/60 bg-carbon/50 p-4 text-sm text-ivory/80">
+          <summary className="cursor-pointer font-medium text-ivory">
+            How to run an intake (tips)
+          </summary>
+          <ul className="mt-3 list-disc space-y-1 pl-5">
+            <li>
+              Don&apos;t show the client this form — sections 1–5 are just one
+              relaxed 45–60 min conversation about their business. Fill it in
+              as they talk (or after, from notes).
+            </li>
+            <li>
+              The trial site can be built from sections 1–4 alone — don&apos;t
+              wait for a complete intake to create momentum.
+            </li>
+            <li>
+              Photos and Google Business Profile access are the two items
+              clients always drag on. Chase early, chase often.
+            </li>
+            <li>
+              Red-starred items block the build — the brief will flag any
+              that are missing.
+            </li>
+          </ul>
+        </details>
+
+        <div className="mb-6 rounded-xl border border-ash/60 bg-carbon p-4">
           <div className="mb-2 flex items-baseline justify-between">
             <p className="text-sm font-medium">
               {progress.filled} of {progress.total} answered
             </p>
-            <p className="text-sm text-graphite/60">{progress.percent}%</p>
+            <p className="text-sm text-ivory/60">{progress.percent}%</p>
           </div>
-          <div className="h-1.5 rounded-full bg-mist/40">
+          <div className="h-1.5 rounded-full bg-ash/50">
             <div
               className="h-1.5 rounded-full bg-violet"
               style={{ width: `${progress.percent}%` }}
             />
           </div>
           {progress.blockingMissing.length > 0 && (
-            <p className="mt-3 text-xs text-graphite/60">
-              <span className="font-medium text-red-600">
+            <p className="mt-3 text-xs text-ivory/60">
+              <span className="font-medium text-red-400">
                 {progress.blockingMissing.length} blocking missing:
               </span>{' '}
               {progress.blockingMissing.join(' · ')}
@@ -65,12 +90,12 @@ export default async function IntakePage({
         </div>
 
         {flags.saved && (
-          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet-deep">
+          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
             Saved.
           </p>
         )}
         {flags.error && (
-          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
             Couldn&apos;t save. Try again.
           </p>
         )}
@@ -89,7 +114,7 @@ export default async function IntakePage({
                       <label htmlFor={name} className="mb-1 block text-sm">
                         {field.label}
                         {field.blocking && (
-                          <span className="ml-1 font-medium text-red-600">
+                          <span className="ml-1 font-medium text-red-400">
                             *
                           </span>
                         )}

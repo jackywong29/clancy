@@ -17,7 +17,7 @@ export async function Header() {
     : { data: null }
 
   return (
-    <header className="flex items-center justify-between border-b border-mist/50 bg-porcelain px-6 py-3">
+    <header className="flex items-center justify-between border-b border-ash/60 bg-graphite px-6 py-3">
       <div className="flex items-center gap-8">
         <Link href="/pipeline">
           <Wordmark />
@@ -28,12 +28,15 @@ export async function Header() {
           </Link>
           <Link
             href="/clients/new"
-            className="text-graphite/60 hover:text-graphite"
+            className="text-ivory/60 hover:text-ivory"
           >
             Add client
           </Link>
+          <Link href="/stages" className="text-ivory/60 hover:text-ivory">
+            Stages
+          </Link>
           {profile?.is_platform_admin && (
-            <Link href="/team" className="text-graphite/60 hover:text-graphite">
+            <Link href="/team" className="text-ivory/60 hover:text-ivory">
               Team
             </Link>
           )}
@@ -42,7 +45,7 @@ export async function Header() {
       <form action={signOut}>
         <button
           type="submit"
-          className="text-sm text-graphite/60 hover:text-graphite"
+          className="text-sm text-ivory/60 hover:text-ivory"
         >
           Sign out
         </button>

@@ -30,12 +30,12 @@ export default async function TeamPage({
       <Header />
       <main className="mx-auto max-w-3xl px-6 py-8">
         <h1 className="mb-1 text-2xl font-medium">Team</h1>
-        <p className="mb-6 text-sm text-graphite/60">
+        <p className="mb-6 text-sm text-ivory/60">
           Everyone with an account. New signups have no workspace until you
           grant one here.
         </p>
         {flags.saved && (
-          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet-deep">
+          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
             Access updated.
           </p>
         )}
@@ -43,22 +43,22 @@ export default async function TeamPage({
           {profileList.map((profile) => (
             <div
               key={profile.id}
-              className="flex flex-wrap items-center gap-3 rounded-xl border border-mist/50 bg-white p-4"
+              className="flex flex-wrap items-center gap-3 rounded-xl border border-ash/60 bg-carbon p-4"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
                   {profile.email ?? profile.id}
                   {profile.is_platform_admin && (
-                    <span className="ml-2 rounded bg-violet/10 px-1.5 py-0.5 text-xs font-normal text-violet-deep">
+                    <span className="ml-2 rounded bg-violet/10 px-1.5 py-0.5 text-xs font-normal text-violet">
                       admin
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-graphite/60">
+                <p className="text-xs text-ivory/60">
                   {profile.full_name || '—'} · joined{' '}
                   {profile.created_at.slice(0, 10)} ·{' '}
                   {orgName(profile.organization_id) ?? (
-                    <span className="text-red-600">no access</span>
+                    <span className="text-red-400">no access</span>
                   )}
                 </p>
               </div>
@@ -67,7 +67,7 @@ export default async function TeamPage({
                 <select
                   name="organization_id"
                   defaultValue={profile.organization_id ?? ''}
-                  className="rounded-lg border border-mist bg-porcelain px-2 py-1.5 text-sm"
+                  className="rounded-lg border border-ash bg-graphite px-2 py-1.5 text-sm"
                 >
                   <option value="">No access</option>
                   {orgList.map((org) => (
@@ -78,7 +78,7 @@ export default async function TeamPage({
                 </select>
                 <button
                   type="submit"
-                  className="rounded-lg border border-mist px-3 py-1.5 text-sm hover:border-violet hover:text-violet-deep"
+                  className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
                 >
                   Save
                 </button>
@@ -86,7 +86,7 @@ export default async function TeamPage({
             </div>
           ))}
         </div>
-        <p className="mt-6 text-xs text-graphite/50">
+        <p className="mt-6 text-xs text-ivory/50">
           Later, each client business becomes its own workspace here — you
           assign their staff to their workspace the same way.
         </p>

@@ -30,6 +30,7 @@ export async function proxy(request: NextRequest) {
 
   if (
     !user &&
+    pathname !== '/' &&
     !pathname.startsWith('/login') &&
     !pathname.startsWith('/signup') &&
     !pathname.startsWith('/auth')
@@ -39,7 +40,7 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  if (user && (pathname === '/login' || pathname === '/')) {
+  if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/pipeline'
     return NextResponse.redirect(url)

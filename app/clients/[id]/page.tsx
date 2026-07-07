@@ -1,12 +1,13 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { updateClient, requireOrg } from '@/lib/actions'
+import { updateClient, deleteClient, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
+import { ConfirmForm } from '@/components/ConfirmForm'
 import type { Client, PipelineStage } from '@/types/database'
 
 const inputClass =
-  'w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet'
+  'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
 
 export default async function ClientDetailPage({
   params,
@@ -39,17 +40,17 @@ export default async function ClientDetailPage({
       <Header />
       <main className="mx-auto max-w-2xl px-6 py-8">
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
-        <p className="mb-6 text-sm text-graphite/60">
+        <p className="mb-6 text-sm text-ivory/60">
           Added {client.created_at.slice(0, 10)}
         </p>
         <ClientTabs clientId={client.id} active="details" />
         {flags.saved && (
-          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet-deep">
+          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
             Saved.
           </p>
         )}
         {flags.error && (
-          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
             Couldn&apos;t save. Check the fields and try again.
           </p>
         )}
@@ -221,6 +222,20 @@ export default async function ClientDetailPage({
             Save changes
           </button>
         </form>
+        <div className="mt-10 border-t border-ash/60 pt-6">
+          <ConfirmForm
+            action={deleteClient}
+            message={`Delete ${client.company_name} and their intake data? This can't be undone.`}
+          >
+            <input type="hidden" name="client_id" value={client.id} />
+            <button
+              type="submit"
+              className="rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400"
+            >
+              Delete client
+            </button>
+          </ConfirmForm>
+        </div>
       </main>
     </div>
   )

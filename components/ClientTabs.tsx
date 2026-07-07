@@ -14,7 +14,7 @@ export function ClientTabs({
   ]
 
   return (
-    <nav className="mb-6 flex gap-4 border-b border-mist/50 text-sm">
+    <nav className="mb-6 flex gap-4 border-b border-ash/60 text-sm">
       {tabs.map((tab) => (
         <Link
           key={tab.key}
@@ -22,7 +22,7 @@ export function ClientTabs({
           className={
             tab.key === active
               ? 'border-b-2 border-violet pb-2 font-medium'
-              : 'pb-2 text-graphite/60 hover:text-graphite'
+              : 'pb-2 text-ivory/60 hover:text-ivory'
           }
         >
           {tab.label}

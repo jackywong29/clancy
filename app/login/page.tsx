@@ -12,15 +12,15 @@ export default async function LoginPage({
 
   return (
     <main className="flex min-h-screen items-center justify-center px-4">
-      <div className="w-full max-w-sm rounded-2xl border border-mist/50 bg-white p-8">
+      <div className="w-full max-w-sm rounded-2xl border border-ash/60 bg-carbon p-8">
         <div className="mb-6 text-center">
           <Wordmark size="text-3xl" />
-          <p className="mt-2 text-sm text-graphite/60">
+          <p className="mt-2 text-sm text-ivory/60">
             Built in days. Managed for you.
           </p>
         </div>
         {params.error === 'oauth' && (
-          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
             Google sign-in failed
             {params.msg ? `: ${params.msg}` : '.'} Try again or use email
             below.
@@ -30,9 +30,9 @@ export default async function LoginPage({
           <>
             <GoogleSignIn />
             <div className="my-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-mist/60" />
-              <span className="text-xs text-graphite/40">or</span>
-              <div className="h-px flex-1 bg-mist/60" />
+              <div className="h-px flex-1 bg-ash/60" />
+              <span className="text-xs text-ivory/40">or</span>
+              <div className="h-px flex-1 bg-ash/60" />
             </div>
           </>
         )}
@@ -47,7 +47,7 @@ export default async function LoginPage({
               type="email"
               required
               autoComplete="email"
-              className="w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet"
+              className="w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet"
             />
           </div>
           <div>
@@ -63,11 +63,11 @@ export default async function LoginPage({
               type="password"
               required
               autoComplete="current-password"
-              className="w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet"
+              className="w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet"
             />
           </div>
           {params.error === '1' && (
-            <p className="text-sm text-red-600">
+            <p className="text-sm text-red-400">
               Wrong email or password. Try again.
             </p>
           )}
@@ -78,9 +78,9 @@ export default async function LoginPage({
             Sign in
           </button>
         </form>
-        <p className="mt-4 text-center text-sm text-graphite/60">
+        <p className="mt-4 text-center text-sm text-ivory/60">
           New here?{' '}
-          <Link href="/signup" className="font-medium text-violet-deep">
+          <Link href="/signup" className="font-medium text-violet">
             Create an account
           </Link>
         </p>
