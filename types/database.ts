@@ -21,6 +21,15 @@ export interface PipelineStage {
   created_at: string
 }
 
+export interface Intake {
+  id: string
+  organization_id: string
+  client_id: string
+  data: Record<string, string>
+  created_at: string
+  updated_at: string
+}
+
 export interface Client {
   id: string
   organization_id: string

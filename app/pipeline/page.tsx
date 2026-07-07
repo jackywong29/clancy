@@ -2,7 +2,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { moveClientStage, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
-import type { Client, PipelineStage } from '@/types/database'
+import { intakeProgress } from '@/lib/intake'
+import type { Client, Intake, PipelineStage } from '@/types/database'
 
 function formatRM(value: number) {
   return `RM ${value.toLocaleString('en-MY', { maximumFractionDigits: 0 })}`
@@ -12,19 +13,27 @@ export default async function PipelinePage() {
   await requireOrg()
   const supabase = await createClient()
 
-  const [{ data: stages }, { data: clients }] = await Promise.all([
-    supabase
-      .from('pipeline_stages')
-      .select('*')
-      .order('position', { ascending: true }),
-    supabase
-      .from('clients')
-      .select('*')
-      .order('created_at', { ascending: false }),
-  ])
+  const [{ data: stages }, { data: clients }, { data: intakes }] =
+    await Promise.all([
+      supabase
+        .from('pipeline_stages')
+        .select('*')
+        .order('position', { ascending: true }),
+      supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false }),
+      supabase.from('intakes').select('client_id, data'),
+    ])
 
   const stageList = (stages ?? []) as PipelineStage[]
   const clientList = (clients ?? []) as Client[]
+  const intakeByClient = new Map(
+    ((intakes ?? []) as Pick<Intake, 'client_id' | 'data'>[]).map((i) => [
+      i.client_id,
+      i.data,
+    ])
+  )
 
   const activeStage = stageList.find((s) => s.name === 'Active')
   const activeClients = clientList.filter(
@@ -82,9 +91,12 @@ export default async function PipelinePage() {
                         key={client.id}
                         className="rounded-lg border border-mist/60 bg-white p-3"
                       >
-                        <p className="text-sm font-medium">
+                        <Link
+                          href={`/clients/${client.id}`}
+                          className="text-sm font-medium hover:text-violet-deep"
+                        >
                           {client.company_name}
-                        </p>
+                        </Link>
                         <p className="mt-0.5 text-xs text-graphite/60">
                           {[client.vertical, client.tier, client.source]
                             .filter(Boolean)
@@ -100,6 +112,27 @@ export default async function PipelinePage() {
                             Renews {client.renewal_date}
                           </p>
                         )}
+                        {intakeByClient.has(client.id) &&
+                          (() => {
+                            const p = intakeProgress(
+                              intakeByClient.get(client.id) ?? {}
+                            )
+                            return (
+                              <div className="mt-2">
+                                <div className="h-1 rounded-full bg-mist/40">
+                                  <div
+                                    className="h-1 rounded-full bg-violet"
+                                    style={{ width: `${p.percent}%` }}
+                                  />
+                                </div>
+                                <p className="mt-1 text-xs text-graphite/50">
+                                  Intake {p.percent}%
+                                  {p.blockingMissing.length > 0 &&
+                                    ` · ${p.blockingMissing.length} blocking`}
+                                </p>
+                              </div>
+                            )
+                          })()}
                         <form
                           action={moveClientStage}
                           className="mt-2 flex gap-1"

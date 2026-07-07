@@ -27,12 +27,16 @@ export default async function SignupPage({
           </p>
         ) : (
           <>
-            <GoogleSignIn />
-            <div className="my-4 flex items-center gap-3">
-              <div className="h-px flex-1 bg-mist/60" />
-              <span className="text-xs text-graphite/40">or</span>
-              <div className="h-px flex-1 bg-mist/60" />
-            </div>
+            {process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === 'true' && (
+              <>
+                <GoogleSignIn />
+                <div className="my-4 flex items-center gap-3">
+                  <div className="h-px flex-1 bg-mist/60" />
+                  <span className="text-xs text-graphite/40">or</span>
+                  <div className="h-px flex-1 bg-mist/60" />
+                </div>
+              </>
+            )}
             <form action={signUp} className="space-y-4">
               <div>
                 <label

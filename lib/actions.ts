@@ -92,6 +92,68 @@ export async function addClient(formData: FormData) {
   redirect('/pipeline')
 }
 
+export async function updateClient(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const clientId = String(formData.get('client_id') ?? '')
+  const optional = (name: string) => {
+    const value = String(formData.get(name) ?? '').trim()
+    return value === '' ? null : value
+  }
+  const mrrRaw = optional('mrr')
+
+  const { error } = await supabase
+    .from('clients')
+    .update({
+      company_name: String(formData.get('company_name') ?? '').trim(),
+      stage_id: optional('stage_id'),
+      contact_person: optional('contact_person'),
+      phone: optional('phone'),
+      email: optional('email'),
+      vertical: optional('vertical'),
+      source: optional('source'),
+      tier: optional('tier'),
+      mrr: mrrRaw === null ? null : Number(mrrRaw),
+      lock_in_start: optional('lock_in_start'),
+      renewal_date: optional('renewal_date'),
+      notes: optional('notes'),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', clientId)
+
+  revalidatePath('/pipeline')
+  revalidatePath(`/clients/${clientId}`)
+  redirect(`/clients/${clientId}?${error ? 'error=1' : 'saved=1'}`)
+}
+
+export async function saveIntake(formData: FormData) {
+  const supabase = await createClient()
+  const organizationId = await requireOrg()
+
+  const clientId = String(formData.get('client_id') ?? '')
+  const data: Record<string, string> = {}
+  for (const [key, value] of formData.entries()) {
+    if (key.includes('.') && typeof value === 'string') {
+      data[key] = value
+    }
+  }
+
+  const { error } = await supabase.from('intakes').upsert(
+    {
+      organization_id: organizationId,
+      client_id: clientId,
+      data,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'client_id' }
+  )
+
+  revalidatePath('/pipeline')
+  revalidatePath(`/clients/${clientId}/intake`)
+  redirect(`/clients/${clientId}/intake?${error ? 'error=1' : 'saved=1'}`)
+}
+
 export async function moveClientStage(formData: FormData) {
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
