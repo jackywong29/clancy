@@ -23,6 +23,37 @@ export interface PipelineStage {
   created_at: string
 }
 
+export interface SiteService {
+  name: string
+  price: string
+  duration: string
+  bookable: boolean
+}
+
+export interface SiteConfig {
+  name?: string
+  tagline?: string
+  description?: string
+  phone?: string
+  whatsapp?: string
+  address?: string
+  hours?: string
+  accent?: string
+  logo_url?: string | null
+  services?: SiteService[]
+  faq?: { q: string; a: string }[]
+}
+
+export interface Site {
+  id: string
+  organization_id: string
+  slug: string
+  published: boolean
+  config: SiteConfig
+  created_at: string
+  updated_at: string
+}
+
 export interface Intake {
   id: string
   organization_id: string
