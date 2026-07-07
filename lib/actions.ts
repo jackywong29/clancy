@@ -85,7 +85,7 @@ export async function addClient(formData: FormData) {
   })
 
   if (error) {
-    redirect('/clients/new?error=1')
+    redirect(`/clients/new?error=1&msg=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/pipeline')
@@ -124,7 +124,11 @@ export async function updateClient(formData: FormData) {
 
   revalidatePath('/pipeline')
   revalidatePath(`/clients/${clientId}`)
-  redirect(`/clients/${clientId}?${error ? 'error=1' : 'saved=1'}`)
+  redirect(
+    `/clients/${clientId}?${
+      error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'
+    }`
+  )
 }
 
 export async function saveIntake(formData: FormData) {
@@ -151,7 +155,11 @@ export async function saveIntake(formData: FormData) {
 
   revalidatePath('/pipeline')
   revalidatePath(`/clients/${clientId}/intake`)
-  redirect(`/clients/${clientId}/intake?${error ? 'error=1' : 'saved=1'}`)
+  redirect(
+    `/clients/${clientId}/intake?${
+      error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'
+    }`
+  )
 }
 
 export async function deleteClient(formData: FormData) {

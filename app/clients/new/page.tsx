@@ -9,7 +9,7 @@ const inputClass =
 export default async function NewClientPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; msg?: string }>
 }) {
   const params = await searchParams
   await requireOrg()
@@ -25,7 +25,11 @@ export default async function NewClientPage({
     <div className="min-h-screen">
       <Header />
       <main className="mx-auto max-w-xl px-6 py-8">
-        <h1 className="mb-6 text-2xl font-medium">Add client</h1>
+        <h1 className="mb-1 text-2xl font-medium">Add client</h1>
+        <p className="mb-6 text-sm text-ivory/60">
+          Just the name is enough to get them on the board — everything else
+          can be filled in later on their page.
+        </p>
         <form action={addClient} className="space-y-4">
           <div>
             <label
@@ -182,7 +186,8 @@ export default async function NewClientPage({
           </div>
           {params.error && (
             <p className="text-sm text-red-400">
-              Couldn&apos;t save the client. Check the fields and try again.
+              Couldn&apos;t save the client
+              {params.msg ? `: ${params.msg}` : '. Check the fields and try again.'}
             </p>
           )}
           <button

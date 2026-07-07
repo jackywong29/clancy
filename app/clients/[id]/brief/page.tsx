@@ -27,7 +27,7 @@ export default async function BriefPage({
   const client = clientRow as Client
   const data: IntakeData = (intakeRow as Intake | null)?.data ?? {}
   const progress = intakeProgress(data)
-  const brief = buildBrief(client, data)
+  const brief = await buildBrief(client, data, supabase)
 
   return (
     <div className="min-h-screen">

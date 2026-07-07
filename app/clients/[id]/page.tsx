@@ -14,7 +14,7 @@ export default async function ClientDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ saved?: string; error?: string }>
+  searchParams: Promise<{ saved?: string; error?: string; msg?: string }>
 }) {
   const { id } = await params
   const flags = await searchParams
@@ -51,7 +51,7 @@ export default async function ClientDetailPage({
         )}
         {flags.error && (
           <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
-            Couldn&apos;t save. Check the fields and try again.
+            Couldn&apos;t save{flags.msg ? `: ${flags.msg}` : '. Check the fields and try again.'}
           </p>
         )}
         <form action={updateClient} className="space-y-4">

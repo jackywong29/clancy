@@ -66,10 +66,7 @@ export default function HomePage() {
           >
             Book a walkthrough
           </a>
-          <p className="mt-4 text-xs text-ivory/40">
-            By the team running MegaStar Arena&apos;s systems · limited managed
-            slots
-          </p>
+          <p className="mt-4 text-xs text-ivory/40">Limited managed slots</p>
         </section>
 
         <section className="grid gap-3 border-t border-ash/60 py-14 sm:grid-cols-5">

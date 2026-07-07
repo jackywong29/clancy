@@ -68,6 +68,20 @@ export default async function PipelinePage() {
           <p className="text-sm text-ivory/60">
             No pipeline stages found — run the schema SQL in Supabase first.
           </p>
+        ) : clientList.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-ash bg-carbon/50 p-10 text-center">
+            <p className="text-lg font-medium">The board is empty.</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-ivory/60">
+              Add your first prospect and watch them move from Lead to Active
+              — that journey is the whole business.
+            </p>
+            <Link
+              href="/clients/new"
+              className="mt-5 inline-block rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
+            >
+              Add your first client
+            </Link>
+          </div>
         ) : (
           <div className="flex gap-3 overflow-x-auto pb-4">
             {stageList.map((stage) => {
