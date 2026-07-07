@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+@theme {
+  --color-porcelain: #F7F6F3;
+  --color-graphite: #1E1D21;
+  --color-violet: #6D5EF0;
+  --color-violet-deep: #5646E5;
+  --color-mist: #C9C7D4;
+  --font-sans: "Avenir Next", Futura, "Helvetica Neue", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  background: #F7F6F3;
+  color: #1E1D21;
+  font-family: var(--font-sans);
+}

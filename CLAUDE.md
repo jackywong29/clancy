@@ -1,0 +1,66 @@
+# Clancy — venture spec
+
+Jacky's second venture alongside running MegaStar Arena: **Clancy**, an AI agency selling a **CRM / automation platform for local businesses**, built and owned as original code (multi-tenant SaaS), sold as a productized subscription. Clancy is the working name for both company and product (decided 2026-07-07); **entity registration pending — Jacky will confirm when registered**. Brand identity + marketing: see `branding-marketing.md`. Ambition (stated 2026-07-07): this becomes Jacky's **full-time business** — the venture is planned on a 5-year horizon, not as a permanent side project. Spun off from the learnings of the MegaStar Arena CRM (`../megastar-crm`) — reuses its architecture lessons, **not** its code. This folder is the product's home; no code exists yet.
+
+> **This file is the canonical spec.** It replaced a long decision journal in memory (2026-07-04). When decisions change, update this file — don't fork the plan into chat memory.
+
+## Strategic position (decided 2026-07-04)
+- **Own-layer-plus-compose-APIs** — build and own the CRM/pipeline/orchestration layer; integrate best-in-class infrastructure APIs instead of building deep infra: Twilio (SMS), an email API (Resend/Postmark) for deliverability, Google Business Profile API (reviews). Rejected: white-labeling GoHighLevel (no ownership), full from-scratch (multi-year). GHL is the *shape* reference, not the codebase.
+- **AI receptionist / voice is out of scope entirely** (Jacky's call) — removes telephony/voice AI, the hardest integration, from the critical path.
+- **Engine + vertical template packs**, not one-size-fits-all: a generic core engine, with per-vertical templates (fields, pipeline stages, seed config — as data) applied as a **configuration step** — not a separate build phase per vertical. Rejected a single maximally-generic template (commoditized lane vs GHL/HubSpot/Zoho, no differentiation).
+- **In-product AI removed entirely (2026-07-07, Jacky's call)** — no Claude API anywhere in the client product: no chat widget, no AI-drafted replies or emails. Follow-up sequences and review requests run as deterministic, templated automations (triggers + merge fields). This kills per-tenant AI usage costs and the AI-liability risk; differentiation now rests on the **personally-tailored build + Managed service**, not AI features. Claude Code remains Jacky's dev tool for building and maintaining the platform. *(Supersedes the 2026-07-04 "Claude API embedded in the backend" decision and the AI-layer guardrail rules that came with it — if AI is ever reintroduced, revisit those bitter-lesson guardrails: tool-loop agents not scripted flows, determinism at money/sending boundaries, prompts as versioned config, one model gateway, evals from day one.)*
+
+## Feature scope (7 features, AI-free)
+Professional website with live reviews · review automation · online booking · follow-up email sequences · 6–9 stage lead pipeline · unified inbox · CRM & contacts.
+
+## Build plan v2 (current roadmap)
+1. **Core engine + CRM** — multi-tenant org-scoped base, contacts + CSV import, configurable 6–9 stage lead pipeline, auth/roles
+2. **Booking + follow-ups** — online booking calendar, follow-up sequence builder wired to pipeline stage changes, email API (Resend/Postmark) integration
+3. **Website + reviews** — templated (not drag-and-drop) website generator per vertical; Google Business Profile API for automated review requests + monitoring; website pulls live reviews from the same integration
+4. **Unified inbox** — all customer messages in one place for staff to answer; website contact form messages (auto-creating CRM contacts) + SMS (Twilio) first; Instagram/Facebook/WhatsApp added later, **demand-gated** — hardest integrations sequenced last
+5. **Expand + launch** — remaining inbox channels, vertical template packs, self-serve signup, pricing, public launch whenever ready (**no fixed date**)
+
+## Architecture rules
+- **True multi-tenant from day one:** one shared codebase/DB, `organization_id` scoping + RLS on **every** table, one org = one client.
+- Everything per-tenant configurable (departments, pipeline stages, fields) as data — **no hardcoded enums enforced by DB CHECK constraints** (the recurring MSA CRM production gotcha; see `../megastar-crm/CLAUDE.md`).
+- Colour system (confirmed): **purple** = brand/primary · **gray/amber/purple/green** = pipeline status. *(Teal was reserved for AI actions — freed up since in-product AI was removed 2026-07-07.)*
+- Automations (follow-up sequences, review requests) are **deterministic**: trigger + template + merge fields. Hard rate limits on all outbound sending regardless.
+
+## Verticals (template packs, in order)
+1. **Car workshops** — job pipeline (intake → diagnosis → in progress → completed/invoiced); closest to the proven MSA pipeline shape
+2. **Dine-in F&B** — POS/table/menu-driven, structurally different core flows
+3. **Handmade/D2C social-commerce brand** — syncs orders from existing e-commerce (e.g. Shopify) rather than replacing it; batch-production pipeline (New → Batching → Packed → Shipped); a second B2B collab pipeline (Inquiry → Discussing → Active → Delivered); social inbox (IG/TikTok DMs) as primary inbox channel; repeat-purchase/gifting nurture; stock-waitlist automation. *(Defined via the BYYOU KL design exercise — not a real pilot lead.)*
+
+## Business model
+- Productized SaaS subscription (monthly per client org, on the shared multi-tenant platform). Price tiers **not set** — validate via early customer conversations.
+- **Sales motion** (decided 2026-07-07):
+  1. Demo the live MegaStar Arena CRM as proof-of-concept
+  2. Propose a version customized to the prospect's own workflow (Jacky prompts Claude to configure/build it — client never touches code)
+  3. Give the prospect a live test-run/trial on their own site before they commit
+  4. Quote: **$0 setup fee**, monthly subscription, **1-year lock-in**
+  5. During the locked-in year, Jacky personally handles all maintenance/updates — this is the **Managed** tier
+  6. At renewal: client either signs another Managed year, or drops to **self-serve** (Standard) — same shared platform, same account and data, Jacky just stops actively managing it and the client owns future changes. This is a **tier/plan flip, not an infrastructure handover** — no per-client export or standalone-instance work required.
+- This operationalizes the previously-flagged **Standard vs Managed** tiering: every client starts on Managed for year 1 (bundled into the lock-in); Standard/self-serve becomes available only as the no-renewal default after year 1, not a signup-time choice. With in-product AI removed, Managed-tier work is genuinely Jacky's hours — which makes the Managed cohort cap below a hard rule, not a guideline.
+- **Pricing (confirmed 2026-07-07, premium positioning):** Managed **RM 1,200/mo**, Self-Serve **RM 500/mo**, setup free. Pilot variant for first 1–2 clients: 50% off year one in exchange for feedback + testimonial.
+- **Managed capacity is a rule, not a permanent cap (reframed 2026-07-07):** the earlier "3–5 clients max" was Jacky's part-time hours, not the product's ceiling — the multi-tenant architecture holds unlimited orgs. Rule: Managed slots = what current delivery capacity can genuinely serve well (~3–5 per part-time solo founder; ~15–20 per full-time account manager later). Capacity grows with the team; scarcity marketing must always reflect the true current number.
+- **Sales assets** (created 2026-07-07): `client-intake-checklist.md` (everything to collect from a client before building) and `sales-proposal-template.md` (pitch → trial → close playbook, incl. objection handling and pilot-client variant).
+- **Planning & brand docs** (2026-07-07): `five-year-plan.md` (year-by-year targets, full-time gate, foundations, risks) · `branding-marketing.md` (Direction C identity + content system) · `launch-posts.md` (the 9 launch posts, copy + pre-launch checklist).
+
+## Constraints & working rules
+- **Time budget today: ~1–2 days/week** (Jacky runs MegaStar Arena full-time as Director). Scope every batch to that reality. The stated ambition is to go **full-time on Clancy** once a revenue gate is hit (gate to be defined in the 5-year plan) — until then, plan for part-time capacity and don't let ambition inflate near-term scope.
+- **Product, not projects:** every client-specific request must land as reusable configuration or a platform feature — never a bespoke code fork for one client. This is the rule that makes year-4 scale possible and it applies from client #1.
+- **No fixed launch date.** Suggested informal checkpoints (core engine usable → workshop template live with a real pilot → F&B template) — Jacky hasn't committed to them yet.
+- Draft-first workflow applies here too: plan in chat, wait for confirmation, then execute the confirmed scope in full.
+- Keep it simple first; one vertical fully validated beats two half-built.
+
+## Governance flags (before charging real external clients — not urgent at pilot stage)
+- Separate legal entity from MegaStar Arena (IP ownership, liability ring-fencing) — **in motion: Jacky plans to register Clancy; unconfirmed until he says so.** Contracts should name Clancy (the company), not Jacky personally.
+- Contracts need the 1-year lock-in and Managed→Standard downgrade spelled out explicitly (what happens on early cancellation, what "self-serve" means for support/updates going forward). *(The AI-liability clause flagged 2026-07-04 is no longer needed — in-product AI removed 2026-07-07; standard SaaS terms suffice.)*
+- Malaysia **PDPA** applies once storing clients' customers' contact data
+
+## Open questions
+- Confirm entity registration (then update governance flags + contracts)
+- Verify + register domain/handles (clancy.my preferred — see branding-marketing.md)
+- Define the full-time revenue gate (proposed in the 5-year plan — needs Jacky's number)
+- Commit to checkpoints? (guards against open-ended drift with no deadline)
+- Pilot client sourcing for the workshop vertical
