@@ -6,7 +6,7 @@ import { Wordmark } from '@/components/Wordmark'
 export default async function LoginPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>
+  searchParams: Promise<{ error?: string; msg?: string }>
 }) {
   const params = await searchParams
 
@@ -19,6 +19,13 @@ export default async function LoginPage({
             Built in days. Managed for you.
           </p>
         </div>
+        {params.error === 'oauth' && (
+          <p className="mb-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+            Google sign-in failed
+            {params.msg ? `: ${params.msg}` : '.'} Try again or use email
+            below.
+          </p>
+        )}
         {process.env.NEXT_PUBLIC_ENABLE_GOOGLE_AUTH === 'true' && (
           <>
             <GoogleSignIn />
@@ -59,7 +66,7 @@ export default async function LoginPage({
               className="w-full rounded-lg border border-mist bg-porcelain px-3 py-2 text-sm outline-none focus:border-violet"
             />
           </div>
-          {params.error && (
+          {params.error === '1' && (
             <p className="text-sm text-red-600">
               Wrong email or password. Try again.
             </p>
