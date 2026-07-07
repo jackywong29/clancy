@@ -7,9 +7,11 @@ export interface Organization {
 
 export interface Profile {
   id: string
-  organization_id: string
+  organization_id: string | null
   full_name: string | null
+  email: string | null
   role: string
+  is_platform_admin: boolean
   created_at: string
 }
 

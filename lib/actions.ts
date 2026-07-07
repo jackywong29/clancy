@@ -154,6 +154,40 @@ export async function saveIntake(formData: FormData) {
   redirect(`/clients/${clientId}/intake?${error ? 'error=1' : 'saved=1'}`)
 }
 
+export async function requireAdmin() {
+  const supabase = await createClient()
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('is_platform_admin')
+    .eq(
+      'id',
+      (await supabase.auth.getUser()).data.user?.id ?? ''
+    )
+    .maybeSingle()
+
+  if (!profile?.is_platform_admin) {
+    redirect('/pipeline')
+  }
+}
+
+export async function updateProfileAccess(formData: FormData) {
+  await requireAdmin()
+  const supabase = await createClient()
+
+  const profileId = String(formData.get('profile_id') ?? '')
+  const orgValue = String(formData.get('organization_id') ?? '')
+
+  if (profileId) {
+    await supabase
+      .from('profiles')
+      .update({ organization_id: orgValue === '' ? null : orgValue })
+      .eq('id', profileId)
+  }
+
+  revalidatePath('/team')
+  redirect('/team?saved=1')
+}
+
 export async function moveClientStage(formData: FormData) {
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
