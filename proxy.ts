@@ -32,7 +32,8 @@ export async function proxy(request: NextRequest) {
     !user &&
     !pathname.startsWith('/login') &&
     !pathname.startsWith('/signup') &&
-    !pathname.startsWith('/auth')
+    !pathname.startsWith('/auth') &&
+    !pathname.startsWith('/api/debug-env')
   ) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
