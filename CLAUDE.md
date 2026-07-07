@@ -55,8 +55,15 @@ Professional website with live reviews · review automation · online booking ·
 
 ## Governance flags (before charging real external clients — not urgent at pilot stage)
 - Separate legal entity from MegaStar Arena (IP ownership, liability ring-fencing) — **in motion: Jacky plans to register Clancy; unconfirmed until he says so.** Contracts should name Clancy (the company), not Jacky personally.
+- Infra separation status (2026-07-07): Supabase = own Clancy org ✓ · GitHub = jackywong29/clancy ✓ · Vercel = deployed under Jacky's personal hobby account (named "MSA") — acceptable for pilot; transfer the project to a Clancy team/account once the entity exists.
 - Contracts need the 1-year lock-in and Managed→Standard downgrade spelled out explicitly (what happens on early cancellation, what "self-serve" means for support/updates going forward). *(The AI-liability clause flagged 2026-07-04 is no longer needed — in-product AI removed 2026-07-07; standard SaaS terms suffice.)*
 - Malaysia **PDPA** applies once storing clients' customers' contact data
+
+## Dev workflow (repo rules — mirrors megastar-crm)
+- **This folder is the Clancy app repo** (Next.js 16 + Supabase + Vercel, same stack as `../megastar-crm`, zero shared infrastructure with it). Batch 1 shipped 2026-07-07: auth, multi-tenant schema (`supabase/schema.sql`), pipeline board, add-client form. Clancy = organization #1.
+- Claude has no DB access — paste all SQL inline in chat; Jacky runs it in the Supabase SQL Editor. Keep `supabase/schema.sql` updated as migrations accrue.
+- Draft-first before any nontrivial batch. `npm run typecheck` before every push. Push = production deploy (Vercel auto-deploys from main) and stays permission-gated.
+- Auth model (since migration 002): signup is open (email/password + Google OAuth), but new users get an **org-less profile** — RLS blocks all data and they land on `/no-access` until Jacky assigns them to an org via SQL (statement in `supabase/002_open_signup.sql`). Proper invite UI is future work.
 
 ## Open questions
 - Confirm entity registration (then update governance flags + contracts)

@@ -17,28 +17,49 @@ export async function signIn(formData: FormData) {
   redirect('/pipeline')
 }
 
+export async function signUp(formData: FormData) {
+  const email = String(formData.get('email') ?? '').trim()
+  const password = String(formData.get('password') ?? '')
+  const fullName = String(formData.get('full_name') ?? '').trim()
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: { data: { full_name: fullName } },
+  })
+
+  if (error) {
+    redirect('/signup?error=1')
+  }
+  if (data.session) {
+    redirect('/pipeline')
+  }
+  redirect('/signup?sent=1')
+}
+
 export async function signOut() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/login')
 }
 
-async function currentOrgId(): Promise<string> {
+export async function requireOrg(): Promise<string> {
   const supabase = await createClient()
-  const { data: profile, error } = await supabase
+  const { data: profile } = await supabase
     .from('profiles')
     .select('organization_id')
-    .single()
+    .maybeSingle()
 
-  if (error || !profile) {
-    redirect('/login')
+  if (!profile?.organization_id) {
+    redirect('/no-access')
   }
   return profile.organization_id
 }
 
 export async function addClient(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await currentOrgId()
+  const organizationId = await requireOrg()
 
   const optional = (name: string) => {
     const value = String(formData.get(name) ?? '').trim()

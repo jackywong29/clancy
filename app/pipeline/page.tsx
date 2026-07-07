@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { moveClientStage } from '@/lib/actions'
+import { moveClientStage, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import type { Client, PipelineStage } from '@/types/database'
 
@@ -9,6 +9,7 @@ function formatRM(value: number) {
 }
 
 export default async function PipelinePage() {
+  await requireOrg()
   const supabase = await createClient()
 
   const [{ data: stages }, { data: clients }] = await Promise.all([

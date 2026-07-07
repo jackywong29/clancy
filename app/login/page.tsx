@@ -1,4 +1,6 @@
+import Link from 'next/link'
 import { signIn } from '@/lib/actions'
+import { GoogleSignIn } from '@/components/GoogleSignIn'
 import { Wordmark } from '@/components/Wordmark'
 
 export default async function LoginPage({
@@ -16,6 +18,12 @@ export default async function LoginPage({
           <p className="mt-2 text-sm text-graphite/60">
             Built in days. Managed for you.
           </p>
+        </div>
+        <GoogleSignIn />
+        <div className="my-4 flex items-center gap-3">
+          <div className="h-px flex-1 bg-mist/60" />
+          <span className="text-xs text-graphite/40">or</span>
+          <div className="h-px flex-1 bg-mist/60" />
         </div>
         <form action={signIn} className="space-y-4">
           <div>
@@ -59,6 +67,12 @@ export default async function LoginPage({
             Sign in
           </button>
         </form>
+        <p className="mt-4 text-center text-sm text-graphite/60">
+          New here?{' '}
+          <Link href="/signup" className="font-medium text-violet-deep">
+            Create an account
+          </Link>
+        </p>
       </div>
     </main>
   )

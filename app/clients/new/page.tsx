@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import { addClient } from '@/lib/actions'
+import { addClient, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import type { PipelineStage } from '@/types/database'
 
@@ -12,6 +12,7 @@ export default async function NewClientPage({
   searchParams: Promise<{ error?: string }>
 }) {
   const params = await searchParams
+  await requireOrg()
   const supabase = await createClient()
   const { data: stages } = await supabase
     .from('pipeline_stages')
