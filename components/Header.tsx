@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/lib/actions'
 import { Wordmark } from '@/components/Wordmark'
+import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher'
+import type { Organization } from '@/types/database'
 
 export async function Header() {
   const supabase = await createClient()
@@ -11,10 +13,19 @@ export async function Header() {
   const { data: profile } = user
     ? await supabase
         .from('profiles')
-        .select('is_platform_admin')
+        .select('organization_id, is_platform_admin')
         .eq('id', user.id)
         .maybeSingle()
     : { data: null }
+
+  let orgs: Organization[] = []
+  if (profile?.is_platform_admin) {
+    const { data } = await supabase
+      .from('organizations')
+      .select('*')
+      .order('name')
+    orgs = (data ?? []) as Organization[]
+  }
 
   return (
     <header className="flex items-center justify-between border-b border-ash/60 bg-graphite px-6 py-3">
@@ -36,20 +47,33 @@ export async function Header() {
             Stages
           </Link>
           {profile?.is_platform_admin && (
-            <Link href="/team" className="text-ivory/60 hover:text-ivory">
-              Team
-            </Link>
+            <>
+              <Link href="/sites" className="text-ivory/60 hover:text-ivory">
+                Sites
+              </Link>
+              <Link href="/team" className="text-ivory/60 hover:text-ivory">
+                Team
+              </Link>
+            </>
           )}
         </nav>
       </div>
-      <form action={signOut}>
-        <button
-          type="submit"
-          className="text-sm text-ivory/60 hover:text-ivory"
-        >
-          Sign out
-        </button>
-      </form>
+      <div className="flex items-center gap-4">
+        {profile?.is_platform_admin && (
+          <WorkspaceSwitcher
+            orgs={orgs}
+            currentId={profile.organization_id}
+          />
+        )}
+        <form action={signOut}>
+          <button
+            type="submit"
+            className="text-sm text-ivory/60 hover:text-ivory"
+          >
+            Sign out
+          </button>
+        </form>
+      </div>
     </header>
   )
 }

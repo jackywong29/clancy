@@ -14,6 +14,7 @@ export interface IntakeField {
   type?: IntakeFieldType
   blocking?: boolean
   hint?: string
+  clientFacing?: boolean
 }
 
 export interface IntakeSection {
@@ -41,11 +42,11 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     key: 'basics',
     title: 'Business basics',
     fields: [
-      { key: 'registered_name', label: 'Registered + trading name', blocking: true },
-      { key: 'ssm_number', label: 'SSM registration no.', blocking: true },
-      { key: 'point_of_contact', label: 'Single point of contact (name, phone, email)', blocking: true },
-      { key: 'description', label: 'What they do, for whom, what makes them different', type: 'long' },
-      { key: 'background', label: 'Year established, team size, service area' },
+      { key: 'registered_name', label: 'Registered + trading name', blocking: true , clientFacing: true },
+      { key: 'ssm_number', label: 'SSM registration no.', blocking: true , clientFacing: true },
+      { key: 'point_of_contact', label: 'Single point of contact (name, phone, email)', blocking: true , clientFacing: true },
+      { key: 'description', label: 'What they do, for whom, what makes them different', type: 'long' , clientFacing: true },
+      { key: 'background', label: 'Year established, team size, service area' , clientFacing: true },
     ],
   },
   {
@@ -63,19 +64,19 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     key: 'contact',
     title: 'Contact, location & hours',
     fields: [
-      { key: 'address', label: 'Address + Google Maps pin', blocking: true },
-      { key: 'phone', label: 'Public phone / WhatsApp', blocking: true },
-      { key: 'email', label: 'Public email' },
-      { key: 'hours', label: 'Operating hours incl. public holidays' },
-      { key: 'socials', label: 'Social links actually in use' },
+      { key: 'address', label: 'Address + Google Maps pin', blocking: true , clientFacing: true },
+      { key: 'phone', label: 'Public phone / WhatsApp', blocking: true , clientFacing: true },
+      { key: 'email', label: 'Public email' , clientFacing: true },
+      { key: 'hours', label: 'Operating hours incl. public holidays' , clientFacing: true },
+      { key: 'socials', label: 'Social links actually in use' , clientFacing: true },
     ],
   },
   {
     key: 'services',
     title: 'Services & pricing',
     fields: [
-      { key: 'items', label: 'Services & prices', type: 'services', blocking: true, hint: 'One row per service. Price can be exact ("RM 150"), a range ("from RM 500"), or "ask for quote". Tick the ones customers can book online.' },
-      { key: 'promos', label: 'Packages, promos, seasonal offers' },
+      { key: 'items', label: 'Services & prices', type: 'services', blocking: true, hint: 'One row per service. Price can be exact ("RM 150"), a range ("from RM 500"), or "ask for quote". Tick the ones customers can book online.' , clientFacing: true },
+      { key: 'promos', label: 'Packages, promos, seasonal offers' , clientFacing: true },
     ],
   },
   {
@@ -93,20 +94,20 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     key: 'booking',
     title: 'Booking rules',
     fields: [
-      { key: 'slots', label: 'Slot length, buffer, max per day/staff' },
-      { key: 'window', label: 'How far ahead bookable, minimum notice' },
-      { key: 'cancellation', label: 'Cancellation / no-show policy' },
-      { key: 'deposit', label: 'Deposit required? Amount + refund terms' },
+      { key: 'slots', label: 'Slot length, buffer, max per day/staff' , clientFacing: true },
+      { key: 'window', label: 'How far ahead bookable, minimum notice' , clientFacing: true },
+      { key: 'cancellation', label: 'Cancellation / no-show policy' , clientFacing: true },
+      { key: 'deposit', label: 'Deposit required? Amount + refund terms' , clientFacing: true },
     ],
   },
   {
     key: 'faq',
     title: 'FAQ & communication style',
     fields: [
-      { key: 'questions', label: 'Top 10 questions customers actually ask', type: 'long', hint: 'Becomes the website FAQ' },
-      { key: 'recipient', label: 'Who receives inquiries/bookings (name + WhatsApp/email)' },
-      { key: 'languages', label: 'Languages: which supported, which primary' },
-      { key: 'tone', label: 'Tone for website + follow-up emails' },
+      { key: 'questions', label: 'Top 10 questions customers actually ask', type: 'long', hint: 'Becomes the website FAQ' , clientFacing: true },
+      { key: 'recipient', label: 'Who receives inquiries/bookings (name + WhatsApp/email)' , clientFacing: true },
+      { key: 'languages', label: 'Languages: which supported, which primary' , clientFacing: true },
+      { key: 'tone', label: 'Tone for website + follow-up emails' , clientFacing: true },
     ],
   },
   {
@@ -258,3 +259,14 @@ export async function buildBrief(
 
   return lines.join('\n')
 }
+
+export const CLIENT_FACING_SECTIONS: IntakeSection[] = INTAKE_SECTIONS.map(
+  (section) => ({
+    ...section,
+    fields: section.fields.filter((f) => f.clientFacing),
+  })
+).filter((section) => section.fields.length > 0)
+
+export const CLIENT_FACING_KEYS = new Set(
+  CLIENT_FACING_SECTIONS.flatMap((s) => s.fields.map((f) => `${s.key}.${f.key}`))
+)

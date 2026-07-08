@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { saveIntake, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
+import { CopyButton } from '@/components/CopyButton'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
 import { StepListEditor } from '@/components/intake/StepListEditor'
 import { FileUploadField } from '@/components/intake/FileUploadField'
@@ -101,6 +102,22 @@ export default async function IntakePage({
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
         <p className="mb-6 text-sm text-ivory/60">Intake</p>
         <ClientTabs clientId={client.id} active="intake" />
+
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ash/60 bg-carbon p-4">
+          <div>
+            <p className="text-sm font-medium">Let the client fill it in</p>
+            <p className="mt-0.5 text-xs text-ivory/60">
+              Send them this private link — they fill the client-friendly
+              sections on their phone; your answers here are never
+              overwritten, only added to.
+            </p>
+          </div>
+          <CopyButton
+            text={`https://clancy-hq.vercel.app/i/${client.intake_token}`}
+            label="Copy client link"
+            variant="outline"
+          />
+        </div>
 
         <details className="mb-4 rounded-xl border border-ash/60 bg-carbon/50 p-4 text-sm text-ivory/80">
           <summary className="cursor-pointer font-medium text-ivory">

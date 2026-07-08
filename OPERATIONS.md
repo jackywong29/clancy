@@ -14,7 +14,7 @@ How the business runs, start to finish. For Jacky and Claude — read this to re
 
 **2. Pitched** — run the pitch meeting per `sales-proposal-template.md`: open with their pain (4 discovery questions), demo live, sketch THEIR pipeline on paper, and book the intake conversation before leaving. Move the card, jot meeting notes on Details.
 
-**3. Intake** — the 45–60 min conversation. Open the client's *Intake* tab and fill sections 1–5 while they talk (tips box on the page). Upload logo/photos/files as they send them. Blocking items (red ★) are tracked automatically; the progress bar shows on their pipeline card.
+**3. Intake** — the 45–60 min conversation. Open the client's *Intake* tab and fill sections 1–5 while they talk (tips box on the page). Upload logo/photos/files as they send them. Blocking items (red ★) are tracked automatically; the progress bar shows on their pipeline card. **Shortcut:** hit *Copy client link* on the intake tab and send it to the client — they fill the client-friendly sections themselves on their phone (their answers merge in; yours are never overwritten). Files still come to you via WhatsApp.
 
 **4. Trial live** — once intake sections 1–4 are in: *Build brief* tab → **Copy brief** → paste to Claude with "build the trial for [client]". Claude downloads the files from the brief's 7-day links and builds. Send the client their link: "It's live. Try booking yourself in."
 

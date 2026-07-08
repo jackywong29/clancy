@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { Wordmark } from '@/components/Wordmark'
 
-// TODO: replace with the business WhatsApp link (wa.me/60…) once decided
 const CONTACT_HREF =
-  'mailto:jackywong0004@gmail.com?subject=Clancy%20walkthrough'
+  'mailto:clancy.hq.ai@gmail.com?subject=Clancy%20walkthrough'
+const INSTAGRAM_HREF = 'https://www.instagram.com/clancy.hq'
 
 const FEATURES = [
   { title: 'Website', text: 'A clean, fast site that gets found on Google' },
@@ -112,7 +112,16 @@ export default function HomePage() {
       </main>
 
       <footer className="border-t border-ash/60 py-8 text-center text-xs text-ivory/40">
-        clancy · Kuala Lumpur · by appointment
+        <p>clancy · Kuala Lumpur · by appointment</p>
+        <p className="mt-2">
+          <a href={INSTAGRAM_HREF} className="hover:text-ivory">
+            Instagram @clancy.hq
+          </a>
+          <span className="mx-2">·</span>
+          <a href={CONTACT_HREF} className="hover:text-ivory">
+            clancy.hq.ai@gmail.com
+          </a>
+        </p>
       </footer>
     </div>
   )

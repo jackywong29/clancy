@@ -67,6 +67,7 @@ export interface Client {
   id: string
   organization_id: string
   stage_id: string | null
+  intake_token: string
   company_name: string
   contact_person: string | null
   phone: string | null

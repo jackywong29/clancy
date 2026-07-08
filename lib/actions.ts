@@ -276,6 +276,122 @@ export async function updateProfileAccess(formData: FormData) {
   redirect('/team?saved=1')
 }
 
+export async function submitClientIntake(formData: FormData) {
+  const { CLIENT_FACING_KEYS } = await import('@/lib/intake')
+  const supabase = await createClient()
+
+  const token = String(formData.get('token') ?? '')
+  const data: Record<string, string> = {}
+  for (const [key, value] of formData.entries()) {
+    if (CLIENT_FACING_KEYS.has(key) && typeof value === 'string') {
+      data[key] = value
+    }
+  }
+
+  const { error } = await supabase.rpc('save_intake_by_token', {
+    t: token,
+    new_data: data,
+  })
+
+  redirect(`/i/${token}?${error ? 'error=1' : 'saved=1'}`)
+}
+
+export async function switchWorkspace(formData: FormData) {
+  await requireAdmin()
+  const supabase = await createClient()
+
+  const orgId = String(formData.get('organization_id') ?? '')
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (orgId && user) {
+    await supabase
+      .from('profiles')
+      .update({ organization_id: orgId })
+      .eq('id', user.id)
+  }
+
+  revalidatePath('/', 'layout')
+  redirect('/pipeline')
+}
+
+export async function createSite(formData: FormData) {
+  await requireAdmin()
+  const supabase = await createClient()
+
+  const organizationId = String(formData.get('organization_id') ?? '')
+  const slug = String(formData.get('slug') ?? '')
+    .trim()
+    .toLowerCase()
+  const name = String(formData.get('name') ?? '').trim()
+
+  if (!/^[a-z0-9-]{2,40}$/.test(slug)) {
+    redirect('/sites?error=1&msg=Slug%20must%20be%202-40%20lowercase%20letters%2C%20numbers%2C%20or%20dashes')
+  }
+
+  const { error } = await supabase.from('sites').insert({
+    organization_id: organizationId,
+    slug,
+    published: false,
+    config: { name: name || slug },
+  })
+
+  if (error) {
+    redirect(`/sites?error=1&msg=${encodeURIComponent(error.message)}`)
+  }
+  revalidatePath('/sites')
+  redirect(`/sites/${slug}/edit`)
+}
+
+export async function updateSite(formData: FormData) {
+  await requireAdmin()
+  const supabase = await createClient()
+
+  const slug = String(formData.get('slug') ?? '')
+  const text = (name: string) => String(formData.get(name) ?? '').trim()
+
+  let services: unknown = []
+  let faq: unknown = []
+  try {
+    services = JSON.parse(text('services') || '[]')
+    faq = JSON.parse(text('faq') || '[]')
+  } catch {
+    // keep empty on parse failure
+  }
+
+  const config = {
+    name: text('name'),
+    tagline: text('tagline'),
+    description: text('description'),
+    phone: text('phone'),
+    whatsapp: text('whatsapp'),
+    address: text('address'),
+    hours: text('hours'),
+    accent: text('accent') || '#5646E5',
+    logo_url: text('logo_url') || null,
+    services,
+    faq,
+  }
+
+  const { error } = await supabase
+    .from('sites')
+    .update({
+      config,
+      published: formData.get('published') === 'on',
+      updated_at: new Date().toISOString(),
+    })
+    .eq('slug', slug)
+
+  revalidatePath(`/s/${slug}`)
+  revalidatePath('/sites')
+  redirect(
+    `/sites/${slug}/edit?${
+      error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'
+    }`
+  )
+}
+
 export async function moveClientStage(formData: FormData) {
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
