@@ -57,8 +57,10 @@ Layout note: posts are listed 1–9 = top-left to bottom-right of the grid. Post
 ---
 
 ## Pre-launch checklist
-- [ ] Domain + handles registered (clancy.my preferred — verify first)
-- [ ] All 9 assets produced (posts 1, 2, 6 need the demo/pilot build; post 9 needs MSA sign-off)
-- [ ] Bio set: "The AI agency for local businesses / Website, bookings, CRM — one quiet system / Built in days. Managed for you. / KL · by appointment"
-- [ ] "Book a walkthrough" link live (WhatsApp or booking form)
+- [x] Instagram secured: **@clancy.hq** (2026-07-07) · email: **clancy.hq.ai@gmail.com** · profile picture: `~/Desktop/Claude/clancy-logo.jpg`
+- [ ] Domain still open (clancy.my — register + custom-domain the Vercel app)
+- [x] Design tiles generated (2026-07-08): posts 4, 5, 7, 8 as 1080px JPEGs in `~/Desktop/Claude/clancy-launch-posts/`
+- [ ] Remaining assets: posts 1, 2, 6 need the first real build/demo footage; post 3 carousel slides on request; post 9 needs MSA sign-off + venue photo
+- [ ] Bio set: "The AI agency for local businesses / Website, bookings, CRM — one quiet system / Built in days. Managed for you. / KL · clancy.hq.ai@gmail.com"
+- [ ] "Book a walkthrough" link live (email for now; WhatsApp/booking later)
 - [ ] Post 9→1 in reverse order, then begin the 3-posts/week cadence
