@@ -87,19 +87,42 @@ function imagePalette(): Palette {
   }
 }
 
-function waLink(config: SiteConfig, text: string) {
-  const digits = (config.whatsapp ?? config.phone ?? '').replace(/\D/g, '')
-  if (!digits) return null
-  return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
-}
-
-// Fill {token} placeholders in an editable WhatsApp template.
+// Fill {token} placeholders in an editable contact template.
 function fillTemplate(tpl: string, vars: Record<string, string>) {
   return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '')
 }
 
 const DEFAULT_BOOK_MSG = "Hi {name}, I'd like to make a booking."
 const DEFAULT_SERVICE_MSG = "Hi {name}, I'd like to book: {service}"
+const DEFAULT_EMAIL_SUBJECT = 'Booking enquiry — {name}'
+const DEFAULT_EMAIL_MSG =
+  "Hi {name}, I'd like to make a booking. Please get back to me — thank you!"
+
+// A single contact link that follows the site's chosen method (WhatsApp or
+// email). `service` empty = the general booking button. Returns null when the
+// chosen channel isn't configured, so buttons hide gracefully.
+function contactHref(config: SiteConfig, name: string, service: string) {
+  const vars = { name, service }
+  if (config.contact_method === 'email') {
+    const email = config.contact_email?.trim()
+    if (!email) return null
+    const subject = fillTemplate(
+      config.email_subject?.trim() || DEFAULT_EMAIL_SUBJECT,
+      vars
+    )
+    const body = fillTemplate(
+      config.email_message?.trim() || DEFAULT_EMAIL_MSG,
+      vars
+    )
+    return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+  }
+  const digits = (config.whatsapp ?? config.phone ?? '').replace(/\D/g, '')
+  if (!digits) return null
+  const tpl = service
+    ? config.service_message?.trim() || DEFAULT_SERVICE_MSG
+    : config.book_message?.trim() || DEFAULT_BOOK_MSG
+  return `https://wa.me/${digits}?text=${encodeURIComponent(fillTemplate(tpl, vars))}`
+}
 
 async function getSite(slug: string): Promise<Site | null> {
   const supabase = await createClient()
@@ -141,11 +164,8 @@ export default async function ClientSitePage({
   const bookLabel = config.book_label?.trim() || 'Book now'
   const serviceBookLabel = config.service_book_label?.trim() || 'Book this'
   const logoCentered = config.logo_position === 'center'
-  const bookMsg = fillTemplate(config.book_message?.trim() || DEFAULT_BOOK_MSG, {
-    name,
-  })
-  const serviceMsg = config.service_message?.trim() || DEFAULT_SERVICE_MSG
-  const book = waLink(config, bookMsg)
+  const contactEmail = config.contact_email?.trim()
+  const book = contactHref(config, name, '')
 
   // Background + palette resolution: image > custom colour > theme.
   const bgImage = config.bg_image_url?.trim()
@@ -418,13 +438,7 @@ export default async function ClientSitePage({
                           )}
                           {service.bookable && book && (
                             <a
-                              href={waLink(
-                                config,
-                                fillTemplate(serviceMsg, {
-                                  name,
-                                  service: service.name,
-                                })
-                              )!}
+                              href={contactHref(config, name, service.name)!}
                               className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-xs font-medium"
                               style={{
                                 borderColor: accent,
@@ -517,6 +531,18 @@ export default async function ClientSitePage({
                             style={{ color: c.muted }}
                           >
                             {config.phone}
+                          </a>
+                        </div>
+                      )}
+                      {contactEmail && (
+                        <div>
+                          <p className="font-medium">Email</p>
+                          <a
+                            href={`mailto:${contactEmail}`}
+                            className="mt-1 block break-words underline"
+                            style={{ color: c.muted }}
+                          >
+                            {contactEmail}
                           </a>
                         </div>
                       )}

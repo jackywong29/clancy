@@ -425,10 +425,50 @@ export default async function SiteEditPage({
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label
+                htmlFor="contact_method"
+                className="mb-1 block text-sm font-medium"
+              >
+                Contact method
+              </label>
+              <select
+                id="contact_method"
+                name="contact_method"
+                defaultValue={config.contact_method ?? 'whatsapp'}
+                className={inputClass}
+              >
+                <option value="whatsapp">WhatsApp</option>
+                <option value="email">Email</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="contact_email"
+                className="mb-1 block text-sm font-medium"
+              >
+                Contact email (for Email method)
+              </label>
+              <input
+                id="contact_email"
+                name="contact_email"
+                type="email"
+                defaultValue={config.contact_email ?? ''}
+                placeholder="hello@yourbusiness.com"
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <p className="-mt-1 text-xs text-ivory/50">
+            Choose how the Book / service buttons reach you. Use{' '}
+            <code>{'{name}'}</code> and <code>{'{service}'}</code> in any message
+            below; leave blank for the defaults.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label
                 htmlFor="book_message"
                 className="mb-1 block text-sm font-medium"
               >
-                WhatsApp message — Book button
+                WhatsApp — Book button
               </label>
               <textarea
                 id="book_message"
@@ -444,7 +484,7 @@ export default async function SiteEditPage({
                 htmlFor="service_message"
                 className="mb-1 block text-sm font-medium"
               >
-                WhatsApp message — Service buttons
+                WhatsApp — Service buttons
               </label>
               <textarea
                 id="service_message"
@@ -455,12 +495,39 @@ export default async function SiteEditPage({
                 className={inputClass}
               />
             </div>
-            <p className="col-span-2 -mt-1 text-xs text-ivory/50">
-              These are the messages pre-filled when someone taps a WhatsApp
-              button. Use <code>{'{name}'}</code> for the business name and{' '}
-              <code>{'{service}'}</code> for the service. Leave blank for the
-              defaults shown.
-            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="email_subject"
+                className="mb-1 block text-sm font-medium"
+              >
+                Email — Subject
+              </label>
+              <input
+                id="email_subject"
+                name="email_subject"
+                defaultValue={config.email_subject ?? ''}
+                placeholder="Booking enquiry — {name}"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="email_message"
+                className="mb-1 block text-sm font-medium"
+              >
+                Email — Message
+              </label>
+              <textarea
+                id="email_message"
+                name="email_message"
+                rows={2}
+                defaultValue={config.email_message ?? ''}
+                placeholder="Hi {name}, I'd like to make a booking."
+                className={inputClass}
+              />
+            </div>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">

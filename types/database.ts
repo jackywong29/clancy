@@ -39,6 +39,7 @@ export type SiteTheme = 'light' | 'dark'
 export type LogoPosition = 'left' | 'center'
 export type ImageSide = 'left' | 'right'
 export type TextAlign = 'left' | 'center' | 'right'
+export type ContactMethod = 'whatsapp' | 'email'
 
 // Per-text-type styling (headings / body / buttons). font blank = inherit
 // the site font; otherwise a curated FONTS key.
@@ -73,6 +74,10 @@ export interface SiteConfig {
   service_book_label?: string
   book_message?: string // WhatsApp template, {name} token
   service_message?: string // WhatsApp template, {name} and {service} tokens
+  contact_method?: ContactMethod // which channel the contact buttons use
+  contact_email?: string
+  email_subject?: string // email template, {name}/{service} tokens
+  email_message?: string // email template, {name}/{service} tokens
   services_title?: string
   find_us_title?: string
   faq_title?: string
