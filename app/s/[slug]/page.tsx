@@ -86,6 +86,14 @@ function waLink(config: SiteConfig, text: string) {
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
 }
 
+// Fill {token} placeholders in an editable WhatsApp template.
+function fillTemplate(tpl: string, vars: Record<string, string>) {
+  return tpl.replace(/\{(\w+)\}/g, (_, k) => vars[k] ?? '')
+}
+
+const DEFAULT_BOOK_MSG = "Hi {name}, I'd like to make a booking."
+const DEFAULT_SERVICE_MSG = "Hi {name}, I'd like to book: {service}"
+
 async function getSite(slug: string): Promise<Site | null> {
   const supabase = await createClient()
   const { data } = await supabase
@@ -126,7 +134,11 @@ export default async function ClientSitePage({
   const bookLabel = config.book_label?.trim() || 'Book now'
   const serviceBookLabel = config.service_book_label?.trim() || 'Book this'
   const logoCentered = config.logo_position === 'center'
-  const book = waLink(config, `Hi ${name}, I'd like to make a booking.`)
+  const bookMsg = fillTemplate(config.book_message?.trim() || DEFAULT_BOOK_MSG, {
+    name,
+  })
+  const serviceMsg = config.service_message?.trim() || DEFAULT_SERVICE_MSG
+  const book = waLink(config, bookMsg)
 
   // Background + palette resolution: image > custom colour > theme.
   const bgImage = config.bg_image_url?.trim()
@@ -193,7 +205,7 @@ export default async function ClientSitePage({
 
       <div className="relative">
         <header
-          className={`mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-6 py-5 ${
+          className={`mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-6 py-6 sm:px-10 lg:px-14 ${
             logoCentered ? 'justify-center' : 'justify-between'
           }`}
         >
@@ -219,12 +231,12 @@ export default async function ClientSitePage({
           )}
         </header>
 
-        <main className="mx-auto max-w-3xl px-6">
+        <main className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14">
           <section
             className={
               heroImage
-                ? 'relative my-8 overflow-hidden rounded-2xl px-6 py-24 text-center sm:py-32'
-                : 'py-16 text-center sm:py-24'
+                ? 'relative my-8 overflow-hidden rounded-2xl px-6 py-24 text-center sm:py-32 lg:py-44'
+                : 'py-20 text-center sm:py-28 lg:py-36'
             }
           >
             {heroImage && (
@@ -249,12 +261,12 @@ export default async function ClientSitePage({
               className="relative"
               style={heroImage ? { color: '#FFFFFF' } : undefined}
             >
-              <h1 className="text-4xl font-medium leading-tight sm:text-5xl">
+              <h1 className="text-4xl font-medium leading-tight sm:text-5xl lg:text-6xl">
                 {config.tagline ?? name}
               </h1>
               {config.description && (
                 <p
-                  className="mx-auto mt-5 max-w-xl text-base leading-relaxed"
+                  className="mx-auto mt-5 max-w-2xl text-base leading-relaxed lg:text-lg"
                   style={{ color: heroImage ? 'rgba(255,255,255,0.85)' : c.muted }}
                 >
                   {config.description}
@@ -274,10 +286,10 @@ export default async function ClientSitePage({
 
           {hasAbout && (
             <section
-              className="py-12"
+              className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <div className="grid items-center gap-8 sm:grid-cols-2">
+              <div className="grid items-center gap-10 sm:grid-cols-2 lg:gap-14">
                 {aboutImage && (
                   <div className={aboutRight ? 'sm:order-2' : ''}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -290,7 +302,7 @@ export default async function ClientSitePage({
                 )}
                 <div className={aboutRight ? 'sm:order-1' : ''}>
                   {config.about_title?.trim() && (
-                    <h2 className="mb-3 text-2xl font-medium">
+                    <h2 className="mb-3 text-2xl font-medium lg:text-3xl">
                       {config.about_title}
                     </h2>
                   )}
@@ -309,13 +321,13 @@ export default async function ClientSitePage({
 
           {services.length > 0 && (
             <section
-              className="py-12"
+              className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <h2 className="mb-6 text-2xl font-medium">
+              <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
                 {config.services_title?.trim() || 'Services'}
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {services.map((service) => (
                   <div
                     key={service.name}
@@ -342,7 +354,10 @@ export default async function ClientSitePage({
                       <a
                         href={waLink(
                           config,
-                          `Hi ${name}, I'd like to book: ${service.name}`
+                          fillTemplate(serviceMsg, {
+                            name,
+                            service: service.name,
+                          })
                         )!}
                         className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-xs font-medium"
                         style={{ borderColor: accent, color: accent }}
@@ -358,13 +373,13 @@ export default async function ClientSitePage({
 
           {gallery.length > 0 && (
             <section
-              className="py-12"
+              className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <h2 className="mb-6 text-2xl font-medium">
+              <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
                 {config.gallery_title?.trim() || 'Gallery'}
               </h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
                 {gallery.map((src, i) => (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -379,10 +394,10 @@ export default async function ClientSitePage({
           )}
 
           <section
-            className="py-12"
+            className="py-14 lg:py-20"
             style={{ borderTop: `1px solid ${c.border}` }}
           >
-            <h2 className="mb-6 text-2xl font-medium">
+            <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
               {config.find_us_title?.trim() || 'Find us'}
             </h2>
             <div className="grid gap-4 text-sm sm:grid-cols-3">
@@ -429,13 +444,13 @@ export default async function ClientSitePage({
 
           {faq.length > 0 && (
             <section
-              className="py-12"
+              className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <h2 className="mb-6 text-2xl font-medium">
+              <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
                 {config.faq_title?.trim() || 'Frequently asked questions'}
               </h2>
-              <div className="space-y-4">
+              <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
                 {faq.map((item) => (
                   <div key={item.q}>
                     <p className="font-medium">{item.q}</p>

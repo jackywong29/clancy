@@ -58,6 +58,8 @@ export interface SiteConfig {
   hero_image_url?: string | null
   book_label?: string
   service_book_label?: string
+  book_message?: string // WhatsApp template, {name} token
+  service_message?: string // WhatsApp template, {name} and {service} tokens
   services_title?: string
   find_us_title?: string
   faq_title?: string

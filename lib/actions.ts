@@ -383,6 +383,8 @@ export async function updateSite(formData: FormData) {
     hero_image_url: text('hero_image_url') || null,
     book_label: text('book_label'),
     service_book_label: text('service_book_label'),
+    book_message: text('book_message'),
+    service_message: text('service_message'),
     services_title: text('services_title'),
     find_us_title: text('find_us_title'),
     faq_title: text('faq_title'),

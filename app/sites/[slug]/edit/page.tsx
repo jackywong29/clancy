@@ -338,6 +338,46 @@ export default async function SiteEditPage({
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="book_message"
+                className="mb-1 block text-sm font-medium"
+              >
+                WhatsApp message — Book button
+              </label>
+              <textarea
+                id="book_message"
+                name="book_message"
+                rows={2}
+                defaultValue={config.book_message ?? ''}
+                placeholder="Hi {name}, I'd like to make a booking."
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="service_message"
+                className="mb-1 block text-sm font-medium"
+              >
+                WhatsApp message — Service buttons
+              </label>
+              <textarea
+                id="service_message"
+                name="service_message"
+                rows={2}
+                defaultValue={config.service_message ?? ''}
+                placeholder="Hi {name}, I'd like to book: {service}"
+                className={inputClass}
+              />
+            </div>
+            <p className="col-span-2 -mt-1 text-xs text-ivory/50">
+              These are the messages pre-filled when someone taps a WhatsApp
+              button. Use <code>{'{name}'}</code> for the business name and{' '}
+              <code>{'{service}'}</code> for the service. Leave blank for the
+              defaults shown.
+            </p>
+          </div>
           <div>
             <label className="mb-1 block text-sm font-medium">
               Section headings
