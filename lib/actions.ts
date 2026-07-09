@@ -371,6 +371,7 @@ export async function updateSite(formData: FormData) {
     address: text('address'),
     hours: text('hours'),
     accent: text('accent') || '#5646E5',
+    theme: text('theme') === 'dark' ? 'dark' : 'light',
     logo_url: text('logo_url') || null,
     services,
     faq,

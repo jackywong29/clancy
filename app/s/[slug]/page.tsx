@@ -1,7 +1,29 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import type { Site, SiteConfig } from '@/types/database'
+import type { Site, SiteConfig, SiteTheme } from '@/types/database'
+
+// Colour tokens per theme. Layout stays in Tailwind; colours are inline so
+// they can switch at runtime from config.theme. Reusable across all tenants.
+function palette(theme: SiteTheme) {
+  return theme === 'dark'
+    ? {
+        bg: '#0C0C0F',
+        surface: '#18181C',
+        text: '#F5F1EA',
+        border: 'rgba(245,241,234,0.12)',
+        muted: 'rgba(245,241,234,0.60)',
+        faint: 'rgba(245,241,234,0.40)',
+      }
+    : {
+        bg: '#FAF8F3',
+        surface: '#FFFFFF',
+        text: '#221F1A',
+        border: 'rgba(34,31,26,0.10)',
+        muted: 'rgba(34,31,26,0.60)',
+        faint: 'rgba(34,31,26,0.40)',
+      }
+}
 
 function waLink(config: SiteConfig, text: string) {
   const digits = (config.whatsapp ?? config.phone ?? '').replace(/\D/g, '')
@@ -45,6 +67,7 @@ export default async function ClientSitePage({
 
   const config = site.config
   const accent = config.accent ?? '#5646E5'
+  const c = palette(config.theme ?? 'light')
   const name = config.name ?? site.slug
   const book = waLink(config, `Hi ${name}, I'd like to make a booking.`)
   const services = (config.services ?? []).filter((s) => s.name.trim() !== '')
@@ -55,7 +78,7 @@ export default async function ClientSitePage({
     : null
 
   return (
-    <div className="min-h-screen bg-[#FAF8F3] text-[#221F1A]">
+    <div className="min-h-screen" style={{ background: c.bg, color: c.text }}>
       <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
         <div className="flex items-center gap-3">
           {config.logo_url ? (
@@ -85,7 +108,10 @@ export default async function ClientSitePage({
             {config.tagline ?? name}
           </h1>
           {config.description && (
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-[#221F1A]/60">
+            <p
+              className="mx-auto mt-5 max-w-xl text-base leading-relaxed"
+              style={{ color: c.muted }}
+            >
               {config.description}
             </p>
           )}
@@ -101,13 +127,14 @@ export default async function ClientSitePage({
         </section>
 
         {services.length > 0 && (
-          <section className="border-t border-[#221F1A]/10 py-12">
+          <section className="py-12" style={{ borderTop: `1px solid ${c.border}` }}>
             <h2 className="mb-6 text-2xl font-medium">Services</h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {services.map((service) => (
                 <div
                   key={service.name}
-                  className="rounded-xl border border-[#221F1A]/10 bg-white p-5"
+                  className="rounded-xl p-5"
+                  style={{ background: c.surface, border: `1px solid ${c.border}` }}
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="font-medium">{service.name}</p>
@@ -116,7 +143,7 @@ export default async function ClientSitePage({
                     </p>
                   </div>
                   {service.duration && (
-                    <p className="mt-1 text-xs text-[#221F1A]/50">
+                    <p className="mt-1 text-xs" style={{ color: c.faint }}>
                       {service.duration}
                     </p>
                   )}
@@ -138,7 +165,7 @@ export default async function ClientSitePage({
           </section>
         )}
 
-        <section className="border-t border-[#221F1A]/10 py-12">
+        <section className="py-12" style={{ borderTop: `1px solid ${c.border}` }}>
           <h2 className="mb-6 text-2xl font-medium">Find us</h2>
           <div className="grid gap-4 text-sm sm:grid-cols-3">
             {config.address && (
@@ -147,19 +174,24 @@ export default async function ClientSitePage({
                 {mapsHref ? (
                   <a
                     href={mapsHref}
-                    className="mt-1 block text-[#221F1A]/60 underline"
+                    className="mt-1 block underline"
+                    style={{ color: c.muted }}
                   >
                     {config.address}
                   </a>
                 ) : (
-                  <p className="mt-1 text-[#221F1A]/60">{config.address}</p>
+                  <p className="mt-1" style={{ color: c.muted }}>
+                    {config.address}
+                  </p>
                 )}
               </div>
             )}
             {config.hours && (
               <div>
                 <p className="font-medium">Hours</p>
-                <p className="mt-1 text-[#221F1A]/60">{config.hours}</p>
+                <p className="mt-1" style={{ color: c.muted }}>
+                  {config.hours}
+                </p>
               </div>
             )}
             {config.phone && (
@@ -167,7 +199,8 @@ export default async function ClientSitePage({
                 <p className="font-medium">Phone</p>
                 <a
                   href={`tel:${config.phone.replace(/\D/g, '')}`}
-                  className="mt-1 block text-[#221F1A]/60 underline"
+                  className="mt-1 block underline"
+                  style={{ color: c.muted }}
                 >
                   {config.phone}
                 </a>
@@ -177,7 +210,7 @@ export default async function ClientSitePage({
         </section>
 
         {faq.length > 0 && (
-          <section className="border-t border-[#221F1A]/10 py-12">
+          <section className="py-12" style={{ borderTop: `1px solid ${c.border}` }}>
             <h2 className="mb-6 text-2xl font-medium">
               Frequently asked questions
             </h2>
@@ -185,7 +218,10 @@ export default async function ClientSitePage({
               {faq.map((item) => (
                 <div key={item.q}>
                   <p className="font-medium">{item.q}</p>
-                  <p className="mt-1 text-sm leading-relaxed text-[#221F1A]/60">
+                  <p
+                    className="mt-1 text-sm leading-relaxed"
+                    style={{ color: c.muted }}
+                  >
                     {item.a}
                   </p>
                 </div>
@@ -195,7 +231,10 @@ export default async function ClientSitePage({
         )}
       </main>
 
-      <footer className="border-t border-[#221F1A]/10 py-8 text-center">
+      <footer
+        className="py-8 text-center"
+        style={{ borderTop: `1px solid ${c.border}` }}
+      >
         {socials.length > 0 && (
           <div className="mb-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
             {socials.map((social) => (
@@ -204,7 +243,8 @@ export default async function ClientSitePage({
                 href={social.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[#221F1A]/60 hover:text-[#221F1A]"
+                className="hover:underline"
+                style={{ color: c.muted }}
               >
                 {social.platform}
               </a>
@@ -213,7 +253,8 @@ export default async function ClientSitePage({
         )}
         <a
           href="https://clancy-hq.vercel.app"
-          className="text-xs text-[#221F1A]/40 hover:underline"
+          className="text-xs hover:underline"
+          style={{ color: c.faint }}
         >
           Powered by clancy.
         </a>

@@ -178,6 +178,23 @@ export default async function SiteEditPage({
                 className="h-10 w-16 cursor-pointer rounded-lg border border-ash bg-graphite"
               />
             </div>
+            <div>
+              <label
+                htmlFor="theme"
+                className="mb-1 block text-sm font-medium"
+              >
+                Theme
+              </label>
+              <select
+                id="theme"
+                name="theme"
+                defaultValue={config.theme ?? 'light'}
+                className={inputClass}
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+              </select>
+            </div>
             <div className="flex-1">
               <label className="mb-1 block text-sm font-medium">Logo</label>
               <SiteLogoUpload

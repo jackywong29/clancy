@@ -35,6 +35,8 @@ export interface SiteSocial {
   url: string
 }
 
+export type SiteTheme = 'light' | 'dark'
+
 export interface SiteConfig {
   name?: string
   tagline?: string
@@ -44,6 +46,7 @@ export interface SiteConfig {
   address?: string
   hours?: string
   accent?: string
+  theme?: SiteTheme
   logo_url?: string | null
   services?: SiteService[]
   faq?: { q: string; a: string }[]
