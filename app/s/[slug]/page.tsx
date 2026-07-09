@@ -49,6 +49,7 @@ export default async function ClientSitePage({
   const book = waLink(config, `Hi ${name}, I'd like to make a booking.`)
   const services = (config.services ?? []).filter((s) => s.name.trim() !== '')
   const faq = (config.faq ?? []).filter((f) => f.q.trim() !== '')
+  const socials = (config.socials ?? []).filter((s) => s.url.trim() !== '')
   const mapsHref = config.address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address)}`
     : null
@@ -194,8 +195,26 @@ export default async function ClientSitePage({
         )}
       </main>
 
-      <footer className="border-t border-[#221F1A]/10 py-8 text-center text-xs text-[#221F1A]/40">
-        <a href="https://clancy-hq.vercel.app" className="hover:underline">
+      <footer className="border-t border-[#221F1A]/10 py-8 text-center">
+        {socials.length > 0 && (
+          <div className="mb-4 flex flex-wrap justify-center gap-x-5 gap-y-2 text-sm">
+            {socials.map((social) => (
+              <a
+                key={social.url}
+                href={social.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[#221F1A]/60 hover:text-[#221F1A]"
+              >
+                {social.platform}
+              </a>
+            ))}
+          </div>
+        )}
+        <a
+          href="https://clancy-hq.vercel.app"
+          className="text-xs text-[#221F1A]/40 hover:underline"
+        >
           Powered by clancy.
         </a>
       </footer>

@@ -5,6 +5,7 @@ import { updateSite, requireAdmin } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
 import { FaqListEditor } from '@/components/intake/FaqListEditor'
+import { SocialsListEditor } from '@/components/intake/SocialsListEditor'
 import { SiteLogoUpload } from '@/components/SiteLogoUpload'
 import type { Site } from '@/types/database'
 
@@ -199,6 +200,15 @@ export default async function SiteEditPage({
             <FaqListEditor
               name="faq"
               initial={JSON.stringify(config.faq ?? [])}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Social links
+            </label>
+            <SocialsListEditor
+              name="socials"
+              initial={JSON.stringify(config.socials ?? [])}
             />
           </div>
           <label className="flex items-center gap-2 rounded-xl border border-ash/60 bg-carbon p-4 text-sm">

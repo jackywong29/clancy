@@ -353,9 +353,11 @@ export async function updateSite(formData: FormData) {
 
   let services: unknown = []
   let faq: unknown = []
+  let socials: unknown = []
   try {
     services = JSON.parse(text('services') || '[]')
     faq = JSON.parse(text('faq') || '[]')
+    socials = JSON.parse(text('socials') || '[]')
   } catch {
     // keep empty on parse failure
   }
@@ -372,6 +374,7 @@ export async function updateSite(formData: FormData) {
     logo_url: text('logo_url') || null,
     services,
     faq,
+    socials,
   }
 
   const { error } = await supabase

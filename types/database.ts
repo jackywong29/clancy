@@ -30,6 +30,11 @@ export interface SiteService {
   bookable: boolean
 }
 
+export interface SiteSocial {
+  platform: string
+  url: string
+}
+
 export interface SiteConfig {
   name?: string
   tagline?: string
@@ -42,6 +47,7 @@ export interface SiteConfig {
   logo_url?: string | null
   services?: SiteService[]
   faq?: { q: string; a: string }[]
+  socials?: SiteSocial[]
 }
 
 export interface Site {
