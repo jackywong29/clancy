@@ -38,6 +38,16 @@ export interface SiteSocial {
 export type SiteTheme = 'light' | 'dark'
 export type LogoPosition = 'left' | 'center'
 export type ImageSide = 'left' | 'right'
+export type TextAlign = 'left' | 'center' | 'right'
+
+// Per-text-type styling (headings / body / buttons). font blank = inherit
+// the site font; otherwise a curated FONTS key.
+export interface TypographyStyle {
+  font?: string
+  bold?: boolean
+  italic?: boolean
+  align?: TextAlign
+}
 
 export interface SiteConfig {
   name?: string
@@ -53,6 +63,9 @@ export interface SiteConfig {
   bg_image_url?: string | null
   font?: string // curated key (see FONTS) or 'custom'
   font_custom?: string // typed Google Font family when font === 'custom'
+  type_headings?: TypographyStyle
+  type_body?: TypographyStyle
+  type_buttons?: TypographyStyle
   logo_url?: string | null
   logo_position?: LogoPosition
   hero_image_url?: string | null

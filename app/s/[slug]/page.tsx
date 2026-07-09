@@ -1,8 +1,14 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { resolveFont, googleFontHref } from '@/lib/fonts'
-import type { Site, SiteConfig, SiteTheme } from '@/types/database'
+import type { CSSProperties } from 'react'
+import { resolveFont, googleFontsHref, typeFont } from '@/lib/fonts'
+import type {
+  Site,
+  SiteConfig,
+  SiteTheme,
+  TypographyStyle,
+} from '@/types/database'
 
 interface Palette {
   bg: string
@@ -155,6 +161,41 @@ export default async function ClientSitePage({
 
   const { google, stack } = resolveFont(config.font, config.font_custom)
 
+  // Per-text-type typography (headings / body / buttons). Each may override
+  // the font (curated key) and set bold / italic / alignment.
+  const headings = typeFont(config.type_headings?.font, stack)
+  const body = typeFont(config.type_body?.font, stack)
+  const buttons = typeFont(config.type_buttons?.font, stack)
+  const fontHref = googleFontsHref([
+    google,
+    headings.google ?? '',
+    body.google ?? '',
+    buttons.google ?? '',
+  ])
+
+  const typo = (
+    t: TypographyStyle | undefined,
+    resolvedStack: string,
+    defaultAlign?: 'center'
+  ): CSSProperties => {
+    const s: CSSProperties = { fontFamily: resolvedStack }
+    if (t?.bold) s.fontWeight = 700
+    if (t?.italic) s.fontStyle = 'italic'
+    const align = t?.align ?? defaultAlign
+    if (align) s.textAlign = align
+    return s
+  }
+  const headingStyle = (defaultAlign?: 'center') =>
+    typo(config.type_headings, headings.stack, defaultAlign)
+  const bodyStyle = (defaultAlign?: 'center') =>
+    typo(config.type_body, body.stack, defaultAlign)
+  const buttonFont: CSSProperties = {
+    fontFamily: buttons.stack,
+    fontWeight: config.type_buttons?.bold ? 700 : undefined,
+    fontStyle: config.type_buttons?.italic ? 'italic' : undefined,
+  }
+  const heroCtaAlign = config.type_buttons?.align ?? 'center'
+
   const services = (config.services ?? []).filter((s) => s.name.trim() !== '')
   const faq = (config.faq ?? []).filter((f) => f.q.trim() !== '')
   const socials = (config.socials ?? []).filter((s) => s.url.trim() !== '')
@@ -181,7 +222,7 @@ export default async function ClientSitePage({
       }}
     >
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
-      <link rel="stylesheet" href={googleFontHref(google)} />
+      <link rel="stylesheet" href={fontHref} />
 
       {bgImage && (
         <>
@@ -224,7 +265,7 @@ export default async function ClientSitePage({
             <a
               href={book}
               className="rounded-lg px-4 py-2 text-sm font-medium text-white"
-              style={{ background: accent }}
+              style={{ background: accent, ...buttonFont }}
             >
               {bookLabel}
             </a>
@@ -261,25 +302,33 @@ export default async function ClientSitePage({
               className="relative"
               style={heroImage ? { color: '#FFFFFF' } : undefined}
             >
-              <h1 className="text-4xl font-medium leading-tight sm:text-5xl lg:text-6xl">
+              <h1
+                className="text-4xl font-medium leading-tight sm:text-5xl lg:text-6xl"
+                style={headingStyle('center')}
+              >
                 {config.tagline ?? name}
               </h1>
               {config.description && (
                 <p
                   className="mx-auto mt-5 max-w-2xl text-base leading-relaxed lg:text-lg"
-                  style={{ color: heroImage ? 'rgba(255,255,255,0.85)' : c.muted }}
+                  style={{
+                    color: heroImage ? 'rgba(255,255,255,0.85)' : c.muted,
+                    ...bodyStyle('center'),
+                  }}
                 >
                   {config.description}
                 </p>
               )}
               {book && (
-                <a
-                  href={book}
-                  className="mt-8 inline-block rounded-lg px-6 py-3 text-sm font-medium text-white"
-                  style={{ background: accent }}
-                >
-                  {bookLabel}
-                </a>
+                <div className="mt-8" style={{ textAlign: heroCtaAlign }}>
+                  <a
+                    href={book}
+                    className="inline-block rounded-lg px-6 py-3 text-sm font-medium text-white"
+                    style={{ background: accent, ...buttonFont }}
+                  >
+                    {bookLabel}
+                  </a>
+                </div>
               )}
             </div>
           </section>
@@ -302,14 +351,17 @@ export default async function ClientSitePage({
                 )}
                 <div className={aboutRight ? 'sm:order-1' : ''}>
                   {config.about_title?.trim() && (
-                    <h2 className="mb-3 text-2xl font-medium lg:text-3xl">
+                    <h2
+                      className="mb-3 text-2xl font-medium lg:text-3xl"
+                      style={headingStyle()}
+                    >
                       {config.about_title}
                     </h2>
                   )}
                   {config.about_body?.trim() && (
                     <p
                       className="whitespace-pre-line text-base leading-relaxed"
-                      style={{ color: c.muted }}
+                      style={{ color: c.muted, ...bodyStyle() }}
                     >
                       {config.about_body}
                     </p>
@@ -324,7 +376,7 @@ export default async function ClientSitePage({
               className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
+              <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
                 {config.services_title?.trim() || 'Services'}
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -360,7 +412,7 @@ export default async function ClientSitePage({
                           })
                         )!}
                         className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-xs font-medium"
-                        style={{ borderColor: accent, color: accent }}
+                        style={{ borderColor: accent, color: accent, ...buttonFont }}
                       >
                         {serviceBookLabel}
                       </a>
@@ -376,7 +428,7 @@ export default async function ClientSitePage({
               className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
+              <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
                 {config.gallery_title?.trim() || 'Gallery'}
               </h2>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -397,7 +449,7 @@ export default async function ClientSitePage({
             className="py-14 lg:py-20"
             style={{ borderTop: `1px solid ${c.border}` }}
           >
-            <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
+            <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
               {config.find_us_title?.trim() || 'Find us'}
             </h2>
             <div className="grid gap-4 text-sm sm:grid-cols-3">
@@ -447,16 +499,18 @@ export default async function ClientSitePage({
               className="py-14 lg:py-20"
               style={{ borderTop: `1px solid ${c.border}` }}
             >
-              <h2 className="mb-6 text-2xl font-medium lg:text-3xl">
+              <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
                 {config.faq_title?.trim() || 'Frequently asked questions'}
               </h2>
               <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
                 {faq.map((item) => (
                   <div key={item.q}>
-                    <p className="font-medium">{item.q}</p>
+                    <p className="font-medium" style={headingStyle()}>
+                      {item.q}
+                    </p>
                     <p
                       className="mt-1 text-sm leading-relaxed"
-                      style={{ color: c.muted }}
+                      style={{ color: c.muted, ...bodyStyle() }}
                     >
                       {item.a}
                     </p>

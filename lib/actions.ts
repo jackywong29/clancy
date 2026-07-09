@@ -350,6 +350,16 @@ export async function updateSite(formData: FormData) {
 
   const slug = String(formData.get('slug') ?? '')
   const text = (name: string) => String(formData.get(name) ?? '').trim()
+  const align = (name: string) => {
+    const v = text(name)
+    return v === 'left' || v === 'center' || v === 'right' ? v : undefined
+  }
+  const typography = (prefix: string) => ({
+    font: text(`${prefix}_font`) || undefined,
+    bold: formData.get(`${prefix}_bold`) === 'on',
+    italic: formData.get(`${prefix}_italic`) === 'on',
+    align: align(`${prefix}_align`),
+  })
 
   let services: unknown = []
   let faq: unknown = []
@@ -378,6 +388,9 @@ export async function updateSite(formData: FormData) {
     bg_image_url: text('bg_image_url') || null,
     font: text('font') || 'sans',
     font_custom: text('font_custom'),
+    type_headings: typography('headings'),
+    type_body: typography('body'),
+    type_buttons: typography('buttons'),
     logo_position: text('logo_position') === 'center' ? 'center' : 'left',
     logo_url: text('logo_url') || null,
     hero_image_url: text('hero_image_url') || null,

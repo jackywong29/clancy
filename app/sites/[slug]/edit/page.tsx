@@ -290,6 +290,78 @@ export default async function SiteEditPage({
             </div>
           </div>
 
+          {/* ---------- Typography ---------- */}
+          <h2 className={groupClass}>Typography</h2>
+          <p className="-mt-1 text-xs text-ivory/50">
+            Each text type can keep the site font above or override it, and be
+            bold / italic / aligned independently.
+          </p>
+          {(
+            [
+              { key: 'headings', label: 'Headings', style: config.type_headings },
+              { key: 'body', label: 'Body text', style: config.type_body },
+              { key: 'buttons', label: 'Buttons', style: config.type_buttons },
+            ] as const
+          ).map((row) => (
+            <div
+              key={row.key}
+              className="grid grid-cols-2 items-end gap-3 sm:grid-cols-4"
+            >
+              <div>
+                <label className="mb-1 block text-sm font-medium">
+                  {row.label}
+                </label>
+                <select
+                  name={`${row.key}_font`}
+                  defaultValue={row.style?.font ?? ''}
+                  aria-label={`${row.label} font`}
+                  className={inputClass}
+                >
+                  <option value="">Inherit site font</option>
+                  {FONTS.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs text-ivory/60">
+                  Alignment
+                </label>
+                <select
+                  name={`${row.key}_align`}
+                  defaultValue={row.style?.align ?? ''}
+                  aria-label={`${row.label} alignment`}
+                  className={inputClass}
+                >
+                  <option value="">Default</option>
+                  <option value="left">Left</option>
+                  <option value="center">Centre</option>
+                  <option value="right">Right</option>
+                </select>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name={`${row.key}_bold`}
+                  defaultChecked={row.style?.bold ?? false}
+                  className="h-4 w-4 accent-violet"
+                />
+                Bold
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name={`${row.key}_italic`}
+                  defaultChecked={row.style?.italic ?? false}
+                  className="h-4 w-4 accent-violet"
+                />
+                Italic
+              </label>
+            </div>
+          ))}
+
           {/* ---------- Hero ---------- */}
           <h2 className={groupClass}>Hero</h2>
           <div>

@@ -67,6 +67,26 @@ export function resolveFont(font?: string, custom?: string): {
 
 // Build the Google Fonts stylesheet URL for a family (a few common weights).
 export function googleFontHref(family: string): string {
-  const spec = `${family.replace(/ /g, '+')}:wght@400;500;600;700`
-  return `https://fonts.googleapis.com/css2?family=${spec}&display=swap`
+  return googleFontsHref([family])
+}
+
+// Combined stylesheet URL for several families in one request (deduped).
+export function googleFontsHref(families: string[]): string {
+  const uniq = Array.from(new Set(families.filter(Boolean)))
+  const spec = uniq
+    .map((f) => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`)
+    .join('&')
+  return `https://fonts.googleapis.com/css2?${spec}&display=swap`
+}
+
+// Resolve a per-type font: a curated FONTS key, or inherit the global stack.
+export function typeFont(
+  key: string | undefined,
+  globalStack: string
+): { stack: string; google: string | null } {
+  if (key) {
+    const def = FONTS.find((f) => f.key === key)
+    if (def) return { stack: def.stack, google: def.google }
+  }
+  return { stack: globalStack, google: null }
 }
