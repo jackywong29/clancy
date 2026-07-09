@@ -59,6 +59,14 @@ Professional website with live reviews · review automation · online booking ·
 - Contracts need the 1-year lock-in and Managed→Standard downgrade spelled out explicitly (what happens on early cancellation, what "self-serve" means for support/updates going forward). *(The AI-liability clause flagged 2026-07-04 is no longer needed — in-product AI removed 2026-07-07; standard SaaS terms suffice.)*
 - Malaysia **PDPA** applies once storing clients' customers' contact data
 
+## Client CRM (Batch 5, 2026-07-10) — the client's OWN internal management system
+Each client business needs TWO things from Clancy: (1) their **website** (`sites` config, `/s/<slug>`) and (2) their **CRM** — a configurable internal tracker, the back-end analogue of the website. Both customized the same way (config-driven editors).
+- **Model:** `organizations.crm_config` JSONB (record label singular/plural, custom `fields`, `card_fields`, `modules`) drives what a workspace tracks. Record values live in `clients.custom` JSONB — adding a field never needs a migration. Migration `011_client_crm.sql`.
+- **Routing branches by workspace:** Clancy's own workspace keeps its **dedicated sales board** (`/pipeline` + `/clients/*`, untouched — "perfect for Jacky's end"). **Client** workspaces (slug ≠ clancy) get the configurable **records CRM**: `/pipeline` renders `RecordsBoard`, records at `/records/new` + `/records/[id]`, config editor at `/crm`. Header nav swaps accordingly.
+- **Who edits:** workspace members (clients) can self-edit their own CRM config (RLS `org members update org`); Jacky as platform admin edits any client's CRM/site by switching workspace (header switcher). Confirmed direction 2026-07-10: clients self-edit allowed + admin full access.
+- **First seed:** SGCKL = a "Visitors" retention CRM (fields: first_visit, how_heard, cell_group, invited_by).
+- **Roadmap (confirmed 2026-07-10):** Batch 6 = tasks + calendar modules per workspace · Batch 7 = access-control tab (add/remove/activate users, like MSA `allowed_emails`) · Batch 8 = editable Clancy landing page pinned atop Sites. A **second build brief (CRM brief)** — analogue of the website brief — is planned to configure a new client's crm_config + stages from intake.
+
 ## Dev workflow (repo rules — mirrors megastar-crm)
 - **`OPERATIONS.md` is the runbook** — how the whole business runs stage-by-stage (lifecycle, Claude handoff, admin how-tos, infra map, hard lessons). Read it when recalling how Clancy operates; update it when the operating flow changes.
 - **Status 2026-07-07: fully operational end-to-end** — first complete loop verified live (client → intake with file upload → build brief → Claude downloaded the files from the brief's signed links).

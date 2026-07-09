@@ -449,6 +449,123 @@ export async function updateSite(formData: FormData) {
   )
 }
 
+function collectCustom(formData: FormData): Record<string, string> {
+  const custom: Record<string, string> = {}
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith('custom.') && typeof value === 'string') {
+      const fieldKey = key.slice('custom.'.length)
+      if (value.trim() !== '') custom[fieldKey] = value
+    }
+  }
+  return custom
+}
+
+export async function addRecord(formData: FormData) {
+  const supabase = await createClient()
+  const organizationId = await requireOrg()
+
+  const name = String(formData.get('name') ?? '').trim()
+  const optional = (n: string) => {
+    const v = String(formData.get(n) ?? '').trim()
+    return v === '' ? null : v
+  }
+
+  const { error } = await supabase.from('clients').insert({
+    organization_id: organizationId,
+    company_name: name,
+    stage_id: optional('stage_id'),
+    phone: optional('phone'),
+    email: optional('email'),
+    notes: optional('notes'),
+    custom: collectCustom(formData),
+  })
+
+  if (error) {
+    redirect(`/records/new?error=1&msg=${encodeURIComponent(error.message)}`)
+  }
+  revalidatePath('/pipeline')
+  redirect('/pipeline')
+}
+
+export async function updateRecord(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const recordId = String(formData.get('record_id') ?? '')
+  const optional = (n: string) => {
+    const v = String(formData.get(n) ?? '').trim()
+    return v === '' ? null : v
+  }
+
+  const { error } = await supabase
+    .from('clients')
+    .update({
+      company_name: String(formData.get('name') ?? '').trim(),
+      stage_id: optional('stage_id'),
+      phone: optional('phone'),
+      email: optional('email'),
+      notes: optional('notes'),
+      custom: collectCustom(formData),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', recordId)
+
+  revalidatePath('/pipeline')
+  revalidatePath(`/records/${recordId}`)
+  redirect(
+    `/records/${recordId}?${
+      error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'
+    }`
+  )
+}
+
+export async function deleteRecord(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const recordId = String(formData.get('record_id') ?? '')
+  if (recordId) {
+    await supabase.from('clients').delete().eq('id', recordId)
+  }
+  revalidatePath('/pipeline')
+  redirect('/pipeline')
+}
+
+export async function updateCrmConfig(formData: FormData) {
+  const supabase = await createClient()
+  const organizationId = await requireOrg()
+
+  let fields: unknown = []
+  try {
+    fields = JSON.parse(String(formData.get('fields') ?? '[]'))
+  } catch {
+    fields = []
+  }
+  const cardFields = String(formData.get('card_fields') ?? '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  const crm_config = {
+    record_singular: String(formData.get('record_singular') ?? '').trim() || 'Record',
+    record_plural: String(formData.get('record_plural') ?? '').trim() || 'Records',
+    fields,
+    card_fields: cardFields,
+    modules: { tasks: false, calendar: false },
+  }
+
+  const { error } = await supabase
+    .from('organizations')
+    .update({ crm_config })
+    .eq('id', organizationId)
+
+  revalidatePath('/crm')
+  revalidatePath('/pipeline')
+  redirect(
+    `/crm?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
+  )
+}
+
 export async function moveClientStage(formData: FormData) {
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')

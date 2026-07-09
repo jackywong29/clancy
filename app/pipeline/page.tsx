@@ -2,16 +2,55 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { moveClientStage, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
+import { RecordsBoard } from '@/components/RecordsBoard'
 import { intakeProgress } from '@/lib/intake'
-import type { Client, Intake, PipelineStage } from '@/types/database'
+import type {
+  Client,
+  CrmConfig,
+  Intake,
+  Organization,
+  PipelineStage,
+} from '@/types/database'
 
 function formatRM(value: number) {
   return `RM ${value.toLocaleString('en-MY', { maximumFractionDigits: 0 })}`
 }
 
 export default async function PipelinePage() {
-  await requireOrg()
+  const orgId = await requireOrg()
   const supabase = await createClient()
+
+  const { data: orgRow } = await supabase
+    .from('organizations')
+    .select('slug, crm_config')
+    .eq('id', orgId)
+    .maybeSingle()
+  const org = orgRow as Pick<Organization, 'slug' | 'crm_config'> | null
+
+  // Client workspaces get the configurable records CRM. Clancy's own
+  // workspace keeps its dedicated sales board (the code below).
+  if (org && org.slug !== 'clancy') {
+    const [{ data: stages }, { data: records }] = await Promise.all([
+      supabase
+        .from('pipeline_stages')
+        .select('*')
+        .order('position', { ascending: true }),
+      supabase
+        .from('clients')
+        .select('*')
+        .order('created_at', { ascending: false }),
+    ])
+    return (
+      <div className="min-h-screen">
+        <Header />
+        <RecordsBoard
+          stages={(stages ?? []) as PipelineStage[]}
+          records={(records ?? []) as Client[]}
+          config={(org.crm_config ?? {}) as CrmConfig}
+        />
+      </div>
+    )
+  }
 
   const [{ data: stages }, { data: clients }, { data: intakes }] =
     await Promise.all([

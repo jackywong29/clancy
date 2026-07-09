@@ -1,7 +1,32 @@
+export type CrmFieldType =
+  | 'text'
+  | 'long'
+  | 'number'
+  | 'date'
+  | 'phone'
+  | 'email'
+  | 'select'
+
+export interface CrmField {
+  key: string
+  label: string
+  type: CrmFieldType
+  options?: string[]
+}
+
+export interface CrmConfig {
+  record_singular?: string
+  record_plural?: string
+  fields?: CrmField[]
+  card_fields?: string[]
+  modules?: { tasks?: boolean; calendar?: boolean }
+}
+
 export interface Organization {
   id: string
   name: string
   slug: string
+  crm_config: CrmConfig
   created_at: string
 }
 
@@ -128,6 +153,7 @@ export interface Client {
   lock_in_start: string | null
   renewal_date: string | null
   notes: string | null
+  custom: Record<string, string>
   created_at: string
   updated_at: string
 }

@@ -27,6 +27,15 @@ export async function Header() {
     orgs = (data ?? []) as Organization[]
   }
 
+  const { data: currentOrg } = profile?.organization_id
+    ? await supabase
+        .from('organizations')
+        .select('slug')
+        .eq('id', profile.organization_id)
+        .maybeSingle()
+    : { data: null }
+  const isClancy = (currentOrg as { slug?: string } | null)?.slug === 'clancy'
+
   return (
     <header className="flex items-center justify-between border-b border-ash/60 bg-graphite px-6 py-3">
       <div className="flex items-center gap-8">
@@ -35,14 +44,22 @@ export async function Header() {
         </Link>
         <nav className="flex items-center gap-5 text-sm">
           <Link href="/pipeline" className="font-medium">
-            Pipeline
+            {isClancy ? 'Pipeline' : 'Board'}
           </Link>
-          <Link
-            href="/clients/new"
-            className="text-ivory/60 hover:text-ivory"
-          >
-            Add client
-          </Link>
+          {isClancy ? (
+            <Link href="/clients/new" className="text-ivory/60 hover:text-ivory">
+              Add client
+            </Link>
+          ) : (
+            <>
+              <Link href="/records/new" className="text-ivory/60 hover:text-ivory">
+                Add record
+              </Link>
+              <Link href="/crm" className="text-ivory/60 hover:text-ivory">
+                Customize
+              </Link>
+            </>
+          )}
           <Link href="/stages" className="text-ivory/60 hover:text-ivory">
             Stages
           </Link>

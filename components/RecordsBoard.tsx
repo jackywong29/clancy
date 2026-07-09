@@ -1,0 +1,148 @@
+import Link from 'next/link'
+import { moveClientStage } from '@/lib/actions'
+import { recordLabel, crmFields, cardFieldKeys, customValue } from '@/lib/crm'
+import { BUILTIN_FIELDS } from '@/lib/crm'
+import type { Client, CrmConfig, PipelineStage } from '@/types/database'
+
+function displayValue(record: Client, key: string, config: CrmConfig): string {
+  if (key === 'name') return record.company_name
+  if (key === BUILTIN_FIELDS.phone || key === 'phone') return record.phone ?? ''
+  if (key === BUILTIN_FIELDS.email || key === 'email') return record.email ?? ''
+  const field = crmFields(config).find((f) => f.key === key)
+  const raw = customValue(record.custom, key)
+  if (field?.type === 'date' && raw) return raw
+  return raw
+}
+
+export function RecordsBoard({
+  stages,
+  records,
+  config,
+}: {
+  stages: PipelineStage[]
+  records: Client[]
+  config: CrmConfig
+}) {
+  const singular = recordLabel(config)
+  const plural = recordLabel(config, true)
+  const cardKeys = cardFieldKeys(config)
+  const fieldLabel = (key: string) =>
+    crmFields(config).find((f) => f.key === key)?.label ?? key
+
+  return (
+    <div className="min-h-screen">
+      <main className="px-6 py-5">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-medium">{plural}</h1>
+            <p className="text-sm text-ivory/60">
+              {records.length} {records.length === 1 ? singular.toLowerCase() : plural.toLowerCase()} across {stages.length} stages
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Link
+              href="/crm"
+              className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet"
+            >
+              Customize
+            </Link>
+            <Link
+              href="/records/new"
+              className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
+            >
+              Add {singular.toLowerCase()}
+            </Link>
+          </div>
+        </div>
+
+        {stages.length === 0 ? (
+          <p className="text-sm text-ivory/60">
+            No stages yet — add some on the Stages page.
+          </p>
+        ) : records.length === 0 ? (
+          <div className="rounded-xl border border-dashed border-ash bg-carbon/50 p-10 text-center">
+            <p className="text-lg font-medium">No {plural.toLowerCase()} yet.</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-ivory/60">
+              Add your first {singular.toLowerCase()} to start tracking.
+            </p>
+            <Link
+              href="/records/new"
+              className="mt-5 inline-block rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
+            >
+              Add {singular.toLowerCase()}
+            </Link>
+          </div>
+        ) : (
+          <div className="flex gap-3 overflow-x-auto pb-4">
+            {stages.map((stage) => {
+              const stageRecords = records.filter((r) => r.stage_id === stage.id)
+              return (
+                <section
+                  key={stage.id}
+                  className="w-64 shrink-0 rounded-xl bg-carbon/50 p-3"
+                >
+                  <h2 className="mb-3 flex items-baseline justify-between px-1 text-sm font-medium">
+                    {stage.name}
+                    <span className="text-xs font-normal text-ivory/50">
+                      {stageRecords.length}
+                    </span>
+                  </h2>
+                  <div className="space-y-2">
+                    {stageRecords.map((record) => (
+                      <article
+                        key={record.id}
+                        className="rounded-lg border border-ash/60 bg-carbon p-3"
+                      >
+                        <Link
+                          href={`/records/${record.id}`}
+                          className="text-sm font-medium hover:text-violet"
+                        >
+                          {record.company_name}
+                        </Link>
+                        {cardKeys.map((key) => {
+                          const val = displayValue(record, key, config)
+                          if (!val) return null
+                          return (
+                            <p key={key} className="mt-0.5 text-xs text-ivory/60">
+                              {fieldLabel(key)}: {val}
+                            </p>
+                          )
+                        })}
+                        <form
+                          action={moveClientStage}
+                          className="mt-2 flex gap-1"
+                        >
+                          <input type="hidden" name="client_id" value={record.id} />
+                          <select
+                            name="stage_id"
+                            defaultValue={stage.id}
+                            className="w-full rounded border border-ash bg-graphite px-1 py-1 text-xs"
+                          >
+                            {stages.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                          <button
+                            type="submit"
+                            className="rounded border border-ash px-2 py-1 text-xs hover:border-violet hover:text-violet"
+                          >
+                            Move
+                          </button>
+                        </form>
+                      </article>
+                    ))}
+                    {stageRecords.length === 0 && (
+                      <p className="px-1 py-2 text-xs text-ivory/40">Empty</p>
+                    )}
+                  </div>
+                </section>
+              )
+            })}
+          </div>
+        )}
+      </main>
+    </div>
+  )
+}
