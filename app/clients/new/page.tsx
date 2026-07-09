@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { addClient, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
+import { SubmitButton } from '@/components/SubmitButton'
 import type { PipelineStage } from '@/types/database'
 
 const inputClass =
@@ -190,12 +191,9 @@ export default async function NewClientPage({
               {params.msg ? `: ${params.msg}` : '. Check the fields and try again.'}
             </p>
           )}
-          <button
-            type="submit"
-            className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
-          >
+          <SubmitButton className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet">
             Save client
-          </button>
+          </SubmitButton>
         </form>
       </main>
     </div>

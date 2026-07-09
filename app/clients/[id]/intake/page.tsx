@@ -4,6 +4,7 @@ import { saveIntake, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
 import { CopyButton } from '@/components/CopyButton'
+import { SubmitButton } from '@/components/SubmitButton'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
 import { StepListEditor } from '@/components/intake/StepListEditor'
 import { FileUploadField } from '@/components/intake/FileUploadField'
@@ -228,12 +229,9 @@ export default async function IntakePage({
             </section>
           ))}
           <div className="sticky bottom-4">
-            <button
-              type="submit"
-              className="w-full rounded-lg bg-violet-deep px-5 py-3 text-sm font-medium text-white hover:bg-violet"
-            >
+            <SubmitButton className="w-full rounded-lg bg-violet-deep px-5 py-3 text-sm font-medium text-white hover:bg-violet">
               Save intake
-            </button>
+            </SubmitButton>
           </div>
         </form>
       </main>

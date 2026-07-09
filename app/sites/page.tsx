@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createSite, requireAdmin } from '@/lib/actions'
 import { Header } from '@/components/Header'
+import { SubmitButton } from '@/components/SubmitButton'
 import type { Organization, Site } from '@/types/database'
 
 const inputClass =
@@ -112,12 +113,12 @@ export default async function SitesPage({
             placeholder="Business name"
             className={`${inputClass} flex-1`}
           />
-          <button
-            type="submit"
+          <SubmitButton
+            pendingText="Creating…"
             className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
           >
             Create site
-          </button>
+          </SubmitButton>
         </form>
       </main>
     </div>

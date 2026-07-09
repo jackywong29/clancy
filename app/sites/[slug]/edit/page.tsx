@@ -10,6 +10,7 @@ import { SiteLogoUpload } from '@/components/SiteLogoUpload'
 import { ImageUpload } from '@/components/ImageUpload'
 import { GalleryUpload } from '@/components/GalleryUpload'
 import { ColorField } from '@/components/ColorField'
+import { SubmitButton } from '@/components/SubmitButton'
 import { FONTS } from '@/lib/fonts'
 import type { Site } from '@/types/database'
 
@@ -586,12 +587,9 @@ export default async function SiteEditPage({
             />
             Published — site is publicly visible at /s/{site.slug}
           </label>
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-violet-deep px-5 py-3 text-sm font-medium text-white hover:bg-violet"
-          >
+          <SubmitButton className="w-full rounded-lg bg-violet-deep px-5 py-3 text-sm font-medium text-white hover:bg-violet">
             Save site
-          </button>
+          </SubmitButton>
         </form>
       </main>
     </div>

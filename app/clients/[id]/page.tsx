@@ -4,6 +4,7 @@ import { updateClient, deleteClient, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
 import { ConfirmForm } from '@/components/ConfirmForm'
+import { SubmitButton } from '@/components/SubmitButton'
 import type { Client, PipelineStage } from '@/types/database'
 
 const inputClass =
@@ -215,12 +216,9 @@ export default async function ClientDetailPage({
               className={inputClass}
             />
           </div>
-          <button
-            type="submit"
-            className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
-          >
+          <SubmitButton className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet">
             Save changes
-          </button>
+          </SubmitButton>
         </form>
         <div className="mt-10 border-t border-ash/60 pt-6">
           <ConfirmForm
