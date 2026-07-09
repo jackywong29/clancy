@@ -551,7 +551,10 @@ export async function updateCrmConfig(formData: FormData) {
     record_plural: String(formData.get('record_plural') ?? '').trim() || 'Records',
     fields,
     card_fields: cardFields,
-    modules: { tasks: false, calendar: false },
+    modules: {
+      tasks: formData.get('module_tasks') === 'on',
+      calendar: formData.get('module_calendar') === 'on',
+    },
   }
 
   const { error } = await supabase
@@ -564,6 +567,101 @@ export async function updateCrmConfig(formData: FormData) {
   redirect(
     `/crm?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
   )
+}
+
+export async function addTask(formData: FormData) {
+  const supabase = await createClient()
+  const organizationId = await requireOrg()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const title = String(formData.get('title') ?? '').trim()
+  const optional = (n: string) => {
+    const v = String(formData.get(n) ?? '').trim()
+    return v === '' ? null : v
+  }
+
+  if (title) {
+    await supabase.from('tasks').insert({
+      organization_id: organizationId,
+      title,
+      details: optional('details'),
+      assignee_id: optional('assignee_id'),
+      client_id: optional('client_id'),
+      due_date: optional('due_date'),
+      created_by: user?.id ?? null,
+    })
+  }
+  revalidatePath('/tasks')
+  redirect('/tasks')
+}
+
+export async function updateTaskStatus(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const taskId = String(formData.get('task_id') ?? '')
+  const status = String(formData.get('status') ?? '')
+  if (taskId && ['pending', 'in_progress', 'done'].includes(status)) {
+    await supabase
+      .from('tasks')
+      .update({ status, updated_at: new Date().toISOString() })
+      .eq('id', taskId)
+  }
+  revalidatePath('/tasks')
+}
+
+export async function deleteTask(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const taskId = String(formData.get('task_id') ?? '')
+  if (taskId) {
+    await supabase.from('tasks').delete().eq('id', taskId)
+  }
+  revalidatePath('/tasks')
+}
+
+export async function addEvent(formData: FormData) {
+  const supabase = await createClient()
+  const organizationId = await requireOrg()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const title = String(formData.get('title') ?? '').trim()
+  const startsOn = String(formData.get('starts_on') ?? '').trim()
+  const optional = (n: string) => {
+    const v = String(formData.get(n) ?? '').trim()
+    return v === '' ? null : v
+  }
+  const month = startsOn.slice(0, 7)
+
+  if (title && startsOn) {
+    await supabase.from('events').insert({
+      organization_id: organizationId,
+      title,
+      details: optional('details'),
+      client_id: optional('client_id'),
+      starts_on: startsOn,
+      event_time: optional('event_time'),
+      created_by: user?.id ?? null,
+    })
+  }
+  revalidatePath('/calendar')
+  redirect(`/calendar?m=${month}`)
+}
+
+export async function deleteEvent(formData: FormData) {
+  const supabase = await createClient()
+  await requireOrg()
+
+  const eventId = String(formData.get('event_id') ?? '')
+  if (eventId) {
+    await supabase.from('events').delete().eq('id', eventId)
+  }
+  revalidatePath('/calendar')
 }
 
 export async function moveClientStage(formData: FormData) {

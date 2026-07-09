@@ -108,6 +108,30 @@ export default async function CrmConfigPage({
             />
           </div>
 
+          <div>
+            <p className="mb-2 text-sm font-medium">Modules</p>
+            <div className="flex gap-4 rounded-xl border border-ash/60 bg-carbon p-4 text-sm">
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="module_tasks"
+                  defaultChecked={config.modules?.tasks === true}
+                  className="h-4 w-4 accent-violet"
+                />
+                Tasks
+              </label>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  name="module_calendar"
+                  defaultChecked={config.modules?.calendar === true}
+                  className="h-4 w-4 accent-violet"
+                />
+                Calendar
+              </label>
+            </div>
+          </div>
+
           <button
             type="submit"
             className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"

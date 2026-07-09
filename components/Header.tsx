@@ -30,11 +30,16 @@ export async function Header() {
   const { data: currentOrg } = profile?.organization_id
     ? await supabase
         .from('organizations')
-        .select('slug')
+        .select('slug, crm_config')
         .eq('id', profile.organization_id)
         .maybeSingle()
     : { data: null }
-  const isClancy = (currentOrg as { slug?: string } | null)?.slug === 'clancy'
+  const org = currentOrg as
+    | { slug?: string; crm_config?: { modules?: { tasks?: boolean; calendar?: boolean } } }
+    | null
+  const isClancy = org?.slug === 'clancy'
+  const showTasks = isClancy || org?.crm_config?.modules?.tasks === true
+  const showCalendar = isClancy || org?.crm_config?.modules?.calendar === true
 
   return (
     <header className="flex items-center justify-between border-b border-ash/60 bg-graphite px-6 py-3">
@@ -59,6 +64,16 @@ export async function Header() {
                 Customize
               </Link>
             </>
+          )}
+          {showTasks && (
+            <Link href="/tasks" className="text-ivory/60 hover:text-ivory">
+              Tasks
+            </Link>
+          )}
+          {showCalendar && (
+            <Link href="/calendar" className="text-ivory/60 hover:text-ivory">
+              Calendar
+            </Link>
           )}
           <Link href="/stages" className="text-ivory/60 hover:text-ivory">
             Stages

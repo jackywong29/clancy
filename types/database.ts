@@ -128,6 +128,34 @@ export interface Site {
   updated_at: string
 }
 
+export type TaskStatus = 'pending' | 'in_progress' | 'done'
+
+export interface Task {
+  id: string
+  organization_id: string
+  client_id: string | null
+  title: string
+  details: string | null
+  assignee_id: string | null
+  due_date: string | null
+  status: TaskStatus
+  created_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface CalendarEvent {
+  id: string
+  organization_id: string
+  client_id: string | null
+  title: string
+  details: string | null
+  starts_on: string
+  event_time: string | null
+  created_by: string | null
+  created_at: string
+}
+
 export interface Intake {
   id: string
   organization_id: string
