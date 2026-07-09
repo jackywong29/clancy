@@ -11,6 +11,7 @@ import { ImageUpload } from '@/components/ImageUpload'
 import { GalleryUpload } from '@/components/GalleryUpload'
 import { ColorField } from '@/components/ColorField'
 import { SubmitButton } from '@/components/SubmitButton'
+import { SectionOrderEditor } from '@/components/SectionOrderEditor'
 import { FONTS } from '@/lib/fonts'
 import type { Site } from '@/types/database'
 
@@ -112,6 +113,16 @@ export default async function SiteEditPage({
               className={inputClass}
             />
           </div>
+
+          {/* ---------- Sections & order ---------- */}
+          <h2 className={groupClass}>Page sections & order</h2>
+          <p className="-mt-1 text-xs text-ivory/50">
+            This is the running order of the live page, top to bottom.
+          </p>
+          <SectionOrderEditor
+            name="section_order"
+            initial={JSON.stringify(config.section_order ?? [])}
+          />
 
           {/* ---------- Contact ---------- */}
           <h2 className={groupClass}>Contact & location</h2>

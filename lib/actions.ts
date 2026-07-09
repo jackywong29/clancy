@@ -365,11 +365,16 @@ export async function updateSite(formData: FormData) {
   let faq: unknown = []
   let socials: unknown = []
   let gallery: unknown = []
+  let sectionOrder: string[] = []
   try {
     services = JSON.parse(text('services') || '[]')
     faq = JSON.parse(text('faq') || '[]')
     socials = JSON.parse(text('socials') || '[]')
     gallery = JSON.parse(text('gallery') || '[]')
+    const parsedOrder = JSON.parse(text('section_order') || '[]')
+    if (Array.isArray(parsedOrder)) {
+      sectionOrder = parsedOrder.filter((x): x is string => typeof x === 'string')
+    }
   } catch {
     // keep empty on parse failure
   }
@@ -407,6 +412,7 @@ export async function updateSite(formData: FormData) {
     about_body: text('about_body'),
     about_image_url: text('about_image_url') || null,
     about_image_side: text('about_image_side') === 'right' ? 'right' : 'left',
+    section_order: sectionOrder,
     services,
     faq,
     socials,

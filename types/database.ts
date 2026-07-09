@@ -85,6 +85,7 @@ export interface SiteConfig {
   services?: SiteService[]
   faq?: { q: string; a: string }[]
   socials?: SiteSocial[]
+  section_order?: string[] // ordered enabled body-section keys (see lib/sections)
 }
 
 export interface Site {

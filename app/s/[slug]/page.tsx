@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { CSSProperties } from 'react'
 import { resolveFont, googleFontsHref, typeFont } from '@/lib/fonts'
+import { resolveSectionOrder } from '@/lib/sections'
 import type {
   Site,
   SiteConfig,
@@ -211,6 +212,7 @@ export default async function ClientSitePage({
   const mapsHref = config.address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address)}`
     : null
+  const orderedKeys = resolveSectionOrder(config.section_order)
 
   return (
     <div
@@ -333,192 +335,230 @@ export default async function ClientSitePage({
             </div>
           </section>
 
-          {hasAbout && (
-            <section
-              className="py-14 lg:py-20"
-              style={{ borderTop: `1px solid ${c.border}` }}
-            >
-              <div className="grid items-center gap-10 sm:grid-cols-2 lg:gap-14">
-                {aboutImage && (
-                  <div className={aboutRight ? 'sm:order-2' : ''}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={aboutImage}
-                      alt={config.about_title ?? 'About'}
-                      className="w-full rounded-2xl object-cover"
-                    />
-                  </div>
-                )}
-                <div className={aboutRight ? 'sm:order-1' : ''}>
-                  {config.about_title?.trim() && (
+          {orderedKeys.map((key) => {
+            switch (key) {
+              case 'about':
+                return hasAbout ? (
+                  <section
+                    key="about"
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
+                  >
+                    <div className="grid items-center gap-10 sm:grid-cols-2 lg:gap-14">
+                      {aboutImage && (
+                        <div className={aboutRight ? 'sm:order-2' : ''}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={aboutImage}
+                            alt={config.about_title ?? 'About'}
+                            className="w-full rounded-2xl object-cover"
+                          />
+                        </div>
+                      )}
+                      <div className={aboutRight ? 'sm:order-1' : ''}>
+                        {config.about_title?.trim() && (
+                          <h2
+                            className="mb-3 text-2xl font-medium lg:text-3xl"
+                            style={headingStyle()}
+                          >
+                            {config.about_title}
+                          </h2>
+                        )}
+                        {config.about_body?.trim() && (
+                          <p
+                            className="whitespace-pre-line text-base leading-relaxed"
+                            style={{ color: c.muted, ...bodyStyle() }}
+                          >
+                            {config.about_body}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+                ) : null
+
+              case 'services':
+                return services.length > 0 ? (
+                  <section
+                    key="services"
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
+                  >
                     <h2
-                      className="mb-3 text-2xl font-medium lg:text-3xl"
+                      className="mb-6 text-2xl font-medium lg:text-3xl"
                       style={headingStyle()}
                     >
-                      {config.about_title}
+                      {config.services_title?.trim() || 'Services'}
                     </h2>
-                  )}
-                  {config.about_body?.trim() && (
-                    <p
-                      className="whitespace-pre-line text-base leading-relaxed"
-                      style={{ color: c.muted, ...bodyStyle() }}
-                    >
-                      {config.about_body}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </section>
-          )}
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {services.map((service) => (
+                        <div
+                          key={service.name}
+                          className="rounded-xl p-5"
+                          style={{
+                            background: c.surface,
+                            border: `1px solid ${c.border}`,
+                          }}
+                        >
+                          <div className="flex items-baseline justify-between gap-3">
+                            <p className="font-medium">{service.name}</p>
+                            {service.price.trim() && (
+                              <p
+                                className="shrink-0 text-sm"
+                                style={{ color: accent }}
+                              >
+                                {service.price}
+                              </p>
+                            )}
+                          </div>
+                          {service.duration && (
+                            <p className="mt-1 text-xs" style={{ color: c.faint }}>
+                              {service.duration}
+                            </p>
+                          )}
+                          {service.bookable && book && (
+                            <a
+                              href={waLink(
+                                config,
+                                fillTemplate(serviceMsg, {
+                                  name,
+                                  service: service.name,
+                                })
+                              )!}
+                              className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-xs font-medium"
+                              style={{
+                                borderColor: accent,
+                                color: accent,
+                                ...buttonFont,
+                              }}
+                            >
+                              {serviceBookLabel}
+                            </a>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null
 
-          {services.length > 0 && (
-            <section
-              className="py-14 lg:py-20"
-              style={{ borderTop: `1px solid ${c.border}` }}
-            >
-              <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
-                {config.services_title?.trim() || 'Services'}
-              </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {services.map((service) => (
-                  <div
-                    key={service.name}
-                    className="rounded-xl p-5"
-                    style={{
-                      background: c.surface,
-                      border: `1px solid ${c.border}`,
-                    }}
+              case 'gallery':
+                return gallery.length > 0 ? (
+                  <section
+                    key="gallery"
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
                   >
-                    <div className="flex items-baseline justify-between gap-3">
-                      <p className="font-medium">{service.name}</p>
-                      {service.price.trim() && (
-                        <p className="shrink-0 text-sm" style={{ color: accent }}>
-                          {service.price}
-                        </p>
+                    <h2
+                      className="mb-6 text-2xl font-medium lg:text-3xl"
+                      style={headingStyle()}
+                    >
+                      {config.gallery_title?.trim() || 'Gallery'}
+                    </h2>
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+                      {gallery.map((src, i) => (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          key={src}
+                          src={src}
+                          alt={`Photo ${i + 1}`}
+                          className="aspect-square w-full rounded-xl object-cover"
+                        />
+                      ))}
+                    </div>
+                  </section>
+                ) : null
+
+              case 'find_us':
+                return (
+                  <section
+                    key="find_us"
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
+                  >
+                    <h2
+                      className="mb-6 text-2xl font-medium lg:text-3xl"
+                      style={headingStyle()}
+                    >
+                      {config.find_us_title?.trim() || 'Find us'}
+                    </h2>
+                    <div className="grid gap-4 text-sm sm:grid-cols-3">
+                      {config.address && (
+                        <div>
+                          <p className="font-medium">Address</p>
+                          {mapsHref ? (
+                            <a
+                              href={mapsHref}
+                              className="mt-1 block underline"
+                              style={{ color: c.muted }}
+                            >
+                              {config.address}
+                            </a>
+                          ) : (
+                            <p className="mt-1" style={{ color: c.muted }}>
+                              {config.address}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                      {config.hours && (
+                        <div>
+                          <p className="font-medium">Hours</p>
+                          <p className="mt-1" style={{ color: c.muted }}>
+                            {config.hours}
+                          </p>
+                        </div>
+                      )}
+                      {config.phone && (
+                        <div>
+                          <p className="font-medium">Phone</p>
+                          <a
+                            href={`tel:${config.phone.replace(/\D/g, '')}`}
+                            className="mt-1 block underline"
+                            style={{ color: c.muted }}
+                          >
+                            {config.phone}
+                          </a>
+                        </div>
                       )}
                     </div>
-                    {service.duration && (
-                      <p className="mt-1 text-xs" style={{ color: c.faint }}>
-                        {service.duration}
-                      </p>
-                    )}
-                    {service.bookable && book && (
-                      <a
-                        href={waLink(
-                          config,
-                          fillTemplate(serviceMsg, {
-                            name,
-                            service: service.name,
-                          })
-                        )!}
-                        className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-xs font-medium"
-                        style={{ borderColor: accent, color: accent, ...buttonFont }}
-                      >
-                        {serviceBookLabel}
-                      </a>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+                  </section>
+                )
 
-          {gallery.length > 0 && (
-            <section
-              className="py-14 lg:py-20"
-              style={{ borderTop: `1px solid ${c.border}` }}
-            >
-              <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
-                {config.gallery_title?.trim() || 'Gallery'}
-              </h2>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-                {gallery.map((src, i) => (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={src}
-                    src={src}
-                    alt={`Photo ${i + 1}`}
-                    className="aspect-square w-full rounded-xl object-cover"
-                  />
-                ))}
-              </div>
-            </section>
-          )}
-
-          <section
-            className="py-14 lg:py-20"
-            style={{ borderTop: `1px solid ${c.border}` }}
-          >
-            <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
-              {config.find_us_title?.trim() || 'Find us'}
-            </h2>
-            <div className="grid gap-4 text-sm sm:grid-cols-3">
-              {config.address && (
-                <div>
-                  <p className="font-medium">Address</p>
-                  {mapsHref ? (
-                    <a
-                      href={mapsHref}
-                      className="mt-1 block underline"
-                      style={{ color: c.muted }}
-                    >
-                      {config.address}
-                    </a>
-                  ) : (
-                    <p className="mt-1" style={{ color: c.muted }}>
-                      {config.address}
-                    </p>
-                  )}
-                </div>
-              )}
-              {config.hours && (
-                <div>
-                  <p className="font-medium">Hours</p>
-                  <p className="mt-1" style={{ color: c.muted }}>
-                    {config.hours}
-                  </p>
-                </div>
-              )}
-              {config.phone && (
-                <div>
-                  <p className="font-medium">Phone</p>
-                  <a
-                    href={`tel:${config.phone.replace(/\D/g, '')}`}
-                    className="mt-1 block underline"
-                    style={{ color: c.muted }}
+              case 'faq':
+                return faq.length > 0 ? (
+                  <section
+                    key="faq"
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
                   >
-                    {config.phone}
-                  </a>
-                </div>
-              )}
-            </div>
-          </section>
-
-          {faq.length > 0 && (
-            <section
-              className="py-14 lg:py-20"
-              style={{ borderTop: `1px solid ${c.border}` }}
-            >
-              <h2 className="mb-6 text-2xl font-medium lg:text-3xl" style={headingStyle()}>
-                {config.faq_title?.trim() || 'Frequently asked questions'}
-              </h2>
-              <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
-                {faq.map((item) => (
-                  <div key={item.q}>
-                    <p className="font-medium" style={headingStyle()}>
-                      {item.q}
-                    </p>
-                    <p
-                      className="mt-1 text-sm leading-relaxed"
-                      style={{ color: c.muted, ...bodyStyle() }}
+                    <h2
+                      className="mb-6 text-2xl font-medium lg:text-3xl"
+                      style={headingStyle()}
                     >
-                      {item.a}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
+                      {config.faq_title?.trim() || 'Frequently asked questions'}
+                    </h2>
+                    <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
+                      {faq.map((item) => (
+                        <div key={item.q}>
+                          <p className="font-medium" style={headingStyle()}>
+                            {item.q}
+                          </p>
+                          <p
+                            className="mt-1 text-sm leading-relaxed"
+                            style={{ color: c.muted, ...bodyStyle() }}
+                          >
+                            {item.a}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </section>
+                ) : null
+
+              default:
+                return null
+            }
+          })}
         </main>
 
         <footer
