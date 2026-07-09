@@ -46,9 +46,18 @@ export async function signOut() {
 
 export async function requireOrg(): Promise<string> {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    redirect('/login')
+  }
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('organization_id')
+    .eq('id', user.id)
     .maybeSingle()
 
   if (!profile?.organization_id) {
