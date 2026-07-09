@@ -354,10 +354,12 @@ export async function updateSite(formData: FormData) {
   let services: unknown = []
   let faq: unknown = []
   let socials: unknown = []
+  let gallery: unknown = []
   try {
     services = JSON.parse(text('services') || '[]')
     faq = JSON.parse(text('faq') || '[]')
     socials = JSON.parse(text('socials') || '[]')
+    gallery = JSON.parse(text('gallery') || '[]')
   } catch {
     // keep empty on parse failure
   }
@@ -372,12 +374,24 @@ export async function updateSite(formData: FormData) {
     hours: text('hours'),
     accent: text('accent') || '#5646E5',
     theme: text('theme') === 'dark' ? 'dark' : 'light',
+    bg_color: text('bg_color'),
+    bg_image_url: text('bg_image_url') || null,
+    font: text('font') || 'sans',
+    font_custom: text('font_custom'),
     logo_position: text('logo_position') === 'center' ? 'center' : 'left',
+    logo_url: text('logo_url') || null,
+    hero_image_url: text('hero_image_url') || null,
     book_label: text('book_label'),
+    service_book_label: text('service_book_label'),
     services_title: text('services_title'),
     find_us_title: text('find_us_title'),
     faq_title: text('faq_title'),
-    logo_url: text('logo_url') || null,
+    gallery_title: text('gallery_title'),
+    gallery,
+    about_title: text('about_title'),
+    about_body: text('about_body'),
+    about_image_url: text('about_image_url') || null,
+    about_image_side: text('about_image_side') === 'right' ? 'right' : 'left',
     services,
     faq,
     socials,

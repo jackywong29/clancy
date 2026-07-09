@@ -37,6 +37,7 @@ export interface SiteSocial {
 
 export type SiteTheme = 'light' | 'dark'
 export type LogoPosition = 'left' | 'center'
+export type ImageSide = 'left' | 'right'
 
 export interface SiteConfig {
   name?: string
@@ -48,12 +49,24 @@ export interface SiteConfig {
   hours?: string
   accent?: string
   theme?: SiteTheme
+  bg_color?: string
+  bg_image_url?: string | null
+  font?: string // curated key (see FONTS) or 'custom'
+  font_custom?: string // typed Google Font family when font === 'custom'
   logo_url?: string | null
   logo_position?: LogoPosition
+  hero_image_url?: string | null
   book_label?: string
+  service_book_label?: string
   services_title?: string
   find_us_title?: string
   faq_title?: string
+  gallery_title?: string
+  gallery?: string[]
+  about_title?: string
+  about_body?: string
+  about_image_url?: string | null
+  about_image_side?: ImageSide
   services?: SiteService[]
   faq?: { q: string; a: string }[]
   socials?: SiteSocial[]

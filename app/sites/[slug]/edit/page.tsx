@@ -7,10 +7,17 @@ import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
 import { FaqListEditor } from '@/components/intake/FaqListEditor'
 import { SocialsListEditor } from '@/components/intake/SocialsListEditor'
 import { SiteLogoUpload } from '@/components/SiteLogoUpload'
+import { ImageUpload } from '@/components/ImageUpload'
+import { GalleryUpload } from '@/components/GalleryUpload'
+import { ColorField } from '@/components/ColorField'
+import { FONTS } from '@/lib/fonts'
 import type { Site } from '@/types/database'
 
 const inputClass =
   'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
+
+const groupClass =
+  'border-b border-ash/50 pb-1 pt-4 text-xs font-semibold uppercase tracking-wide text-ivory/50'
 
 export default async function SiteEditPage({
   params,
@@ -33,16 +40,15 @@ export default async function SiteEditPage({
   if (!siteRow) notFound()
   const site = siteRow as Site
   const config = site.config
+  const orgId = site.organization_id
 
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-xl px-6 py-8">
+      <main className="mx-auto max-w-2xl px-6 py-8">
         <div className="mb-6 flex items-baseline justify-between">
           <div>
-            <h1 className="text-2xl font-medium">
-              {config.name ?? site.slug}
-            </h1>
+            <h1 className="text-2xl font-medium">{config.name ?? site.slug}</h1>
             <p className="mt-1 text-sm text-ivory/60">
               Site editor · /s/{site.slug}
             </p>
@@ -65,6 +71,9 @@ export default async function SiteEditPage({
 
         <form action={updateSite} className="space-y-4">
           <input type="hidden" name="slug" value={site.slug} />
+
+          {/* ---------- Basics ---------- */}
+          <h2 className={groupClass}>Basics</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="name" className="mb-1 block text-sm font-medium">
@@ -79,10 +88,7 @@ export default async function SiteEditPage({
               />
             </div>
             <div>
-              <label
-                htmlFor="tagline"
-                className="mb-1 block text-sm font-medium"
-              >
+              <label htmlFor="tagline" className="mb-1 block text-sm font-medium">
                 Tagline (the big headline)
               </label>
               <input
@@ -94,10 +100,7 @@ export default async function SiteEditPage({
             </div>
           </div>
           <div>
-            <label
-              htmlFor="description"
-              className="mb-1 block text-sm font-medium"
-            >
+            <label htmlFor="description" className="mb-1 block text-sm font-medium">
               Description
             </label>
             <textarea
@@ -108,6 +111,9 @@ export default async function SiteEditPage({
               className={inputClass}
             />
           </div>
+
+          {/* ---------- Contact ---------- */}
+          <h2 className={groupClass}>Contact & location</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label htmlFor="phone" className="mb-1 block text-sm font-medium">
@@ -121,10 +127,7 @@ export default async function SiteEditPage({
               />
             </div>
             <div>
-              <label
-                htmlFor="whatsapp"
-                className="mb-1 block text-sm font-medium"
-              >
+              <label htmlFor="whatsapp" className="mb-1 block text-sm font-medium">
                 WhatsApp (for Book buttons)
               </label>
               <input
@@ -137,10 +140,7 @@ export default async function SiteEditPage({
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                htmlFor="address"
-                className="mb-1 block text-sm font-medium"
-              >
+              <label htmlFor="address" className="mb-1 block text-sm font-medium">
                 Address
               </label>
               <input
@@ -162,27 +162,18 @@ export default async function SiteEditPage({
               />
             </div>
           </div>
-          <div className="flex items-end gap-4">
+
+          {/* ---------- Appearance ---------- */}
+          <h2 className={groupClass}>Appearance</h2>
+          <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                htmlFor="accent"
-                className="mb-1 block text-sm font-medium"
-              >
+              <label className="mb-1 block text-sm font-medium">
                 Accent colour
               </label>
-              <input
-                id="accent"
-                name="accent"
-                type="color"
-                defaultValue={config.accent ?? '#5646E5'}
-                className="h-10 w-16 cursor-pointer rounded-lg border border-ash bg-graphite"
-              />
+              <ColorField name="accent" initial={config.accent ?? '#5646E5'} />
             </div>
             <div>
-              <label
-                htmlFor="theme"
-                className="mb-1 block text-sm font-medium"
-              >
+              <label htmlFor="theme" className="mb-1 block text-sm font-medium">
                 Theme
               </label>
               <select
@@ -195,22 +186,132 @@ export default async function SiteEditPage({
                 <option value="dark">Dark</option>
               </select>
             </div>
-            <div className="flex-1">
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="font" className="mb-1 block text-sm font-medium">
+                Font
+              </label>
+              <select
+                id="font"
+                name="font"
+                defaultValue={config.font ?? 'sans'}
+                className={inputClass}
+              >
+                {FONTS.map((f) => (
+                  <option key={f.key} value={f.key}>
+                    {f.label}
+                  </option>
+                ))}
+                <option value="custom">Custom (type a Google Font)…</option>
+              </select>
+            </div>
+            <div>
+              <label
+                htmlFor="font_custom"
+                className="mb-1 block text-sm font-medium"
+              >
+                Custom font name
+              </label>
+              <input
+                id="font_custom"
+                name="font_custom"
+                defaultValue={config.font_custom ?? ''}
+                placeholder="e.g. Poppins"
+                className={inputClass}
+              />
+              <p className="mt-1 text-xs text-ivory/50">
+                Used only when Font = Custom. Any{' '}
+                <a
+                  href="https://fonts.google.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline"
+                >
+                  Google Font
+                </a>{' '}
+                name.
+              </p>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Background colour (optional — overrides the theme)
+            </label>
+            <ColorField
+              name="bg_color"
+              initial={config.bg_color ?? ''}
+              allowEmpty
+              placeholder="Leave blank to use theme"
+            />
+            <p className="mt-1 text-xs text-ivory/50">
+              Text colour is auto-chosen for contrast.
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">
+                Background image (optional)
+              </label>
+              <ImageUpload
+                name="bg_image_url"
+                initial={config.bg_image_url ?? ''}
+                orgId={orgId}
+                slug={site.slug}
+                kind="bg"
+                label="background"
+              />
+            </div>
+            <div>
               <label className="mb-1 block text-sm font-medium">Logo</label>
               <SiteLogoUpload
                 name="logo_url"
                 initial={config.logo_url ?? ''}
-                orgId={site.organization_id}
+                orgId={orgId}
                 slug={site.slug}
               />
+              <div className="mt-2">
+                <label
+                  htmlFor="logo_position"
+                  className="mb-1 block text-xs text-ivory/60"
+                >
+                  Logo position
+                </label>
+                <select
+                  id="logo_position"
+                  name="logo_position"
+                  defaultValue={config.logo_position ?? 'left'}
+                  className={inputClass}
+                >
+                  <option value="left">Left</option>
+                  <option value="center">Centre</option>
+                </select>
+              </div>
             </div>
           </div>
+
+          {/* ---------- Hero ---------- */}
+          <h2 className={groupClass}>Hero</h2>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Hero image (optional — big photo behind the headline)
+            </label>
+            <ImageUpload
+              name="hero_image_url"
+              initial={config.hero_image_url ?? ''}
+              orgId={orgId}
+              slug={site.slug}
+              kind="hero"
+              label="hero image"
+              className="h-16 w-28 rounded-lg object-cover"
+            />
+          </div>
+
+          {/* ---------- Buttons & headings ---------- */}
+          <h2 className={groupClass}>Buttons & headings</h2>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label
-                htmlFor="book_label"
-                className="mb-1 block text-sm font-medium"
-              >
+              <label htmlFor="book_label" className="mb-1 block text-sm font-medium">
                 Booking button text
               </label>
               <input
@@ -223,32 +324,37 @@ export default async function SiteEditPage({
             </div>
             <div>
               <label
-                htmlFor="logo_position"
+                htmlFor="service_book_label"
                 className="mb-1 block text-sm font-medium"
               >
-                Logo position
+                Service button text
               </label>
-              <select
-                id="logo_position"
-                name="logo_position"
-                defaultValue={config.logo_position ?? 'left'}
+              <input
+                id="service_book_label"
+                name="service_book_label"
+                defaultValue={config.service_book_label ?? ''}
+                placeholder="Book this"
                 className={inputClass}
-              >
-                <option value="left">Left</option>
-                <option value="center">Centre</option>
-              </select>
+              />
             </div>
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium">
               Section headings
             </label>
-            <div className="grid gap-3 sm:grid-cols-3">
+            <div className="grid gap-3 sm:grid-cols-4">
               <input
                 name="services_title"
                 defaultValue={config.services_title ?? ''}
                 placeholder="Services"
                 aria-label="Services heading"
+                className={inputClass}
+              />
+              <input
+                name="gallery_title"
+                defaultValue={config.gallery_title ?? ''}
+                placeholder="Gallery"
+                aria-label="Gallery heading"
                 className={inputClass}
               />
               <input
@@ -261,7 +367,7 @@ export default async function SiteEditPage({
               <input
                 name="faq_title"
                 defaultValue={config.faq_title ?? ''}
-                placeholder="Frequently asked questions"
+                placeholder="FAQ"
                 aria-label="FAQ heading"
                 className={inputClass}
               />
@@ -270,30 +376,96 @@ export default async function SiteEditPage({
               Leave blank to use the default shown in each box.
             </p>
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">Services</label>
-            <ServiceListEditor
-              name="services"
-              initial={JSON.stringify(config.services ?? [])}
-            />
+
+          {/* ---------- About section ---------- */}
+          <h2 className={groupClass}>About section (optional)</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="about_title" className="mb-1 block text-sm font-medium">
+                Heading
+              </label>
+              <input
+                id="about_title"
+                name="about_title"
+                defaultValue={config.about_title ?? ''}
+                placeholder="e.g. Our story"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="about_image_side"
+                className="mb-1 block text-sm font-medium"
+              >
+                Image side
+              </label>
+              <select
+                id="about_image_side"
+                name="about_image_side"
+                defaultValue={config.about_image_side ?? 'left'}
+                className={inputClass}
+              >
+                <option value="left">Image left</option>
+                <option value="right">Image right</option>
+              </select>
+            </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">FAQ</label>
-            <FaqListEditor
-              name="faq"
-              initial={JSON.stringify(config.faq ?? [])}
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium">
-              Social links
+            <label htmlFor="about_body" className="mb-1 block text-sm font-medium">
+              Text
             </label>
-            <SocialsListEditor
-              name="socials"
-              initial={JSON.stringify(config.socials ?? [])}
+            <textarea
+              id="about_body"
+              name="about_body"
+              rows={3}
+              defaultValue={config.about_body ?? ''}
+              className={inputClass}
             />
           </div>
-          <label className="flex items-center gap-2 rounded-xl border border-ash/60 bg-carbon p-4 text-sm">
+          <div>
+            <label className="mb-1 block text-sm font-medium">About image</label>
+            <ImageUpload
+              name="about_image_url"
+              initial={config.about_image_url ?? ''}
+              orgId={orgId}
+              slug={site.slug}
+              kind="about"
+              label="about image"
+              className="h-16 w-28 rounded-lg object-cover"
+            />
+            <p className="mt-1 text-xs text-ivory/50">
+              The About section only shows if you fill in a heading, text, or image.
+            </p>
+          </div>
+
+          {/* ---------- Services ---------- */}
+          <h2 className={groupClass}>Services</h2>
+          <ServiceListEditor
+            name="services"
+            initial={JSON.stringify(config.services ?? [])}
+          />
+
+          {/* ---------- Gallery ---------- */}
+          <h2 className={groupClass}>Photo gallery</h2>
+          <GalleryUpload
+            name="gallery"
+            initial={JSON.stringify(config.gallery ?? [])}
+            orgId={orgId}
+            slug={site.slug}
+          />
+
+          {/* ---------- FAQ ---------- */}
+          <h2 className={groupClass}>FAQ</h2>
+          <FaqListEditor name="faq" initial={JSON.stringify(config.faq ?? [])} />
+
+          {/* ---------- Social links ---------- */}
+          <h2 className={groupClass}>Social links</h2>
+          <SocialsListEditor
+            name="socials"
+            initial={JSON.stringify(config.socials ?? [])}
+          />
+
+          <label className="mt-2 flex items-center gap-2 rounded-xl border border-ash/60 bg-carbon p-4 text-sm">
             <input
               type="checkbox"
               name="published"
