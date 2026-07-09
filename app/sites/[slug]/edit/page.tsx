@@ -205,6 +205,71 @@ export default async function SiteEditPage({
               />
             </div>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label
+                htmlFor="book_label"
+                className="mb-1 block text-sm font-medium"
+              >
+                Booking button text
+              </label>
+              <input
+                id="book_label"
+                name="book_label"
+                defaultValue={config.book_label ?? ''}
+                placeholder="Book now"
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label
+                htmlFor="logo_position"
+                className="mb-1 block text-sm font-medium"
+              >
+                Logo position
+              </label>
+              <select
+                id="logo_position"
+                name="logo_position"
+                defaultValue={config.logo_position ?? 'left'}
+                className={inputClass}
+              >
+                <option value="left">Left</option>
+                <option value="center">Centre</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium">
+              Section headings
+            </label>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <input
+                name="services_title"
+                defaultValue={config.services_title ?? ''}
+                placeholder="Services"
+                aria-label="Services heading"
+                className={inputClass}
+              />
+              <input
+                name="find_us_title"
+                defaultValue={config.find_us_title ?? ''}
+                placeholder="Find us"
+                aria-label="Find us heading"
+                className={inputClass}
+              />
+              <input
+                name="faq_title"
+                defaultValue={config.faq_title ?? ''}
+                placeholder="Frequently asked questions"
+                aria-label="FAQ heading"
+                className={inputClass}
+              />
+            </div>
+            <p className="mt-1 text-xs text-ivory/50">
+              Leave blank to use the default shown in each box.
+            </p>
+          </div>
           <div>
             <label className="mb-1 block text-sm font-medium">Services</label>
             <ServiceListEditor

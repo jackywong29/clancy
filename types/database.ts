@@ -36,6 +36,7 @@ export interface SiteSocial {
 }
 
 export type SiteTheme = 'light' | 'dark'
+export type LogoPosition = 'left' | 'center'
 
 export interface SiteConfig {
   name?: string
@@ -48,6 +49,11 @@ export interface SiteConfig {
   accent?: string
   theme?: SiteTheme
   logo_url?: string | null
+  logo_position?: LogoPosition
+  book_label?: string
+  services_title?: string
+  find_us_title?: string
+  faq_title?: string
   services?: SiteService[]
   faq?: { q: string; a: string }[]
   socials?: SiteSocial[]

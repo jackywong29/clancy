@@ -69,6 +69,8 @@ export default async function ClientSitePage({
   const accent = config.accent ?? '#5646E5'
   const c = palette(config.theme ?? 'light')
   const name = config.name ?? site.slug
+  const bookLabel = config.book_label?.trim() || 'Book now'
+  const logoCentered = config.logo_position === 'center'
   const book = waLink(config, `Hi ${name}, I'd like to make a booking.`)
   const services = (config.services ?? []).filter((s) => s.name.trim() !== '')
   const faq = (config.faq ?? []).filter((f) => f.q.trim() !== '')
@@ -79,7 +81,11 @@ export default async function ClientSitePage({
 
   return (
     <div className="min-h-screen" style={{ background: c.bg, color: c.text }}>
-      <header className="mx-auto flex max-w-3xl items-center justify-between px-6 py-5">
+      <header
+        className={`mx-auto flex max-w-3xl flex-wrap items-center gap-3 px-6 py-5 ${
+          logoCentered ? 'justify-center' : 'justify-between'
+        }`}
+      >
         <div className="flex items-center gap-3">
           {config.logo_url ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -91,13 +97,13 @@ export default async function ClientSitePage({
           ) : null}
           <span className="text-lg font-medium">{name}</span>
         </div>
-        {book && (
+        {book && !logoCentered && (
           <a
             href={book}
             className="rounded-lg px-4 py-2 text-sm font-medium text-white"
             style={{ background: accent }}
           >
-            Book now
+            {bookLabel}
           </a>
         )}
       </header>
@@ -121,14 +127,16 @@ export default async function ClientSitePage({
               className="mt-8 inline-block rounded-lg px-6 py-3 text-sm font-medium text-white"
               style={{ background: accent }}
             >
-              Book via WhatsApp
+              {bookLabel}
             </a>
           )}
         </section>
 
         {services.length > 0 && (
           <section className="py-12" style={{ borderTop: `1px solid ${c.border}` }}>
-            <h2 className="mb-6 text-2xl font-medium">Services</h2>
+            <h2 className="mb-6 text-2xl font-medium">
+              {config.services_title?.trim() || 'Services'}
+            </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               {services.map((service) => (
                 <div
@@ -138,9 +146,11 @@ export default async function ClientSitePage({
                 >
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="font-medium">{service.name}</p>
-                    <p className="shrink-0 text-sm" style={{ color: accent }}>
-                      {service.price}
-                    </p>
+                    {service.price.trim() && (
+                      <p className="shrink-0 text-sm" style={{ color: accent }}>
+                        {service.price}
+                      </p>
+                    )}
                   </div>
                   {service.duration && (
                     <p className="mt-1 text-xs" style={{ color: c.faint }}>
@@ -166,7 +176,9 @@ export default async function ClientSitePage({
         )}
 
         <section className="py-12" style={{ borderTop: `1px solid ${c.border}` }}>
-          <h2 className="mb-6 text-2xl font-medium">Find us</h2>
+          <h2 className="mb-6 text-2xl font-medium">
+            {config.find_us_title?.trim() || 'Find us'}
+          </h2>
           <div className="grid gap-4 text-sm sm:grid-cols-3">
             {config.address && (
               <div>
@@ -212,7 +224,7 @@ export default async function ClientSitePage({
         {faq.length > 0 && (
           <section className="py-12" style={{ borderTop: `1px solid ${c.border}` }}>
             <h2 className="mb-6 text-2xl font-medium">
-              Frequently asked questions
+              {config.faq_title?.trim() || 'Frequently asked questions'}
             </h2>
             <div className="space-y-4">
               {faq.map((item) => (
