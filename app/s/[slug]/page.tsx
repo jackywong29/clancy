@@ -126,6 +126,7 @@ function contactHref(config: SiteConfig, name: string, service: string) {
 }
 
 async function getSite(slug: string): Promise<Site | null> {
+  if (slug === 'clancy-home') return null
   const supabase = await createClient()
   const { data } = await supabase
     .from('sites')
@@ -247,7 +248,13 @@ export default async function ClientSitePage({
   const mapsHref = config.address
     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address)}`
     : null
-  const orderedKeys = resolveSectionOrder(config.section_order)
+  const customSections = (config.custom_sections ?? []).filter(
+    (s) => s.title.trim() !== ''
+  )
+  const orderedKeys = resolveSectionOrder(
+    config.section_order,
+    customSections.map((s) => s.key)
+  )
 
   return (
     <div
@@ -701,8 +708,29 @@ export default async function ClientSitePage({
                   </section>
                 ) : null
 
-              default:
-                return null
+              default: {
+                const custom = customSections.find((s) => s.key === key)
+                return custom ? (
+                  <section
+                    key={custom.key}
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
+                  >
+                    <h2
+                      className="mb-4 text-2xl font-medium lg:text-3xl"
+                      style={headingStyle()}
+                    >
+                      {custom.title}
+                    </h2>
+                    <p
+                      className="whitespace-pre-line text-base leading-relaxed"
+                      style={{ color: c.muted, ...bodyStyle() }}
+                    >
+                      {custom.body}
+                    </p>
+                  </section>
+                ) : null
+              }
             }
           })}
         </main>

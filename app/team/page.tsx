@@ -9,6 +9,7 @@ import {
 import { getMembership, hasRole, roleLabel } from '@/lib/permissions'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/Header'
+import { CopyButton } from '@/components/CopyButton'
 import { DepartmentListEditor } from '@/components/team/DepartmentListEditor'
 import { CategoryListEditor } from '@/components/team/CategoryListEditor'
 import type {
@@ -176,6 +177,11 @@ export default async function TeamPage({
                   · waiting for first sign-in
                 </p>
               </div>
+              <CopyButton
+                text={`You're invited to join our workspace on Clancy! Create your account with this email (${invite.email}) here: https://clancy-hq.vercel.app/signup`}
+                label="Copy invite"
+                variant="outline"
+              />
               <form action={removeInvite}>
                 <input type="hidden" name="invite_id" value={invite.id} />
                 <button
@@ -257,6 +263,32 @@ export default async function TeamPage({
                 aria-label="Name for admin role"
               />
             </div>
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-medium">Invite email</p>
+            <p className="mb-2 text-xs text-ivory/50">
+              Sent automatically when you invite someone (needs automated
+              email configured). Tokens: {'{business}'} and {'{link}'}.
+            </p>
+            <input
+              name="invite_subject"
+              defaultValue={
+                m.crmConfig.invite_subject ??
+                "You're invited to {business} on Clancy"
+              }
+              className={`${inputClass} mb-2 w-full`}
+              aria-label="Invite email subject"
+            />
+            <textarea
+              name="invite_message"
+              rows={3}
+              defaultValue={
+                m.crmConfig.invite_message ??
+                'Hi!\n\nYou have been invited to join {business} on Clancy.\n\nCreate your account with this email address here: {link}\n\nSee you inside!'
+              }
+              className={`${inputClass} w-full`}
+              aria-label="Invite email message"
+            />
           </div>
           <div>
             <p className="mb-2 text-sm font-medium">Departments</p>

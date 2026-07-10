@@ -8,6 +8,8 @@ import {
   requireEditorOrg,
   requireWorkspaceAdmin,
 } from '@/lib/permissions'
+import { isEmailConfigured, sendEmail, fillTokens } from '@/lib/email'
+import { resolveAudience } from '@/lib/audience'
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
@@ -390,12 +392,14 @@ export async function updateSite(formData: FormData) {
   let faq: unknown = []
   let socials: unknown = []
   let gallery: unknown = []
+  let customSections: unknown = []
   let sectionOrder: string[] = []
   try {
     services = JSON.parse(text('services') || '[]')
     faq = JSON.parse(text('faq') || '[]')
     socials = JSON.parse(text('socials') || '[]')
     gallery = JSON.parse(text('gallery') || '[]')
+    customSections = JSON.parse(text('custom_sections') || '[]')
     const parsedOrder = JSON.parse(text('section_order') || '[]')
     if (Array.isArray(parsedOrder)) {
       sectionOrder = parsedOrder.filter((x): x is string => typeof x === 'string')
@@ -451,6 +455,7 @@ export async function updateSite(formData: FormData) {
     section_order: sectionOrder,
     services,
     faq,
+    custom_sections: customSections,
     socials,
   }
 
@@ -774,6 +779,25 @@ export async function addInvite(formData: FormData) {
     department,
   })
 
+  if (!error && isEmailConfigured()) {
+    const { data: orgRow } = await supabase
+      .from('organizations')
+      .select('name')
+      .eq('id', m.orgId)
+      .maybeSingle()
+    const business = (orgRow?.name as string) ?? 'our team'
+    const subject = fillTokens(
+      m.crmConfig.invite_subject?.trim() || "You're invited to {business} on Clancy",
+      { business }
+    )
+    const message = fillTokens(
+      m.crmConfig.invite_message?.trim() ||
+        'Hi!\n\nYou have been invited to join {business} on Clancy.\n\nCreate your account with this email address here: {link}\n\nSee you inside!',
+      { business, link: 'https://clancy-hq.vercel.app/signup' }
+    )
+    await sendEmail({ to: [email], subject, text: message })
+  }
+
   revalidatePath('/team')
   redirect(
     `/team?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
@@ -813,6 +837,8 @@ export async function saveTeamSettings(formData: FormData) {
     },
     departments: parse('departments'),
     calendar_categories: parse('calendar_categories'),
+    invite_subject: String(formData.get('invite_subject') ?? '').trim(),
+    invite_message: String(formData.get('invite_message') ?? '').trim(),
   }
 
   const { error } = await supabase
@@ -932,4 +958,87 @@ export async function deleteBroadcast(formData: FormData) {
   }
   revalidatePath('/broadcasts')
   redirect('/broadcasts')
+}
+
+export async function updateLanding(formData: FormData) {
+  await requireAdmin()
+  const supabase = await createClient()
+  const text = (n: string) => String(formData.get(n) ?? '').trim()
+
+  let features: unknown = []
+  let steps: unknown = []
+  try {
+    features = JSON.parse(text('features') || '[]')
+    steps = JSON.parse(text('steps') || '[]')
+  } catch {
+    // keep empty
+  }
+
+  const config = {
+    hero_title: text('hero_title'),
+    hero_sub: text('hero_sub'),
+    cta_label: text('cta_label'),
+    cta_href: text('cta_href'),
+    badge_line: text('badge_line'),
+    features,
+    steps,
+    closing_title: text('closing_title'),
+    closing_sub: text('closing_sub'),
+    footer_line: text('footer_line'),
+    instagram_url: text('instagram_url'),
+    contact_email: text('contact_email'),
+  }
+
+  const { error } = await supabase
+    .from('sites')
+    .update({ config, updated_at: new Date().toISOString() })
+    .eq('slug', 'clancy-home')
+
+  revalidatePath('/')
+  redirect(
+    `/sites/home/edit?${
+      error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'
+    }`
+  )
+}
+
+export async function sendBroadcastNow(formData: FormData) {
+  const supabase = await createClient()
+  await requireEditorOrg()
+
+  const broadcastId = String(formData.get('broadcast_id') ?? '')
+  const { data: broadcastRow } = await supabase
+    .from('broadcasts')
+    .select('*')
+    .eq('id', broadcastId)
+    .maybeSingle()
+
+  if (!broadcastRow) {
+    redirect('/broadcasts?error=1&msg=Broadcast%20not%20found')
+  }
+  const recipients = await resolveAudience(supabase, broadcastRow.audience)
+  const emails = recipients.map((r: { email: string }) => r.email)
+
+  if (emails.length === 0) {
+    redirect(`/broadcasts/${broadcastId}?error=1&msg=No%20recipients%20with%20an%20email`)
+  }
+
+  for (let i = 0; i < emails.length; i += 40) {
+    const { ok, error } = await sendEmail({
+      bcc: emails.slice(i, i + 40),
+      subject: broadcastRow.subject,
+      text: broadcastRow.body,
+    })
+    if (!ok) {
+      redirect(`/broadcasts/${broadcastId}?error=1&msg=${encodeURIComponent(error ?? 'send failed')}`)
+    }
+  }
+
+  await supabase
+    .from('broadcasts')
+    .update({ status: 'sent', recipient_count: emails.length })
+    .eq('id', broadcastId)
+
+  revalidatePath('/broadcasts')
+  redirect('/broadcasts?saved=1')
 }

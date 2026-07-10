@@ -29,17 +29,7 @@ export function CategoryListEditor({
   const [rows, setRows] = useState<EventCategory[]>(() => parse(initial))
 
   function update(i: number, patch: Partial<EventCategory>) {
-    setRows(
-      rows.map((r, idx) =>
-        idx === i
-          ? {
-              ...r,
-              ...patch,
-              key: patch.name !== undefined ? r.key || slugify(patch.name) : r.key,
-            }
-          : r
-      )
-    )
+    setRows(rows.map((r, idx) => (idx === i ? { ...r, ...patch } : r)))
   }
 
   return (
@@ -48,13 +38,17 @@ export function CategoryListEditor({
         type="hidden"
         name={name}
         value={JSON.stringify(
-          rows
-            .filter((r) => r.name.trim() !== '')
-            .map((r) => ({
-              key: r.key || slugify(r.name),
-              name: r.name.trim(),
-              color: r.color || DEFAULT_COLORS[0],
-            }))
+          (() => {
+            const seen = new Set<string>()
+            return rows
+              .filter((r) => r.name.trim() !== '')
+              .map((r) => {
+                let key = r.key || slugify(r.name)
+                while (seen.has(key)) key = `${key}-2`
+                seen.add(key)
+                return { key, name: r.name.trim(), color: r.color || DEFAULT_COLORS[0] }
+              })
+          })()
         )}
       />
       {rows.map((row, i) => (

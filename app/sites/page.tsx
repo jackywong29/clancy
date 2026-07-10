@@ -22,7 +22,9 @@ export default async function SitesPage({
     supabase.from('organizations').select('*').order('name'),
   ])
 
-  const siteList = (sites ?? []) as Site[]
+  const siteList = ((sites ?? []) as Site[]).filter(
+    (s) => s.slug !== 'clancy-home'
+  )
   const orgList = (orgs ?? []) as Organization[]
   const orgName = (id: string) => orgList.find((o) => o.id === id)?.name ?? '—'
 
@@ -40,6 +42,33 @@ export default async function SitesPage({
             {flags.msg ?? 'Something went wrong.'}
           </p>
         )}
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-xl border border-violet/40 bg-carbon p-4">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">
+              Clancy homepage
+              <span className="ml-2 rounded bg-violet/10 px-1.5 py-0.5 text-xs font-normal text-violet">
+                yours
+              </span>
+            </p>
+            <p className="text-xs text-ivory/60">
+              clancy-hq.vercel.app — what new prospects land on
+            </p>
+          </div>
+          <a
+            href="/"
+            target="_blank"
+            className="text-sm text-ivory/60 hover:text-ivory"
+          >
+            View
+          </a>
+          <Link
+            href="/sites/home/edit"
+            className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+          >
+            Edit
+          </Link>
+        </div>
+
         <div className="space-y-2">
           {siteList.map((site) => (
             <div

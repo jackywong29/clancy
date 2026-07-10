@@ -36,13 +36,26 @@ function isSectionKey(k: string): k is SectionKey {
   return (SECTION_KEYS as readonly string[]).includes(k)
 }
 
+export function isCustomSectionKey(k: string): boolean {
+  return k.startsWith('custom-')
+}
+
 // Resolve the stored order into a clean, de-duped list of valid keys.
-// Empty/absent → the default order (all sections, original layout).
-export function resolveSectionOrder(order?: string[]): SectionKey[] {
-  if (!order || order.length === 0) return DEFAULT_SECTION_ORDER
-  const seen = new Set<SectionKey>()
-  for (const k of order) {
-    if (isSectionKey(k)) seen.add(k)
+// Built-in keys plus any 'custom-*' keys present in customKeys survive.
+// Newly added custom sections not yet in the saved order are appended.
+export function resolveSectionOrder(
+  order?: string[],
+  customKeys: string[] = []
+): string[] {
+  if (!order || order.length === 0) {
+    return [...DEFAULT_SECTION_ORDER, ...customKeys]
   }
-  return seen.size ? [...seen] : DEFAULT_SECTION_ORDER
+  const seen = new Set<string>()
+  for (const k of order) {
+    if (isSectionKey(k) || customKeys.includes(k)) seen.add(k)
+  }
+  for (const k of customKeys) {
+    if (!seen.has(k)) seen.add(k)
+  }
+  return seen.size ? [...seen] : [...DEFAULT_SECTION_ORDER, ...customKeys]
 }

@@ -1,15 +1,16 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { createBroadcast, deleteBroadcast } from '@/lib/actions'
-import { getMembership, hasRole } from '@/lib/permissions'
+import { getMembership, hasRole, roleLabel } from '@/lib/permissions'
+import { audienceLabel } from '@/lib/audience'
+import { isEmailConfigured } from '@/lib/email'
 import { recordLabel } from '@/lib/crm'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { ConfirmForm } from '@/components/ConfirmForm'
-import type { Broadcast, PipelineStage } from '@/types/database'
+import type { Broadcast, PipelineStage, WorkspaceRole } from '@/types/database'
 
-const inputClass =
-  'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
+const ROLES: WorkspaceRole[] = ['viewer', 'editor', 'admin']
 
 export default async function BroadcastsPage({
   searchParams,
@@ -34,7 +35,17 @@ export default async function BroadcastsPage({
 
   const list = (broadcasts ?? []) as Broadcast[]
   const stageList = (stages ?? []) as PipelineStage[]
-  const plural = recordLabel(m.crmConfig, true).toLowerCase()
+  const departments = m.crmConfig.departments ?? []
+  const plural = recordLabel(m.crmConfig, true)
+  const stageName = (id: string) =>
+    stageList.find((s) => s.id === id)?.name ?? null
+  const deptName = (key: string) =>
+    departments.find((d) => d.key === key)?.name ?? null
+  const automated = isEmailConfigured()
+
+  const rowClass = 'flex items-center gap-3 border-b border-ash/50 px-4 py-3'
+  const fieldClass =
+    'flex-1 bg-transparent text-sm outline-none placeholder:text-ivory/40'
 
   return (
     <div className="min-h-screen">
@@ -42,13 +53,16 @@ export default async function BroadcastsPage({
       <main className="mx-auto max-w-2xl px-6 py-8">
         <h1 className="mb-1 text-2xl font-medium">Broadcasts</h1>
         <p className="mb-6 text-sm text-ivory/60">
-          Announcements, notices, and newsletters — emailed to the {plural}{' '}
-          on your board who have an email address.
+          Announcements, notices, and newsletters — to your {plural.toLowerCase()}{' '}
+          or your team.{' '}
+          {automated
+            ? 'Sending is automated from the Clancy email.'
+            : 'Sends via your mail app until automated email is configured.'}
         </p>
 
         {flags.saved && (
           <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
-            Marked as sent.
+            Sent.
           </p>
         )}
         {flags.error && (
@@ -59,35 +73,63 @@ export default async function BroadcastsPage({
 
         <form
           action={createBroadcast}
-          className="mb-8 space-y-3 rounded-xl border border-dashed border-ash bg-carbon/50 p-4"
+          className="mb-8 overflow-hidden rounded-xl border border-ash/60 bg-carbon"
         >
-          <input
-            name="subject"
-            required
-            placeholder="Subject"
-            className={inputClass}
-          />
-          <textarea
-            name="body"
-            required
-            rows={5}
-            placeholder="Write your announcement…"
-            className={inputClass}
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <select name="audience" defaultValue="all" className="rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet" aria-label="Audience">
-              <option value="all">Everyone with an email</option>
-              {stageList.map((s) => (
-                <option key={s.id} value={`stage:${s.id}`}>
-                  Only stage: {s.name}
-                </option>
-              ))}
+          <div className={rowClass}>
+            <span className="w-16 shrink-0 text-sm text-ivory/50">To</span>
+            <select
+              name="audience"
+              defaultValue="all"
+              className="flex-1 bg-transparent text-sm outline-none"
+              aria-label="Audience"
+            >
+              <optgroup label={plural}>
+                <option value="all">All {plural.toLowerCase()} with an email</option>
+                {stageList.map((s) => (
+                  <option key={s.id} value={`stage:${s.id}`}>
+                    Only stage: {s.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Team">
+                <option value="team">Whole team</option>
+                {ROLES.map((r) => (
+                  <option key={r} value={`role:${r}`}>
+                    Only {roleLabel(m.crmConfig, r)}s
+                  </option>
+                ))}
+                {departments.map((d) => (
+                  <option key={d.key} value={`dept:${d.key}`}>
+                    Only department: {d.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
+          </div>
+          <div className={rowClass}>
+            <span className="w-16 shrink-0 text-sm text-ivory/50">Subject</span>
+            <input
+              name="subject"
+              required
+              placeholder="What's this about?"
+              className={fieldClass}
+            />
+          </div>
+          <div className="px-4 py-3">
+            <textarea
+              name="body"
+              required
+              rows={6}
+              placeholder="Write your message…"
+              className="w-full bg-transparent text-sm leading-relaxed outline-none placeholder:text-ivory/40"
+            />
+          </div>
+          <div className="border-t border-ash/50 px-4 py-3">
             <button
               type="submit"
               className="rounded-lg bg-violet-deep px-5 py-2 text-sm font-medium text-white hover:bg-violet"
             >
-              Prepare broadcast
+              Review & send →
             </button>
           </div>
         </form>
@@ -112,6 +154,7 @@ export default async function BroadcastsPage({
                   </span>
                 </p>
                 <p className="text-xs text-ivory/60">
+                  {audienceLabel(b.audience, m.crmConfig, stageName, deptName)} ·{' '}
                   {b.recipient_count} recipient{b.recipient_count === 1 ? '' : 's'} ·{' '}
                   {b.created_at.slice(0, 10)}
                 </p>

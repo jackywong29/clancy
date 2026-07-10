@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/lib/actions'
 import { Wordmark } from '@/components/Wordmark'
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher'
+import { NavLink } from '@/components/NavLink'
 import type { Organization } from '@/types/database'
 
 export async function Header() {
@@ -72,75 +73,41 @@ export async function Header() {
         <Link href="/pipeline">
           <Wordmark />
         </Link>
-        <nav className="flex items-center gap-5 overflow-x-auto whitespace-nowrap text-sm">
-          <Link href="/pipeline" className="font-medium">
-            {isClancy ? 'Pipeline' : 'Board'}
-          </Link>
+        <nav className="flex items-center gap-4 overflow-x-auto whitespace-nowrap text-sm">
+          <NavLink href="/pipeline" label={isClancy ? 'Pipeline' : 'Board'} icon="board" />
           {isClancy ? (
-            <Link href="/clients/new" className="text-ivory/60 hover:text-ivory">
-              Add client
-            </Link>
+            <NavLink href="/clients/new" label="Add client" icon="add" />
           ) : (
             <>
-              {isEditor && (
-                <Link href="/records/new" className="text-ivory/60 hover:text-ivory">
-                  Add record
-                </Link>
-              )}
-              {isWorkspaceAdmin && (
-                <Link href="/crm" className="text-ivory/60 hover:text-ivory">
-                  Customize
-                </Link>
-              )}
-              {ownSiteSlug && (
-                <a
-                  href={`/s/${ownSiteSlug}`}
-                  target="_blank"
-                  className="text-ivory/60 hover:text-ivory"
-                >
-                  View site
-                </a>
-              )}
-              {isWorkspaceAdmin && ownSiteSlug && (
-                <Link
-                  href={`/sites/${ownSiteSlug}/edit`}
-                  className="text-ivory/60 hover:text-ivory"
-                >
-                  Edit website
-                </Link>
-              )}
+              {isEditor && <NavLink href="/records/new" label="Add" icon="add" />}
             </>
           )}
-          {showTasks && (
-            <Link href="/tasks" className="text-ivory/60 hover:text-ivory">
-              Tasks
-            </Link>
-          )}
+          {showTasks && <NavLink href="/tasks" label="Tasks" icon="tasks" />}
           {showCalendar && (
-            <Link href="/calendar" className="text-ivory/60 hover:text-ivory">
-              Calendar
-            </Link>
+            <NavLink href="/calendar" label="Calendar" icon="calendar" />
           )}
+          <NavLink href="/people" label="People" icon="people" />
+          {isEditor && <NavLink href="/stages" label="Stages" icon="stages" />}
           {isEditor && (
-            <Link href="/stages" className="text-ivory/60 hover:text-ivory">
-              Stages
-            </Link>
+            <NavLink href="/broadcasts" label="Broadcasts" icon="broadcasts" />
           )}
-          {isEditor && (
-            <Link href="/broadcasts" className="text-ivory/60 hover:text-ivory">
-              Broadcasts
-            </Link>
+          {!isClancy && isWorkspaceAdmin && (
+            <NavLink href="/crm" label="Customize" icon="customize" />
+          )}
+          {!isClancy && ownSiteSlug && (
+            <NavLink href={`/s/${ownSiteSlug}`} label="View site" icon="view" external />
+          )}
+          {!isClancy && isWorkspaceAdmin && ownSiteSlug && (
+            <NavLink
+              href={`/sites/${ownSiteSlug}/edit`}
+              label="Edit website"
+              icon="edit"
+            />
           )}
           {profile?.is_platform_admin && (
-            <Link href="/sites" className="text-ivory/60 hover:text-ivory">
-              Sites
-            </Link>
+            <NavLink href="/sites" label="Sites" icon="sites" />
           )}
-          {isWorkspaceAdmin && (
-            <Link href="/team" className="text-ivory/60 hover:text-ivory">
-              Team
-            </Link>
-          )}
+          {isWorkspaceAdmin && <NavLink href="/team" label="Team" icon="team" />}
         </nav>
       </div>
       <div className="flex items-center gap-4">

@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { SECTION_KEYS, SECTION_LABELS, type SectionKey } from '@/lib/sections'
+import { SECTION_KEYS, SECTION_LABELS } from '@/lib/sections'
 
 interface Row {
-  key: SectionKey
+  key: string
   enabled: boolean
 }
 
-function initRows(initial: string): Row[] {
+function initRows(initial: string, extraKeys: string[]): Row[] {
   let order: string[] = []
   try {
     const parsed = JSON.parse(initial)
@@ -16,13 +16,13 @@ function initRows(initial: string): Row[] {
   } catch {
     // fall through to default
   }
-  const known = (k: string): k is SectionKey =>
-    (SECTION_KEYS as readonly string[]).includes(k)
+  const allKeys = [...(SECTION_KEYS as readonly string[]), ...extraKeys]
+  const known = (k: string) => allKeys.includes(k)
   const enabled = order.filter(known)
   if (enabled.length === 0) {
-    return SECTION_KEYS.map((key) => ({ key, enabled: true }))
+    return allKeys.map((key) => ({ key, enabled: true }))
   }
-  const rest = SECTION_KEYS.filter((k) => !enabled.includes(k))
+  const rest = allKeys.filter((k) => !enabled.includes(k))
   return [
     ...enabled.map((key) => ({ key, enabled: true })),
     ...rest.map((key) => ({ key, enabled: false })),
@@ -34,11 +34,19 @@ function initRows(initial: string): Row[] {
 export function SectionOrderEditor({
   name,
   initial,
+  extra = [],
 }: {
   name: string
   initial: string
+  extra?: { key: string; label: string }[]
 }) {
-  const [rows, setRows] = useState<Row[]>(() => initRows(initial))
+  const [rows, setRows] = useState<Row[]>(() =>
+    initRows(initial, extra.map((e) => e.key))
+  )
+  const labelFor = (key: string) =>
+    (SECTION_LABELS as Record<string, string>)[key] ??
+    extra.find((e) => e.key === key)?.label ??
+    key
   const value = JSON.stringify(rows.filter((r) => r.enabled).map((r) => r.key))
 
   function move(i: number, dir: -1 | 1) {
@@ -64,7 +72,7 @@ export function SectionOrderEditor({
           <div className="flex flex-col leading-none">
             <button
               type="button"
-              aria-label={`Move ${SECTION_LABELS[row.key]} up`}
+              aria-label={`Move ${labelFor(row.key)} up`}
               disabled={i === 0}
               onClick={() => move(i, -1)}
               className="text-ivory/50 hover:text-violet disabled:opacity-25"
@@ -73,7 +81,7 @@ export function SectionOrderEditor({
             </button>
             <button
               type="button"
-              aria-label={`Move ${SECTION_LABELS[row.key]} down`}
+              aria-label={`Move ${labelFor(row.key)} down`}
               disabled={i === rows.length - 1}
               onClick={() => move(i, 1)}
               className="text-ivory/50 hover:text-violet disabled:opacity-25"
@@ -86,7 +94,7 @@ export function SectionOrderEditor({
               row.enabled ? '' : 'text-ivory/40 line-through'
             }`}
           >
-            {SECTION_LABELS[row.key]}
+            {labelFor(row.key)}
           </span>
           <label className="flex items-center gap-1.5 text-xs text-ivory/70">
             <input

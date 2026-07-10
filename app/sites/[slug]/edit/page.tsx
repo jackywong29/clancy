@@ -14,6 +14,7 @@ import { GalleryUpload } from '@/components/GalleryUpload'
 import { ColorField } from '@/components/ColorField'
 import { SubmitButton } from '@/components/SubmitButton'
 import { SectionOrderEditor } from '@/components/SectionOrderEditor'
+import { CustomSectionsEditor } from '@/components/CustomSectionsEditor'
 import { FONTS } from '@/lib/fonts'
 import type { Site } from '@/types/database'
 
@@ -140,6 +141,17 @@ export default async function SiteEditPage({
           <SectionOrderEditor
             name="section_order"
             initial={JSON.stringify(config.section_order ?? [])}
+            extra={(config.custom_sections ?? [])
+              .filter((s) => s.title.trim() !== '')
+              .map((s) => ({ key: s.key, label: s.title }))}
+          />
+          <p className="text-xs text-ivory/50">
+            Add your own sections below — save once and they appear in this
+            list to reorder.
+          </p>
+          <CustomSectionsEditor
+            name="custom_sections"
+            initial={JSON.stringify(config.custom_sections ?? [])}
           />
 
           {/* ---------- Contact ---------- */}

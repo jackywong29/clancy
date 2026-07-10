@@ -32,9 +32,17 @@ export function DepartmentListEditor({
         type="hidden"
         name={name}
         value={JSON.stringify(
-          rows
-            .filter((r) => r.name.trim() !== '')
-            .map((r) => ({ key: r.key || slugify(r.name), name: r.name.trim() }))
+          (() => {
+            const seen = new Set<string>()
+            return rows
+              .filter((r) => r.name.trim() !== '')
+              .map((r) => {
+                let key = r.key || slugify(r.name)
+                while (seen.has(key)) key = `${key}-2`
+                seen.add(key)
+                return { key, name: r.name.trim() }
+              })
+          })()
         )}
       />
       {rows.map((row, i) => (
@@ -44,9 +52,7 @@ export function DepartmentListEditor({
             onChange={(e) =>
               setRows(
                 rows.map((r, idx) =>
-                  idx === i
-                    ? { key: r.key || slugify(e.target.value), name: e.target.value }
-                    : r
+                  idx === i ? { ...r, name: e.target.value } : r
                 )
               )
             }

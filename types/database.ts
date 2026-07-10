@@ -36,6 +36,8 @@ export interface CrmConfig {
   role_labels?: Partial<Record<WorkspaceRole, string>>
   departments?: Department[]
   calendar_categories?: EventCategory[]
+  invite_subject?: string
+  invite_message?: string
 }
 
 export interface Organization {
@@ -140,6 +142,29 @@ export interface SiteConfig {
   form_intro?: string
   form_button?: string
   form_success?: string
+  custom_sections?: CustomSection[]
+}
+
+export interface CustomSection {
+  key: string // 'custom-<slug>'
+  title: string
+  body: string
+}
+
+// Config shape for the Clancy landing page (sites row slug 'clancy-home').
+export interface LandingConfig {
+  hero_title?: string
+  hero_sub?: string
+  cta_label?: string
+  cta_href?: string
+  badge_line?: string
+  features?: { title: string; text: string }[]
+  steps?: { title: string; text: string }[]
+  closing_title?: string
+  closing_sub?: string
+  footer_line?: string
+  instagram_url?: string
+  contact_email?: string
 }
 
 export interface Site {

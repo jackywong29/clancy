@@ -1,20 +1,26 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { markBroadcastSent } from '@/lib/actions'
+import { markBroadcastSent, sendBroadcastNow } from '@/lib/actions'
 import { getMembership, hasRole } from '@/lib/permissions'
+import { resolveAudience } from '@/lib/audience'
+import { isEmailConfigured } from '@/lib/email'
 import { Header } from '@/components/Header'
 import { CopyButton } from '@/components/CopyButton'
-import type { Broadcast, Client } from '@/types/database'
+import { SubmitButton } from '@/components/SubmitButton'
+import type { Broadcast } from '@/types/database'
 
 const BATCH_SIZE = 40
 
 export default async function BroadcastDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ error?: string; msg?: string }>
 }) {
   const { id } = await params
+  const flags = await searchParams
   const m = await getMembership()
   if (!hasRole(m, 'editor')) redirect('/pipeline?denied=1')
   const supabase = await createClient()
@@ -27,24 +33,10 @@ export default async function BroadcastDetailPage({
   if (!broadcastRow) notFound()
   const broadcast = broadcastRow as Broadcast
 
-  let query = supabase
-    .from('clients')
-    .select('id, company_name, email')
-    .not('email', 'is', null)
-    .neq('email', '')
-    .order('company_name')
-  if (broadcast.audience.startsWith('stage:')) {
-    query = query.eq('stage_id', broadcast.audience.slice(6))
-  }
-  const { data: recipients } = await query
-  const recipientList = (recipients ?? []) as Pick<
-    Client,
-    'id' | 'company_name' | 'email'
-  >[]
+  const recipients = await resolveAudience(supabase, broadcast.audience)
+  const emails = recipients.map((r) => r.email)
+  const automated = isEmailConfigured()
 
-  const emails = recipientList
-    .map((r) => r.email)
-    .filter((e): e is string => !!e)
   const batches: string[][] = []
   for (let i = 0; i < emails.length; i += BATCH_SIZE) {
     batches.push(emails.slice(i, i + BATCH_SIZE))
@@ -72,6 +64,12 @@ export default async function BroadcastDetailPage({
           </Link>
         </div>
 
+        {flags.error && (
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
+            {flags.msg ?? 'Something went wrong.'}
+          </p>
+        )}
+
         <pre className="mb-6 whitespace-pre-wrap rounded-xl border border-ash/60 bg-carbon p-5 text-sm leading-relaxed">
           {broadcast.body}
         </pre>
@@ -79,52 +77,72 @@ export default async function BroadcastDetailPage({
         {broadcast.status !== 'sent' && (
           <div className="mb-6 space-y-3 rounded-xl border border-ash/60 bg-carbon p-4">
             <p className="text-sm font-medium">Send it</p>
-            <p className="text-xs text-ivory/60">
-              Each button opens a pre-filled email in your mail app with the
-              recipients in BCC (so they can&apos;t see each other). Send each
-              batch, then mark the broadcast as sent.
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {batches.map((batch, i) => (
-                <a
-                  key={i}
-                  href={mailtoFor(batch)}
-                  className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
-                >
-                  {batches.length === 1
-                    ? `Open email (${batch.length} recipients)`
-                    : `Batch ${i + 1} (${batch.length})`}
-                </a>
-              ))}
-              {batches.length === 0 && (
-                <p className="text-sm text-ivory/50">
-                  No recipients have an email address yet.
+            {automated ? (
+              <>
+                <p className="text-xs text-ivory/60">
+                  One click — Clancy emails everyone from the business address,
+                  recipients in BCC so they can&apos;t see each other.
                 </p>
-              )}
-              <CopyButton
-                text={emails.join(', ')}
-                label="Copy all emails"
-                variant="outline"
-              />
-            </div>
-            <form action={markBroadcastSent}>
-              <input type="hidden" name="broadcast_id" value={broadcast.id} />
-              <button
-                type="submit"
-                className="rounded-lg border border-ash px-4 py-2 text-sm hover:border-violet hover:text-violet"
-              >
-                Mark as sent
-              </button>
-            </form>
+                <form action={sendBroadcastNow}>
+                  <input type="hidden" name="broadcast_id" value={broadcast.id} />
+                  <SubmitButton
+                    pendingText="Sending…"
+                    className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
+                  >
+                    Send now to {emails.length} recipient
+                    {emails.length === 1 ? '' : 's'}
+                  </SubmitButton>
+                </form>
+              </>
+            ) : (
+              <>
+                <p className="text-xs text-ivory/60">
+                  Automated sending isn&apos;t set up yet (needs the Gmail app
+                  password — ask Claude). Meanwhile, each button opens a
+                  pre-filled email in your mail app with recipients in BCC.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {batches.map((batch, i) => (
+                    <a
+                      key={i}
+                      href={mailtoFor(batch)}
+                      className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
+                    >
+                      {batches.length === 1
+                        ? `Open email (${batch.length} recipients)`
+                        : `Batch ${i + 1} (${batch.length})`}
+                    </a>
+                  ))}
+                  {batches.length === 0 && (
+                    <p className="text-sm text-ivory/50">
+                      No recipients have an email address yet.
+                    </p>
+                  )}
+                  <CopyButton
+                    text={emails.join(', ')}
+                    label="Copy all emails"
+                    variant="outline"
+                  />
+                </div>
+                <form action={markBroadcastSent}>
+                  <input type="hidden" name="broadcast_id" value={broadcast.id} />
+                  <button
+                    type="submit"
+                    className="rounded-lg border border-ash px-4 py-2 text-sm hover:border-violet hover:text-violet"
+                  >
+                    Mark as sent
+                  </button>
+                </form>
+              </>
+            )}
           </div>
         )}
 
         <p className="mb-2 text-sm font-medium text-ivory/80">Recipients</p>
         <div className="space-y-1">
-          {recipientList.map((r) => (
-            <p key={r.id} className="text-sm text-ivory/70">
-              {r.company_name}{' '}
-              <span className="text-ivory/40">· {r.email}</span>
+          {recipients.map((r, i) => (
+            <p key={i} className="text-sm text-ivory/70">
+              {r.name} <span className="text-ivory/40">· {r.email}</span>
             </p>
           ))}
         </div>
