@@ -9,6 +9,7 @@ export const SECTION_KEYS = [
   'gallery',
   'find_us',
   'faq',
+  'form',
 ] as const
 
 export type SectionKey = (typeof SECTION_KEYS)[number]
@@ -19,6 +20,7 @@ export const DEFAULT_SECTION_ORDER: SectionKey[] = [
   'gallery',
   'find_us',
   'faq',
+  'form',
 ]
 
 export const SECTION_LABELS: Record<SectionKey, string> = {
@@ -27,6 +29,7 @@ export const SECTION_LABELS: Record<SectionKey, string> = {
   gallery: 'Photo gallery',
   find_us: 'Find us',
   faq: 'FAQ',
+  form: 'Signup form',
 }
 
 function isSectionKey(k: string): k is SectionKey {

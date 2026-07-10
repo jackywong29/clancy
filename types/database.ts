@@ -14,12 +14,28 @@ export interface CrmField {
   options?: string[]
 }
 
+export interface Department {
+  key: string
+  name: string
+}
+
+export interface EventCategory {
+  key: string
+  name: string
+  color: string
+}
+
+export type WorkspaceRole = 'viewer' | 'editor' | 'admin'
+
 export interface CrmConfig {
   record_singular?: string
   record_plural?: string
   fields?: CrmField[]
   card_fields?: string[]
   modules?: { tasks?: boolean; calendar?: boolean }
+  role_labels?: Partial<Record<WorkspaceRole, string>>
+  departments?: Department[]
+  calendar_categories?: EventCategory[]
 }
 
 export interface Organization {
@@ -36,6 +52,7 @@ export interface Profile {
   full_name: string | null
   email: string | null
   role: string
+  department: string | null
   is_platform_admin: boolean
   created_at: string
 }
@@ -116,6 +133,11 @@ export interface SiteConfig {
   faq?: { q: string; a: string }[]
   socials?: SiteSocial[]
   section_order?: string[] // ordered enabled body-section keys (see lib/sections)
+  form_enabled?: boolean
+  form_title?: string
+  form_intro?: string
+  form_button?: string
+  form_success?: string
 }
 
 export interface Site {
@@ -138,6 +160,7 @@ export interface Task {
   details: string | null
   assignee_id: string | null
   due_date: string | null
+  department: string | null
   status: TaskStatus
   created_by: string | null
   created_at: string
@@ -152,6 +175,7 @@ export interface CalendarEvent {
   details: string | null
   starts_on: string
   event_time: string | null
+  category: string | null
   created_by: string | null
   created_at: string
 }
@@ -184,4 +208,23 @@ export interface Client {
   custom: Record<string, string>
   created_at: string
   updated_at: string
+}
+
+export interface OrgInvite {
+  id: string
+  organization_id: string
+  email: string
+  role: string
+  department: string | null
+  created_at: string
+}
+
+export interface NotificationItem {
+  id: string
+  organization_id: string
+  title: string
+  body: string | null
+  link: string | null
+  read: boolean
+  created_at: string
 }

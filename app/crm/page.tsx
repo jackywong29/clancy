@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { updateCrmConfig, requireOrg } from '@/lib/actions'
+import { updateCrmConfig } from '@/lib/actions'
+import { requireWorkspaceAdmin } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { CrmFieldEditor } from '@/components/CrmFieldEditor'
 import { crmFields } from '@/lib/crm'
@@ -15,7 +16,7 @@ export default async function CrmConfigPage({
   searchParams: Promise<{ saved?: string; error?: string; msg?: string }>
 }) {
   const flags = await searchParams
-  const orgId = await requireOrg()
+  const orgId = (await requireWorkspaceAdmin()).orgId
   const supabase = await createClient()
 
   const { data: orgRow } = await supabase

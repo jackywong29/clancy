@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { CSSProperties } from 'react'
 import { resolveFont, googleFontsHref, typeFont } from '@/lib/fonts'
 import { resolveSectionOrder } from '@/lib/sections'
+import { submitLeadForm } from '@/lib/actions'
 import type {
   Site,
   SiteConfig,
@@ -151,10 +152,13 @@ export async function generateMetadata({
 
 export default async function ClientSitePage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>
+  searchParams: Promise<{ sent?: string; formerror?: string }>
 }) {
   const { slug } = await params
+  const formFlags = await searchParams
   const site = await getSite(slug)
   if (!site) notFound()
 
@@ -478,6 +482,108 @@ export default async function ClientSitePage({
                           className="aspect-square w-full rounded-xl object-cover"
                         />
                       ))}
+                    </div>
+                  </section>
+                ) : null
+
+              case 'form':
+                return config.form_enabled ? (
+                  <section
+                    key="form"
+                    id="signup"
+                    className="py-14 lg:py-20"
+                    style={{ borderTop: `1px solid ${c.border}` }}
+                  >
+                    <div className="mx-auto max-w-xl">
+                      <h2
+                        className="mb-3 text-2xl font-medium lg:text-3xl"
+                        style={headingStyle('center')}
+                      >
+                        {config.form_title?.trim() || 'Join us'}
+                      </h2>
+                      {config.form_intro?.trim() && (
+                        <p
+                          className="mb-6 text-base leading-relaxed"
+                          style={{ color: c.muted, ...bodyStyle('center') }}
+                        >
+                          {config.form_intro}
+                        </p>
+                      )}
+                      {formFlags.sent ? (
+                        <p
+                          className="rounded-xl px-4 py-6 text-center text-base font-medium"
+                          style={{ background: c.surface, color: accent }}
+                        >
+                          {config.form_success?.trim() ||
+                            "Thank you — we'll be in touch soon!"}
+                        </p>
+                      ) : (
+                        <form action={submitLeadForm} className="space-y-3">
+                          <input type="hidden" name="site_slug" value={site.slug} />
+                          {formFlags.formerror && (
+                            <p className="rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-500">
+                              Something went wrong — please check your name and
+                              try again.
+                            </p>
+                          )}
+                          <input
+                            name="name"
+                            required
+                            placeholder="Your name"
+                            className="w-full rounded-lg px-4 py-3 text-sm outline-none"
+                            style={{
+                              background: c.surface,
+                              border: `1px solid ${c.border}`,
+                              color: c.text,
+                              ...bodyStyle(),
+                            }}
+                          />
+                          <div className="grid gap-3 sm:grid-cols-2">
+                            <input
+                              name="phone"
+                              placeholder="Phone / WhatsApp"
+                              className="w-full rounded-lg px-4 py-3 text-sm outline-none"
+                              style={{
+                                background: c.surface,
+                                border: `1px solid ${c.border}`,
+                                color: c.text,
+                                ...bodyStyle(),
+                              }}
+                            />
+                            <input
+                              name="email"
+                              type="email"
+                              placeholder="Email"
+                              className="w-full rounded-lg px-4 py-3 text-sm outline-none"
+                              style={{
+                                background: c.surface,
+                                border: `1px solid ${c.border}`,
+                                color: c.text,
+                                ...bodyStyle(),
+                              }}
+                            />
+                          </div>
+                          <textarea
+                            name="message"
+                            rows={3}
+                            placeholder="Anything you'd like us to know?"
+                            className="w-full rounded-lg px-4 py-3 text-sm outline-none"
+                            style={{
+                              background: c.surface,
+                              border: `1px solid ${c.border}`,
+                              color: c.text,
+                              ...bodyStyle(),
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            className="w-full rounded-lg px-6 py-3 text-sm font-medium text-white"
+                            style={{ background: accent, ...buttonFont }}
+                          >
+                            {config.form_button?.trim() || 'Sign up'}
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </section>
                 ) : null

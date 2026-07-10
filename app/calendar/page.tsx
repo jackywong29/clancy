@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { addEvent, deleteEvent, requireOrg } from '@/lib/actions'
+import { addEvent, deleteEvent } from '@/lib/actions'
 import { Header } from '@/components/Header'
+import { getMembership, hasRole } from '@/lib/permissions'
 import type { CalendarEvent, Client, Task } from '@/types/database'
 
 const inputClass =
@@ -28,7 +29,11 @@ export default async function CalendarPage({
   searchParams: Promise<{ m?: string }>
 }) {
   const flags = await searchParams
-  await requireOrg()
+  const m = await getMembership()
+  const canEdit = hasRole(m, 'editor')
+  const categories = m.crmConfig.calendar_categories ?? []
+  const categoryColor = (key: string | null) =>
+    categories.find((c) => c.key === key)?.color ?? '#6D5EF0'
   const supabase = await createClient()
 
   const now = new Date()
@@ -135,7 +140,11 @@ export default async function CalendarPage({
                         <form
                           key={event.id}
                           action={deleteEvent}
-                          className="group rounded bg-violet/15 px-1.5 py-1 text-xs text-violet"
+                          className="group rounded px-1.5 py-1 text-xs"
+                          style={{
+                            backgroundColor: `${categoryColor(event.category)}26`,
+                            color: categoryColor(event.category),
+                          }}
                           title={event.details ?? event.title}
                         >
                           <input type="hidden" name="event_id" value={event.id} />
@@ -145,13 +154,15 @@ export default async function CalendarPage({
                             )}
                             {event.title}
                           </span>
-                          <button
-                            type="submit"
-                            aria-label={`Delete ${event.title}`}
-                            className="ml-1 hidden text-violet/60 hover:text-red-400 group-hover:inline"
-                          >
-                            ×
-                          </button>
+                          {canEdit && (
+                            <button
+                              type="submit"
+                              aria-label={`Delete ${event.title}`}
+                              className="ml-1 hidden opacity-60 hover:text-red-400 group-hover:inline"
+                            >
+                              ×
+                            </button>
+                          )}
                         </form>
                       ))}
                       {dayTasks.map((task) => (
@@ -171,6 +182,25 @@ export default async function CalendarPage({
           })}
         </div>
 
+        {categories.length > 0 && (
+          <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-ivory/70">
+            {categories.map((cat) => (
+              <span key={cat.key} className="flex items-center gap-1.5">
+                <span
+                  className="inline-block h-2.5 w-2.5 rounded-full"
+                  style={{ backgroundColor: cat.color }}
+                />
+                {cat.name}
+              </span>
+            ))}
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-2.5 w-2.5 rounded bg-ash/60" />
+              Task due
+            </span>
+          </div>
+        )}
+
+        {canEdit && (
         <form
           action={addEvent}
           className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3"
@@ -195,6 +225,16 @@ export default async function CalendarPage({
             className={`${inputClass} w-24`}
             aria-label="Time"
           />
+          {categories.length > 0 && (
+            <select name="category" className={inputClass} aria-label="Category">
+              <option value="">No category</option>
+              {categories.map((cat) => (
+                <option key={cat.key} value={cat.key}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          )}
           <select name="client_id" className={inputClass} aria-label="Linked record">
             <option value="">No linked record</option>
             {recordList.map((r) => (
@@ -210,6 +250,7 @@ export default async function CalendarPage({
             Add event
           </button>
         </form>
+        )}
         <p className="mt-3 text-xs text-ivory/50">
           Events show in violet; open tasks with due dates show as ☐. Hover an
           event to delete it.

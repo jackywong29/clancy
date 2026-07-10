@@ -3,6 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import {
+  getMembership,
+  requireEditorOrg,
+  requireWorkspaceAdmin,
+} from '@/lib/permissions'
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
@@ -68,7 +73,7 @@ export async function requireOrg(): Promise<string> {
 
 export async function addClient(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const organizationId = (await requireEditorOrg()).orgId
 
   const optional = (name: string) => {
     const value = String(formData.get(name) ?? '').trim()
@@ -103,7 +108,7 @@ export async function addClient(formData: FormData) {
 
 export async function updateClient(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const clientId = String(formData.get('client_id') ?? '')
   const optional = (name: string) => {
@@ -142,7 +147,7 @@ export async function updateClient(formData: FormData) {
 
 export async function saveIntake(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const organizationId = (await requireEditorOrg()).orgId
 
   const clientId = String(formData.get('client_id') ?? '')
   const data: Record<string, string> = {}
@@ -173,7 +178,7 @@ export async function saveIntake(formData: FormData) {
 
 export async function deleteClient(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const clientId = String(formData.get('client_id') ?? '')
   if (clientId) {
@@ -186,7 +191,7 @@ export async function deleteClient(formData: FormData) {
 
 export async function addStage(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const organizationId = (await requireEditorOrg()).orgId
 
   const name = String(formData.get('name') ?? '').trim()
   if (name) {
@@ -211,7 +216,7 @@ export async function addStage(formData: FormData) {
 
 export async function updateStage(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const stageId = String(formData.get('stage_id') ?? '')
   const name = String(formData.get('name') ?? '').trim()
@@ -231,7 +236,7 @@ export async function updateStage(formData: FormData) {
 
 export async function deleteStage(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const stageId = String(formData.get('stage_id') ?? '')
   if (stageId) {
@@ -354,10 +359,21 @@ export async function createSite(formData: FormData) {
 }
 
 export async function updateSite(formData: FormData) {
-  await requireAdmin()
   const supabase = await createClient()
 
   const slug = String(formData.get('slug') ?? '')
+  const membership = await getMembership()
+  if (!membership.isPlatformAdmin) {
+    if (membership.role !== 'admin') redirect('/pipeline?denied=1')
+    const { data: owned } = await supabase
+      .from('sites')
+      .select('organization_id')
+      .eq('slug', slug)
+      .maybeSingle()
+    if (owned?.organization_id !== membership.orgId) {
+      redirect('/pipeline?denied=1')
+    }
+  }
   const text = (name: string) => String(formData.get(name) ?? '').trim()
   const align = (name: string) => {
     const v = text(name)
@@ -390,6 +406,11 @@ export async function updateSite(formData: FormData) {
 
   const config = {
     name: text('name'),
+    form_enabled: formData.get('form_enabled') === 'on',
+    form_title: text('form_title'),
+    form_intro: text('form_intro'),
+    form_button: text('form_button'),
+    form_success: text('form_success'),
     tagline: text('tagline'),
     description: text('description'),
     phone: text('phone'),
@@ -533,7 +554,8 @@ export async function deleteRecord(formData: FormData) {
 
 export async function updateCrmConfig(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const membership = await requireWorkspaceAdmin()
+  const organizationId = membership.orgId
 
   let fields: unknown = []
   try {
@@ -547,6 +569,7 @@ export async function updateCrmConfig(formData: FormData) {
     .filter(Boolean)
 
   const crm_config = {
+    ...membership.crmConfig,
     record_singular: String(formData.get('record_singular') ?? '').trim() || 'Record',
     record_plural: String(formData.get('record_plural') ?? '').trim() || 'Records',
     fields,
@@ -571,7 +594,7 @@ export async function updateCrmConfig(formData: FormData) {
 
 export async function addTask(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const organizationId = (await requireEditorOrg()).orgId
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -590,6 +613,7 @@ export async function addTask(formData: FormData) {
       assignee_id: optional('assignee_id'),
       client_id: optional('client_id'),
       due_date: optional('due_date'),
+      department: optional('department'),
       created_by: user?.id ?? null,
     })
   }
@@ -599,7 +623,7 @@ export async function addTask(formData: FormData) {
 
 export async function updateTaskStatus(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const taskId = String(formData.get('task_id') ?? '')
   const status = String(formData.get('status') ?? '')
@@ -614,7 +638,7 @@ export async function updateTaskStatus(formData: FormData) {
 
 export async function deleteTask(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const taskId = String(formData.get('task_id') ?? '')
   if (taskId) {
@@ -625,7 +649,7 @@ export async function deleteTask(formData: FormData) {
 
 export async function addEvent(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const organizationId = (await requireEditorOrg()).orgId
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -646,6 +670,7 @@ export async function addEvent(formData: FormData) {
       client_id: optional('client_id'),
       starts_on: startsOn,
       event_time: optional('event_time'),
+      category: optional('category'),
       created_by: user?.id ?? null,
     })
   }
@@ -655,7 +680,7 @@ export async function addEvent(formData: FormData) {
 
 export async function deleteEvent(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  await requireEditorOrg()
 
   const eventId = String(formData.get('event_id') ?? '')
   if (eventId) {
@@ -665,6 +690,7 @@ export async function deleteEvent(formData: FormData) {
 }
 
 export async function moveClientStage(formData: FormData) {
+  await requireEditorOrg()
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
   const stageId = String(formData.get('stage_id') ?? '')
@@ -677,4 +703,149 @@ export async function moveClientStage(formData: FormData) {
   }
 
   revalidatePath('/pipeline')
+}
+
+export async function updateMember(formData: FormData) {
+  const supabase = await createClient()
+  const m = await requireWorkspaceAdmin()
+
+  const profileId = String(formData.get('profile_id') ?? '')
+  const role = String(formData.get('role') ?? 'viewer')
+  const department = String(formData.get('department') ?? '').trim() || null
+
+  if (!profileId || !['viewer', 'editor', 'admin'].includes(role)) {
+    redirect('/team?error=1&msg=Invalid%20role')
+  }
+
+  const { data: target } = await supabase
+    .from('profiles')
+    .select('organization_id, is_platform_admin')
+    .eq('id', profileId)
+    .maybeSingle()
+
+  if (!target) redirect('/team?error=1&msg=Member%20not%20found')
+  if (target.is_platform_admin && !m.isPlatformAdmin) {
+    redirect('/team?error=1&msg=Cannot%20edit%20a%20Clancy%20admin')
+  }
+  if (!m.isPlatformAdmin && target.organization_id !== m.orgId) {
+    redirect('/team?error=1&msg=Not%20in%20your%20workspace')
+  }
+
+  await supabase
+    .from('profiles')
+    .update({ role, department })
+    .eq('id', profileId)
+
+  revalidatePath('/team')
+  redirect('/team?saved=1')
+}
+
+export async function addInvite(formData: FormData) {
+  const supabase = await createClient()
+  const m = await requireWorkspaceAdmin()
+
+  const email = String(formData.get('email') ?? '').trim().toLowerCase()
+  const role = String(formData.get('role') ?? 'viewer')
+  const department = String(formData.get('department') ?? '').trim() || null
+
+  if (!email || !['viewer', 'editor', 'admin'].includes(role)) {
+    redirect('/team?error=1&msg=Email%20and%20a%20valid%20role%20are%20required')
+  }
+
+  const { error } = await supabase.from('org_invites').insert({
+    organization_id: m.orgId,
+    email,
+    role,
+    department,
+  })
+
+  revalidatePath('/team')
+  redirect(
+    `/team?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
+  )
+}
+
+export async function removeInvite(formData: FormData) {
+  const supabase = await createClient()
+  await requireWorkspaceAdmin()
+
+  const inviteId = String(formData.get('invite_id') ?? '')
+  if (inviteId) {
+    await supabase.from('org_invites').delete().eq('id', inviteId)
+  }
+  revalidatePath('/team')
+}
+
+export async function saveTeamSettings(formData: FormData) {
+  const supabase = await createClient()
+  const m = await requireWorkspaceAdmin()
+
+  const parse = (name: string) => {
+    try {
+      const v = JSON.parse(String(formData.get(name) ?? '[]'))
+      return Array.isArray(v) ? v : []
+    } catch {
+      return []
+    }
+  }
+
+  const crm_config = {
+    ...m.crmConfig,
+    role_labels: {
+      viewer: String(formData.get('label_viewer') ?? '').trim() || 'Staff',
+      editor: String(formData.get('label_editor') ?? '').trim() || 'Head',
+      admin: String(formData.get('label_admin') ?? '').trim() || 'Admin',
+    },
+    departments: parse('departments'),
+    calendar_categories: parse('calendar_categories'),
+  }
+
+  const { error } = await supabase
+    .from('organizations')
+    .update({ crm_config })
+    .eq('id', m.orgId)
+
+  revalidatePath('/team')
+  revalidatePath('/tasks')
+  revalidatePath('/calendar')
+  redirect(
+    `/team?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
+  )
+}
+
+export async function submitLeadForm(formData: FormData) {
+  const supabase = await createClient()
+  const slug = String(formData.get('site_slug') ?? '')
+
+  const lead = {
+    name: String(formData.get('name') ?? '').trim(),
+    phone: String(formData.get('phone') ?? '').trim(),
+    email: String(formData.get('email') ?? '').trim(),
+    message: String(formData.get('message') ?? '').trim(),
+  }
+
+  if (!slug || !lead.name) {
+    redirect(`/s/${slug}?formerror=1`)
+  }
+
+  const { error } = await supabase.rpc('submit_lead', {
+    site_slug: slug,
+    lead,
+  })
+
+  redirect(`/s/${slug}?${error ? 'formerror=1' : 'sent=1'}`)
+}
+
+export async function markAllNotificationsRead() {
+  const supabase = await createClient()
+  const m = await getMembership()
+
+  await supabase
+    .from('notifications')
+    .update({ read: true })
+    .eq('organization_id', m.orgId)
+    .eq('read', false)
+
+  revalidatePath('/notifications')
+  redirect('/notifications')
 }

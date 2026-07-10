@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { updateSite, requireAdmin } from '@/lib/actions'
+import { updateSite } from '@/lib/actions'
+import { getMembership } from '@/lib/permissions'
+import { redirect } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
 import { FaqListEditor } from '@/components/intake/FaqListEditor'
@@ -30,7 +32,7 @@ export default async function SiteEditPage({
 }) {
   const { slug } = await params
   const flags = await searchParams
-  await requireAdmin()
+  const m = await getMembership()
   const supabase = await createClient()
 
   const { data: siteRow } = await supabase
@@ -41,6 +43,12 @@ export default async function SiteEditPage({
 
   if (!siteRow) notFound()
   const site = siteRow as Site
+  if (
+    !m.isPlatformAdmin &&
+    (m.role !== 'admin' || site.organization_id !== m.orgId)
+  ) {
+    redirect('/pipeline?denied=1')
+  }
   const config = site.config
   const orgId = site.organization_id
 
@@ -646,6 +654,72 @@ export default async function SiteEditPage({
           />
 
           {/* ---------- FAQ ---------- */}
+          {/* ---------- Signup form ---------- */}
+          <h2 className={groupClass}>Signup form</h2>
+          <p className="-mt-1 text-xs text-ivory/50">
+            Visitors fill this on the website and land straight on the board
+            as a new record — plus an Inbox notification. Position it via
+            Page sections &amp; order above.
+          </p>
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="form_enabled"
+              defaultChecked={config.form_enabled === true}
+              className="h-4 w-4 accent-violet"
+            />
+            Show the signup form on the site
+          </label>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="form_title" className="mb-1 block text-sm font-medium">
+                Form heading
+              </label>
+              <input
+                id="form_title"
+                name="form_title"
+                placeholder="Join us"
+                defaultValue={config.form_title ?? ''}
+                className={inputClass}
+              />
+            </div>
+            <div>
+              <label htmlFor="form_button" className="mb-1 block text-sm font-medium">
+                Button label
+              </label>
+              <input
+                id="form_button"
+                name="form_button"
+                placeholder="Sign up"
+                defaultValue={config.form_button ?? ''}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div>
+            <label htmlFor="form_intro" className="mb-1 block text-sm font-medium">
+              Intro line (optional)
+            </label>
+            <input
+              id="form_intro"
+              name="form_intro"
+              defaultValue={config.form_intro ?? ''}
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="form_success" className="mb-1 block text-sm font-medium">
+              Thank-you message
+            </label>
+            <input
+              id="form_success"
+              name="form_success"
+              placeholder="Thank you — we'll be in touch soon!"
+              defaultValue={config.form_success ?? ''}
+              className={inputClass}
+            />
+          </div>
+
           <h2 className={groupClass}>FAQ</h2>
           <FaqListEditor name="faq" initial={JSON.stringify(config.faq ?? [])} />
 

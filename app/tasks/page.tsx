@@ -1,11 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
-import {
-  addTask,
-  updateTaskStatus,
-  deleteTask,
-  requireOrg,
-} from '@/lib/actions'
+import { addTask, updateTaskStatus, deleteTask } from '@/lib/actions'
 import { Header } from '@/components/Header'
+import { getMembership, hasRole } from '@/lib/permissions'
 import type { Client, Profile, Task, TaskStatus } from '@/types/database'
 
 const inputClass =
@@ -18,7 +14,11 @@ const STATUS_META: Record<TaskStatus, { label: string; next?: TaskStatus; nextLa
 }
 
 export default async function TasksPage() {
-  await requireOrg()
+  const m = await getMembership()
+  const canEdit = hasRole(m, 'editor')
+  const departments = m.crmConfig.departments ?? []
+  const deptName = (key: string | null) =>
+    departments.find((d) => d.key === key)?.name ?? null
   const supabase = await createClient()
 
   const [{ data: tasks }, { data: members }, { data: records }] =
@@ -35,7 +35,13 @@ export default async function TasksPage() {
         .order('company_name'),
     ])
 
-  const taskList = (tasks ?? []) as Task[]
+  const allTasks = (tasks ?? []) as Task[]
+  const taskList =
+    m.role === 'admin'
+      ? allTasks
+      : allTasks.filter(
+          (t) => t.department === null || t.department === m.department
+        )
   const memberList = (members ?? []) as Pick<Profile, 'id' | 'full_name' | 'email'>[]
   const recordList = (records ?? []) as Pick<Client, 'id' | 'company_name'>[]
 
@@ -59,6 +65,7 @@ export default async function TasksPage() {
           Everything the team needs to do, in one list.
         </p>
 
+        {canEdit && (
         <form
           action={addTask}
           className="mb-8 space-y-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3"
@@ -84,6 +91,14 @@ export default async function TasksPage() {
               className={inputClass}
               aria-label="Due date"
             />
+            <select name="department" className={inputClass} aria-label="Department">
+              <option value="">All departments</option>
+              {departments.map((d) => (
+                <option key={d.key} value={d.key}>
+                  {d.name}
+                </option>
+              ))}
+            </select>
             <select name="client_id" className={inputClass} aria-label="Linked record">
               <option value="">No linked record</option>
               {recordList.map((r) => (
@@ -100,6 +115,7 @@ export default async function TasksPage() {
             </button>
           </div>
         </form>
+        )}
 
         {statuses.map((status) => {
           const group = taskList.filter((t) => t.status === status)
@@ -138,13 +154,14 @@ export default async function TasksPage() {
                             memberName(task.assignee_id),
                             task.due_date &&
                               `due ${task.due_date}${overdue ? ' · overdue' : ''}`,
+                            deptName(task.department),
                             recordName(task.client_id),
                           ]
                             .filter(Boolean)
                             .join(' · ') || 'Unassigned'}
                         </p>
                       </div>
-                      {meta.next && (
+                      {canEdit && meta.next && (
                         <form action={updateTaskStatus}>
                           <input type="hidden" name="task_id" value={task.id} />
                           <input type="hidden" name="status" value={meta.next} />
@@ -156,6 +173,7 @@ export default async function TasksPage() {
                           </button>
                         </form>
                       )}
+                      {canEdit && (
                       <form action={deleteTask}>
                         <input type="hidden" name="task_id" value={task.id} />
                         <button
@@ -166,6 +184,7 @@ export default async function TasksPage() {
                           ×
                         </button>
                       </form>
+                      )}
                     </div>
                   )
                 })}
