@@ -184,6 +184,17 @@ export default async function ClientSitePage({
     c = themePalette(config.theme ?? 'light')
   }
 
+  // Optional explicit text colour override (muted/faint derive via alpha).
+  const textOverride = config.text_color?.trim()
+  if (textOverride && luminance(textOverride) !== null) {
+    c = {
+      ...c,
+      text: textOverride,
+      muted: `${textOverride}9E`,
+      faint: `${textOverride}6B`,
+    }
+  }
+
   const { google, stack } = resolveFont(config.font, config.font_custom)
 
   // Per-text-type typography (headings / body / buttons). Each may override

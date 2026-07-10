@@ -59,6 +59,7 @@ export async function Header() {
         .from('sites')
         .select('slug')
         .eq('organization_id', profile.organization_id)
+        .limit(1)
         .maybeSingle(),
     ])
     unread = count ?? 0
@@ -71,7 +72,7 @@ export async function Header() {
         <Link href="/pipeline">
           <Wordmark />
         </Link>
-        <nav className="flex items-center gap-5 text-sm">
+        <nav className="flex items-center gap-5 overflow-x-auto whitespace-nowrap text-sm">
           <Link href="/pipeline" className="font-medium">
             {isClancy ? 'Pipeline' : 'Board'}
           </Link>
@@ -91,12 +92,21 @@ export async function Header() {
                   Customize
                 </Link>
               )}
+              {ownSiteSlug && (
+                <a
+                  href={`/s/${ownSiteSlug}`}
+                  target="_blank"
+                  className="text-ivory/60 hover:text-ivory"
+                >
+                  View site
+                </a>
+              )}
               {isWorkspaceAdmin && ownSiteSlug && (
                 <Link
                   href={`/sites/${ownSiteSlug}/edit`}
                   className="text-ivory/60 hover:text-ivory"
                 >
-                  Website
+                  Edit website
                 </Link>
               )}
             </>
@@ -114,6 +124,11 @@ export async function Header() {
           {isEditor && (
             <Link href="/stages" className="text-ivory/60 hover:text-ivory">
               Stages
+            </Link>
+          )}
+          {isEditor && (
+            <Link href="/broadcasts" className="text-ivory/60 hover:text-ivory">
+              Broadcasts
             </Link>
           )}
           {profile?.is_platform_admin && (

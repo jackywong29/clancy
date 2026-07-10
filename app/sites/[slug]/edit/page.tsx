@@ -63,9 +63,19 @@ export default async function SiteEditPage({
               Site editor · /s/{site.slug}
             </p>
           </div>
-          <Link href="/sites" className="text-sm text-ivory/60 hover:text-ivory">
-            ← All sites
-          </Link>
+          {m.isPlatformAdmin ? (
+            <Link href="/sites" className="text-sm text-ivory/60 hover:text-ivory">
+              ← All sites
+            </Link>
+          ) : (
+            <a
+              href={`/s/${site.slug}`}
+              target="_blank"
+              className="text-sm text-ivory/60 hover:text-ivory"
+            >
+              View live site →
+            </a>
+          )}
         </div>
 
         {flags.saved && (
@@ -191,6 +201,20 @@ export default async function SiteEditPage({
                 Accent colour
               </label>
               <ColorField name="accent" initial={config.accent ?? '#5646E5'} />
+              <div className="mt-3">
+                <label className="mb-1 block text-sm font-medium">
+                  Text colour (optional)
+                </label>
+                <p className="mb-1 text-xs text-ivory/50">
+                  Leave blank to auto-pick from the theme/background.
+                </p>
+                <ColorField
+                  name="text_color"
+                  initial={config.text_color ?? ''}
+                  allowEmpty
+                  placeholder="auto"
+                />
+              </div>
             </div>
             <div>
               <label htmlFor="theme" className="mb-1 block text-sm font-medium">

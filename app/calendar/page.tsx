@@ -4,6 +4,7 @@ import { deleteEvent } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { getMembership, hasRole } from '@/lib/permissions'
 import { expandEvents } from '@/lib/recurrence'
+import { klNow, klToday } from '@/lib/dates'
 import { EventForm } from '@/components/calendar/EventForm'
 import type { CalendarEvent, Client, Task } from '@/types/database'
 
@@ -36,7 +37,7 @@ export default async function CalendarPage({
     categories.find((c) => c.key === key)?.color ?? '#6D5EF0'
   const supabase = await createClient()
 
-  const now = new Date()
+  const now = klNow()
   const param = /^\d{4}-\d{2}$/.test(flags.m ?? '') ? flags.m! : ym(now)
   const [year, month] = param.split('-').map(Number)
 
@@ -44,7 +45,7 @@ export default async function CalendarPage({
   const firstDay = `${param}-01`
   const lastDay = `${param}-${String(daysInMonth).padStart(2, '0')}`
   const startOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7
-  const today = new Date().toISOString().slice(0, 10)
+  const today = klToday()
 
   const [{ data: events }, { data: tasks }, { data: records }] =
     await Promise.all([

@@ -33,6 +33,14 @@ How the business runs, start to finish. For Jacky and Claude — read this to re
 - Claude works in `~/Desktop/Claude/crm-platform` — draft-first for anything nontrivial, typecheck before push, push = production deploy (gated).
 - Database changes: Claude pastes SQL in chat → Jacky runs it in Supabase SQL Editor → the file also lands in `supabase/` for history.
 
+## Client workspace cheat-sheet (what each client's team sees)
+- **Board** — their records (custom fields via Customize) moving through their stages
+- **View site / Edit website** — their public site (edit = admins only)
+- **Tasks / Calendar** — department-scoped tasks; colour-coded events with repeats and alerts (module toggles on Customize)
+- **Broadcasts** — email announcements to records (BCC mail-app batches for now)
+- **Inbox** — website signups and alerts · **Team** — members, roles (renameable), invites, departments, calendar categories (admins only)
+- Roles: view-only / edit / admin — set on Team, labels renameable per business
+
 ## Admin how-tos
 
 - **Grant/revoke access:** Team page (new signups land in "no access" until granted — including future client staff, who'll get their own workspace).

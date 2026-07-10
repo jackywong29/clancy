@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { addTask, updateTaskStatus, deleteTask } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { getMembership, hasRole } from '@/lib/permissions'
+import { klToday } from '@/lib/dates'
 import type { Client, Profile, Task, TaskStatus } from '@/types/database'
 
 const inputClass =
@@ -53,7 +54,7 @@ export default async function TasksPage() {
   const recordName = (id: string | null) =>
     recordList.find((r) => r.id === id)?.company_name ?? null
 
-  const today = new Date().toISOString().slice(0, 10)
+  const today = klToday()
   const statuses: TaskStatus[] = ['pending', 'in_progress', 'done']
 
   return (

@@ -101,6 +101,7 @@ export interface SiteConfig {
   address?: string
   hours?: string
   accent?: string
+  text_color?: string
   theme?: SiteTheme
   bg_color?: string
   bg_image_url?: string | null
@@ -241,5 +242,17 @@ export interface NotificationItem {
   body: string | null
   link: string | null
   read: boolean
+  created_at: string
+}
+
+export interface Broadcast {
+  id: string
+  organization_id: string
+  subject: string
+  body: string
+  audience: string
+  recipient_count: number
+  status: string
+  created_by: string | null
   created_at: string
 }

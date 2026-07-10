@@ -429,6 +429,7 @@ export async function updateSite(formData: FormData) {
     logo_position: text('logo_position') === 'center' ? 'center' : 'left',
     logo_url: text('logo_url') || null,
     favicon_url: text('favicon_url') || null,
+    text_color: text('text_color'),
     hero_image_url: text('hero_image_url') || null,
     book_label: text('book_label'),
     service_book_label: text('service_book_label'),
@@ -862,4 +863,73 @@ export async function markAllNotificationsRead() {
 
   revalidatePath('/notifications')
   redirect('/notifications')
+}
+
+export async function createBroadcast(formData: FormData) {
+  const supabase = await createClient()
+  const m = await requireEditorOrg()
+
+  const subject = String(formData.get('subject') ?? '').trim()
+  const body = String(formData.get('body') ?? '').trim()
+  const audience = String(formData.get('audience') ?? 'all')
+
+  if (!subject || !body) {
+    redirect('/broadcasts?error=1&msg=Subject%20and%20message%20are%20required')
+  }
+
+  let query = supabase
+    .from('clients')
+    .select('id', { count: 'exact', head: true })
+    .not('email', 'is', null)
+    .neq('email', '')
+  if (audience.startsWith('stage:')) {
+    query = query.eq('stage_id', audience.slice(6))
+  }
+  const { count } = await query
+
+  const { data: created, error } = await supabase
+    .from('broadcasts')
+    .insert({
+      organization_id: m.orgId,
+      subject,
+      body,
+      audience,
+      recipient_count: count ?? 0,
+      created_by: m.userId,
+    })
+    .select('id')
+    .single()
+
+  if (error || !created) {
+    redirect(`/broadcasts?error=1&msg=${encodeURIComponent(error?.message ?? 'failed')}`)
+  }
+  revalidatePath('/broadcasts')
+  redirect(`/broadcasts/${created.id}`)
+}
+
+export async function markBroadcastSent(formData: FormData) {
+  const supabase = await createClient()
+  await requireEditorOrg()
+
+  const broadcastId = String(formData.get('broadcast_id') ?? '')
+  if (broadcastId) {
+    await supabase
+      .from('broadcasts')
+      .update({ status: 'sent' })
+      .eq('id', broadcastId)
+  }
+  revalidatePath('/broadcasts')
+  redirect('/broadcasts?saved=1')
+}
+
+export async function deleteBroadcast(formData: FormData) {
+  const supabase = await createClient()
+  await requireEditorOrg()
+
+  const broadcastId = String(formData.get('broadcast_id') ?? '')
+  if (broadcastId) {
+    await supabase.from('broadcasts').delete().eq('id', broadcastId)
+  }
+  revalidatePath('/broadcasts')
+  redirect('/broadcasts')
 }
