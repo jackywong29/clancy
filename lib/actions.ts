@@ -428,6 +428,7 @@ export async function updateSite(formData: FormData) {
     type_buttons: typography('buttons'),
     logo_position: text('logo_position') === 'center' ? 'center' : 'left',
     logo_url: text('logo_url') || null,
+    favicon_url: text('favicon_url') || null,
     hero_image_url: text('hero_image_url') || null,
     book_label: text('book_label'),
     service_book_label: text('service_book_label'),
@@ -661,6 +662,13 @@ export async function addEvent(formData: FormData) {
     return v === '' ? null : v
   }
   const month = startsOn.slice(0, 7)
+  const allDay = formData.get('all_day') === 'on'
+  const alertDepartments = formData.getAll('alert_departments').map(String)
+  const alertRaw = String(formData.get('alert_minutes') ?? '').trim()
+  const repeat = String(formData.get('repeat') ?? 'none')
+  const validRepeat = ['none', 'daily', 'weekly', 'biweekly', 'monthly', 'yearly'].includes(repeat)
+    ? repeat
+    : 'none'
 
   if (title && startsOn) {
     await supabase.from('events').insert({
@@ -669,7 +677,13 @@ export async function addEvent(formData: FormData) {
       details: optional('details'),
       client_id: optional('client_id'),
       starts_on: startsOn,
-      event_time: optional('event_time'),
+      ends_on: optional('ends_on') ?? startsOn,
+      event_time: allDay ? null : optional('event_time'),
+      end_time: allDay ? null : optional('end_time'),
+      all_day: allDay,
+      repeat: validRepeat,
+      alert_departments: alertDepartments,
+      alert_minutes: alertRaw === '' ? null : Number(alertRaw),
       category: optional('category'),
       created_by: user?.id ?? null,
     })

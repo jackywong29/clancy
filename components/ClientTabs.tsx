@@ -5,12 +5,13 @@ export function ClientTabs({
   active,
 }: {
   clientId: string
-  active: 'details' | 'intake' | 'brief'
+  active: 'details' | 'intake' | 'brief' | 'crm-brief'
 }) {
   const tabs = [
     { key: 'details', label: 'Details', href: `/clients/${clientId}` },
     { key: 'intake', label: 'Intake', href: `/clients/${clientId}/intake` },
-    { key: 'brief', label: 'Build brief', href: `/clients/${clientId}/brief` },
+    { key: 'brief', label: 'Website brief', href: `/clients/${clientId}/brief` },
+    { key: 'crm-brief', label: 'CRM brief', href: `/clients/${clientId}/crm-brief` },
   ]
 
   return (

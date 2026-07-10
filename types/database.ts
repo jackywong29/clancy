@@ -110,6 +110,7 @@ export interface SiteConfig {
   type_body?: TypographyStyle
   type_buttons?: TypographyStyle
   logo_url?: string | null
+  favicon_url?: string | null
   logo_position?: LogoPosition
   hero_image_url?: string | null
   book_label?: string
@@ -175,10 +176,24 @@ export interface CalendarEvent {
   details: string | null
   starts_on: string
   event_time: string | null
+  ends_on: string | null
+  end_time: string | null
+  all_day: boolean
+  repeat: EventRepeat
+  alert_departments: string[]
+  alert_minutes: number | null
   category: string | null
   created_by: string | null
   created_at: string
 }
+
+export type EventRepeat =
+  | 'none'
+  | 'daily'
+  | 'weekly'
+  | 'biweekly'
+  | 'monthly'
+  | 'yearly'
 
 export interface Intake {
   id: string

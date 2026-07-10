@@ -1,12 +1,11 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { addEvent, deleteEvent } from '@/lib/actions'
+import { deleteEvent } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { getMembership, hasRole } from '@/lib/permissions'
+import { expandEvents } from '@/lib/recurrence'
+import { EventForm } from '@/components/calendar/EventForm'
 import type { CalendarEvent, Client, Task } from '@/types/database'
-
-const inputClass =
-  'rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
 
 function ym(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
@@ -32,6 +31,7 @@ export default async function CalendarPage({
   const m = await getMembership()
   const canEdit = hasRole(m, 'editor')
   const categories = m.crmConfig.calendar_categories ?? []
+  const departments = m.crmConfig.departments ?? []
   const categoryColor = (key: string | null) =>
     categories.find((c) => c.key === key)?.color ?? '#6D5EF0'
   const supabase = await createClient()
@@ -51,7 +51,6 @@ export default async function CalendarPage({
       supabase
         .from('events')
         .select('*')
-        .gte('starts_on', firstDay)
         .lte('starts_on', lastDay)
         .order('starts_on'),
       supabase
@@ -63,7 +62,8 @@ export default async function CalendarPage({
       supabase.from('clients').select('id, company_name').order('company_name'),
     ])
 
-  const eventList = (events ?? []) as CalendarEvent[]
+  const rawEvents = (events ?? []) as CalendarEvent[]
+  const occurrences = expandEvents(rawEvents, firstDay, lastDay)
   const taskList = (tasks ?? []) as Task[]
   const recordList = (records ?? []) as Pick<Client, 'id' | 'company_name'>[]
 
@@ -117,7 +117,7 @@ export default async function CalendarPage({
           ))}
           {cells.map((day, i) => {
             const ds = day ? dateStr(day) : null
-            const dayEvents = ds ? eventList.filter((e) => e.starts_on === ds) : []
+            const dayEvents = ds ? occurrences.filter((e) => e.occurrenceDate === ds) : []
             const dayTasks = ds ? taskList.filter((t) => t.due_date === ds) : []
             return (
               <div
@@ -149,10 +149,20 @@ export default async function CalendarPage({
                         >
                           <input type="hidden" name="event_id" value={event.id} />
                           <span>
-                            {event.event_time && (
-                              <span className="opacity-70">{event.event_time} </span>
+                            {event.all_day ? (
+                              <span className="opacity-70">all day </span>
+                            ) : (
+                              event.event_time && (
+                                <span className="opacity-70">
+                                  {event.event_time}
+                                  {event.end_time ? `–${event.end_time}` : ''}{' '}
+                                </span>
+                              )
                             )}
                             {event.title}
+                            {event.repeat !== 'none' && (
+                              <span className="opacity-50"> ↻</span>
+                            )}
                           </span>
                           {canEdit && (
                             <button
@@ -201,56 +211,14 @@ export default async function CalendarPage({
         )}
 
         {canEdit && (
-        <form
-          action={addEvent}
-          className="mt-6 flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3"
-        >
-          <input
-            name="title"
-            required
-            placeholder="New event…"
-            className={`${inputClass} flex-1`}
+          <EventForm
+            defaultDate={param === ym(now) ? today : firstDay}
+            categories={categories}
+            departments={departments}
+            records={recordList}
           />
-          <input
-            name="starts_on"
-            type="date"
-            required
-            defaultValue={param === ym(now) ? today : firstDay}
-            className={inputClass}
-            aria-label="Date"
-          />
-          <input
-            name="event_time"
-            placeholder="7:30pm"
-            className={`${inputClass} w-24`}
-            aria-label="Time"
-          />
-          {categories.length > 0 && (
-            <select name="category" className={inputClass} aria-label="Category">
-              <option value="">No category</option>
-              {categories.map((cat) => (
-                <option key={cat.key} value={cat.key}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-          )}
-          <select name="client_id" className={inputClass} aria-label="Linked record">
-            <option value="">No linked record</option>
-            {recordList.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.company_name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
-          >
-            Add event
-          </button>
-        </form>
         )}
+
         <p className="mt-3 text-xs text-ivory/50">
           Events show in violet; open tasks with due dates show as ☐. Hover an
           event to delete it.

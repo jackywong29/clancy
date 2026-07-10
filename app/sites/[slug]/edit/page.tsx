@@ -307,6 +307,21 @@ export default async function SiteEditPage({
                   <option value="center">Centre</option>
                 </select>
               </div>
+              <div className="mt-3">
+                <label className="mb-1 block text-sm font-medium">
+                  Browser tab icon (favicon)
+                </label>
+                <p className="mb-2 text-xs text-ivory/50">
+                  Shows in the browser tab. A small square image works best —
+                  upload and it&apos;s live.
+                </p>
+                <SiteLogoUpload
+                  name="favicon_url"
+                  initial={config.favicon_url ?? ''}
+                  orgId={orgId}
+                  slug={`${site.slug}-favicon`}
+                />
+              </div>
             </div>
           </div>
 

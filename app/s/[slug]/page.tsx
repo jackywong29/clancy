@@ -249,6 +249,9 @@ export default async function ClientSitePage({
     >
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={fontHref} />
+      {config.favicon_url?.trim() && (
+        <link rel="icon" href={config.favicon_url} />
+      )}
 
       {bgImage && (
         <>

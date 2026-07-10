@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Client } from '@/types/database'
+import type { Client, CrmConfig } from '@/types/database'
 
 // The client-intake checklist as data (see client-intake-checklist.md).
 // Changing sections/fields here never needs a DB migration — answers live
@@ -270,3 +270,111 @@ export const CLIENT_FACING_SECTIONS: IntakeSection[] = INTAKE_SECTIONS.map(
 export const CLIENT_FACING_KEYS = new Set(
   CLIENT_FACING_SECTIONS.flatMap((s) => s.fields.map((f) => `${s.key}.${f.key}`))
 )
+
+function parseSteps(raw: string | undefined): string[] {
+  if (!raw) return []
+  try {
+    const v = JSON.parse(raw)
+    return Array.isArray(v) ? v.filter((s) => String(s).trim() !== '') : []
+  } catch {
+    return raw.trim() ? [raw.trim()] : []
+  }
+}
+
+// The CRM build brief — the internal-management analogue of buildBrief. Hands
+// Claude everything needed to configure the client's back-end CRM: record
+// type, pipeline stages (from their real process), departments, and the
+// fields worth tracking. Suggestions are flagged so Jacky confirms before I
+// apply them.
+export function buildCrmBrief(
+  client: Client,
+  data: IntakeData,
+  config: CrmConfig
+): string {
+  const lines: string[] = []
+  const get = (k: string) => (data[k] ?? '').trim()
+
+  lines.push(`# CRM build brief — ${client.company_name}`)
+  lines.push('')
+  lines.push(
+    `Generated ${new Date().toISOString().slice(0, 10)} from Clancy HQ. This configures their internal back-end (records, stages, departments) — the website has its own brief.`
+  )
+  lines.push('')
+
+  lines.push('## What the business does')
+  lines.push(get('basics.description') || '_Not captured in intake yet._')
+  lines.push('')
+
+  lines.push('## Record type')
+  const singular = config.record_singular || ''
+  const plural = config.record_plural || ''
+  if (singular) {
+    lines.push(`Currently configured as **${singular} / ${plural}**.`)
+  } else {
+    lines.push(
+      '_Not set yet._ Decide what one row on their board represents (e.g. Visitor, Job, Customer, Order) and its plural.'
+    )
+  }
+  lines.push('')
+
+  lines.push('## Pipeline stages (from their real process)')
+  const steps = parseSteps(data['workflow.pipeline_steps'])
+  if (steps.length > 0) {
+    lines.push(
+      'From the intake, their process from first contact to done — use these as the board stages:'
+    )
+    steps.forEach((s, i) => lines.push(`${i + 1}. ${s}`))
+  } else {
+    lines.push(
+      '_No process captured._ Ask how a record moves from first contact to finished, and turn each step into a stage.'
+    )
+  }
+  lines.push('')
+
+  lines.push('## Fields to track per record')
+  const existing = Array.isArray(config.fields) ? config.fields : []
+  if (existing.length > 0) {
+    lines.push('Already configured:')
+    for (const f of existing) {
+      lines.push(`- ${f.label} (${f.type}${f.key ? `, key: ${f.key}` : ''})`)
+    }
+  } else {
+    lines.push(
+      '_None beyond the built-ins (name, phone, email, notes)._ Add the details this business needs — infer from the description and services, then confirm with Jacky.'
+    )
+  }
+  lines.push('')
+
+  lines.push('## Team & departments')
+  lines.push(`**Staff / who needs access:** ${get('workflow.staff') || '—'}`)
+  const depts = config.departments ?? []
+  if (depts.length > 0) {
+    lines.push(`**Departments set:** ${depts.map((d) => d.name).join(', ')}`)
+  } else {
+    lines.push(
+      '**Departments:** none yet — if different teams should only see their own tasks, set them up on the Team page.'
+    )
+  }
+  lines.push('')
+
+  lines.push('## Follow-ups & where leads are lost')
+  lines.push(`**Follow-ups they do / want:** ${get('workflow.followups') || '—'}`)
+  lines.push(`**Where leads get lost today:** ${get('workflow.lost_leads') || '—'}`)
+  lines.push('')
+
+  lines.push('## Modules')
+  const mods = config.modules ?? {}
+  lines.push(`- Tasks: ${mods.tasks ? 'on' : 'off'}`)
+  lines.push(`- Calendar: ${mods.calendar ? 'on' : 'off'}`)
+  lines.push(
+    '(Turn on whichever the business needs on the Customize page.)'
+  )
+  lines.push('')
+
+  lines.push('## How to build from this')
+  lines.push(
+    '1. Set the record name + stages on Customize + Stages. 2. Add the tracked fields. 3. Set departments/roles on Team if needed. 4. Enable Tasks/Calendar as required. 5. Enable the website signup form so new records arrive automatically.'
+  )
+
+  return lines.join('\n')
+}
