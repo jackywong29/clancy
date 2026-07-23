@@ -1,0 +1,443 @@
+================================================================================
+CLANCY — COMPLETE PROJECT OVERVIEW
+Master reference for expanding and scaling the business
+Last updated: 15 July 2026
+================================================================================
+
+HOW TO USE THIS FILE
+  A single self-contained summary of the whole venture — business model,
+  product, tech, operations, economics, growth levers, risks, and what to do
+  next. Written so it can be read cold: by you months from now, by an advisor
+  or first hire, or pasted into an AI conversation for strategy help.
+
+  Detailed working docs live beside this file (see ASSETS at the end).
+
+
+================================================================================
+1. SNAPSHOT
+================================================================================
+
+WHAT IT IS
+  Clancy is an AI-powered agency and software platform for local businesses in
+  Kuala Lumpur, Malaysia. Each client gets two things built and managed for
+  them:
+    1. A professional public website (their marketing front end)
+    2. An internal CRM / management system (their operational back end)
+
+  It is a genuine multi-tenant SaaS platform — one shared codebase and
+  database, every client is an isolated "workspace" — sold as a productized
+  monthly subscription with a managed service wrapped around it.
+
+POSITIONING
+  "Built in days. Managed for you."
+  Premium, personal, small-by-design. The competitive edge is not features —
+  it is speed of delivery (AI-assisted builds in days instead of agency
+  months) plus a genuinely personal managed service. Clients never touch code
+  and never manage the software themselves during their first year.
+
+IMPORTANT WORDING DISCIPLINE
+  Clancy is an "AI agency" because AI is used to BUILD and MAINTAIN client
+  systems fast. There is deliberately NO AI inside the client product — no
+  chatbots, no AI-written replies. This was an explicit decision (7 Jul 2026)
+  to remove per-client AI running costs and AI liability. Never market AI
+  features inside the client product.
+
+STATUS AS OF 15 JULY 2026
+  - Platform: built and live at clancy-hq.vercel.app (10 build batches,
+    ~40 commits, 16 database migrations)
+  - Live tenants: Clancy's own workspace + SGCKL (a Kuala Lumpur church) —
+    first real client site, live at /s/sgckl
+  - Revenue: no confirmed paying client yet — commercial terms with SGCKL
+    still to be formalised
+  - Brand: identity, logo, launch content all created; Instagram @clancy.hq
+    and clancy.hq.ai@gmail.com secured; PUBLIC LAUNCH HAS NOT HAPPENED YET
+  - Company: not yet registered as a legal entity
+  - Founder time: ~1–2 days per week
+
+
+================================================================================
+2. FOUNDER CONTEXT
+================================================================================
+
+  Jacky Wong — Director of MegaStar Arena, a concert venue and multipurpose
+  hall in Kuala Lumpur, inherited from his father. Runs it full time with
+  department heads across Finance, Operations, Tech, Sales/Marketing and
+  Events (15–50 people).
+
+  Clancy is the second venture, currently part time at ~1–2 days/week, with
+  the stated ambition of becoming his full-time business on a five-year
+  horizon.
+
+  Relevant strengths: operationally technical (runs his own database
+  migrations, manages hosting and infrastructure, thinks at architecture
+  level) but does not write code — an AI writes all of it. Already runs a
+  real company with staff, so the operational instincts are proven.
+
+  ORIGIN OF THE IDEA: he first built an internal CRM for MegaStar Arena. It
+  worked, staff used it daily, and the insight followed — every local business
+  has the same problem (customers everywhere, tracked nowhere). Clancy
+  productizes that lesson. The MegaStar CRM remains a separate system and is
+  used as the live proof-of-concept in sales demos.
+
+
+================================================================================
+3. THE OFFER — WHAT A CLIENT ACTUALLY GETS
+================================================================================
+
+  A) A PUBLIC WEBSITE
+     Fully configurable per client, no bespoke code: theme (light/dark),
+     custom colours, background image, curated Google fonts with per-text-type
+     typography, logo and browser-tab icon, hero, About section, Services with
+     prices, photo gallery, location/hours, FAQ, plus unlimited custom
+     sections — all reorderable. Booking and contact via WhatsApp deep-link or
+     email. A signup form that feeds straight into their CRM.
+
+  B) AN INTERNAL CRM
+     - Configurable records: the business decides what a record is called
+       (Visitor / Job / Customer / Order) and what fields it holds
+     - A pipeline board with their own stages, matching how they actually work
+     - Tasks with assignees, due dates, and department-scoped visibility
+     - Calendar with colour-coded categories, recurring events, all-day
+       events and department alerts
+     - People directory (everyone: records from the website, manually added
+       records, and staff)
+     - Broadcasts — email announcements and newsletters to records or team,
+       segmented by stage, role or department
+     - Inbox notifications (e.g. new website signups)
+     - Team management: three permission levels (view / edit / admin) with
+       renameable labels per business, email invites, departments
+
+  C) THE MANAGED SERVICE
+     All updates, changes and maintenance handled personally by Jacky during
+     the contract. Client requests are batched weekly, not on demand.
+
+
+================================================================================
+4. BUSINESS MODEL
+================================================================================
+
+PRICING (confirmed 7 Jul 2026)
+  Setup fee ................ RM 0 (free — worth ~RM 5,000 if quoted separately)
+  Managed tier ............. RM 1,200 / month
+  Self-Serve tier .......... RM 500 / month
+  Contract ................. 12-month lock-in
+  Pilot variant ............ 50% off year one (RM 600/month) for the first
+                             1–2 clients, in exchange for feedback and a
+                             testimonial
+
+  Every client starts on Managed for year one (bundled into the lock-in). At
+  renewal they either sign another Managed year or drop to Self-Serve — the
+  same platform, same data, they just drive it themselves and Jacky stops
+  actively managing it. This is a plan/tier flip, NOT an infrastructure
+  handover — no export or migration work is required or promised.
+
+  Rationale for the free setup + lock-in pairing: free setup removes the
+  buying objection; the 12 months is how the setup investment is earned back.
+  Never waive the lock-in — free setup with no lock-in puts all risk on Clancy.
+
+CAPACITY MATH (this is the real constraint, not the software)
+  ~3–5 Managed clients per part-time solo founder
+  ~15–20 Managed clients per full-time account manager
+  Unlimited clients from the platform's perspective — the architecture is
+  multi-tenant, so software is never the ceiling. Delivery hours are.
+
+  Marketing must always state the TRUE current capacity. Scarcity is real
+  ("limited managed slots") and must never be faked.
+
+
+================================================================================
+5. SALES MOTION
+================================================================================
+
+  1. DEMO — show the live MegaStar Arena CRM. Framing: "This runs my venue
+     every day. I'm not selling software I read about; I'm selling the system
+     I run my own business on."
+  2. DISCOVER — open with their pain, not the product. Key questions: How do
+     new customers find you? What happens when someone messages at 11pm? How
+     do you track a customer from first message to job done? When did a lead
+     last disappear?
+  3. SKETCH — draw THEIR process as a pipeline on paper. Seeing their own
+     business as a pipeline is the hook.
+  4. INTAKE — a single 45–60 minute conversation covering their business,
+     branding, services, and workflow. (A private link lets the client fill
+     the easy parts themselves on their phone.)
+  5. TRIAL — build a live site + system in days and hand them the link:
+     "It's live. Try booking yourself in."
+  6. CLOSE — free setup, RM 1,200/month, 12 months.
+  7. ONBOARD — go live within 2–3 weeks of signing; 30-minute handover call
+     with their staff.
+  8. RENEW — at month 11, renew Managed or move to Self-Serve.
+
+  OBJECTION HANDLING (full scripts in sales-proposal-template.md)
+  - "Too expensive" → compare to one admin salary, or to an agency website
+    (RM 3–8k) + hosting + booking tool + their own time
+  - "What if you disappear?" → your data is yours; after year one you can run
+    it self-serve
+  - "We use WhatsApp already" → keep it; this catches the customers who don't
+    message you — the ones googling at night
+  - "A year is long" → that's what makes the RM 5k setup free
+
+
+================================================================================
+6. HOW THE WORK ACTUALLY GETS DONE (the operating leverage)
+================================================================================
+
+  This is the part that makes one part-time person able to deliver
+  agency-grade work, and it is the thing to protect as the business scales.
+
+  Everything about a client lives in Clancy itself. Two "build briefs" are
+  generated automatically from one intake:
+
+      Client intake (one conversation)
+                    |
+        +-----------+-----------+
+        |                       |
+   Website brief            CRM brief
+        |                       |
+   site config             crm config
+        |                       |
+   their public site      their staff's board
+
+  Jacky copies a brief, pastes it to Claude with an instruction ("build the
+  trial for X"), and the system gets built or updated. File uploads (logos,
+  photos) travel with the brief as time-limited download links, so the AI can
+  fetch real assets.
+
+  Ongoing client requests arrive by WhatsApp, get collected against the client
+  record, and are batched weekly into a single instruction. This is why the
+  managed promise is deliverable at all.
+
+  THE RULE THAT MAKES SCALE POSSIBLE — "PRODUCT, NOT PROJECTS":
+  Every client request must land as reusable configuration or a platform
+  feature. Never a bespoke code fork for one client. This single discipline is
+  what separates a platform that reaches 150 clients from an agency that dies
+  at 20.
+
+
+================================================================================
+7. PLATFORM & TECHNOLOGY
+================================================================================
+
+  Stack ............ Next.js 16 (App Router, React Server Components),
+                     TypeScript, Tailwind CSS v4
+  Database/Auth .... Supabase (PostgreSQL) — Singapore region
+  Hosting .......... Vercel, auto-deploys from GitHub main branch
+  Email ............ Gmail SMTP via nodemailer (transitional; move to a
+                     proper email API such as Resend once a real domain is
+                     registered)
+  Repo ............. github.com/jackywong29/clancy
+  Live at .......... clancy-hq.vercel.app
+
+  ARCHITECTURE PRINCIPLES
+  - True multi-tenant from day one: one shared codebase and database, every
+    table scoped by organization_id with row-level security. One org = one
+    client. Adding client #100 requires no new infrastructure.
+  - Everything per-tenant configurable as DATA, not code: pipeline stages,
+    record types, custom fields, departments, roles, website layout — all
+    stored as JSON configuration. Changing what a client tracks never
+    requires a database migration or a code change.
+  - No hardcoded enum constraints in the database (a hard-won lesson from the
+    MegaStar CRM, where these repeatedly broke production).
+  - Deterministic automations (trigger + template + merge fields), never AI.
+
+  SECURITY POSTURE
+  - The wall BETWEEN businesses is enforced at the database layer (RLS) —
+    this is the strong boundary and it is solid.
+  - Permission levels WITHIN a workspace (view/edit/admin) are currently
+    enforced at the application layer. Fine for ordinary SME staff; should be
+    hardened to the database layer before any client with genuine
+    adversarial-insider risk.
+  - Malaysia's PDPA applies — Clancy stores clients' customers' personal data
+    on their behalf. Clients remain the data owner.
+
+
+================================================================================
+8. BRAND & MARKETING
+================================================================================
+
+  IDENTITY ("Direction C")
+    Graphite  #1E1D21   (primary dark)
+    Ivory     #F4EFE6   (text / light)
+    Violet    #6D5EF0   (accent — bridges agency, platform and client sites)
+    Wordmark: lowercase "clancy" with a violet full stop
+    Type: geometric sans; voice is premium-minimal, plain English, no hype
+
+  ACCOUNTS
+    Email ......... clancy.hq.ai@gmail.com
+    Instagram ..... @clancy.hq
+    Domain ........ clancy.my NOT yet registered (currently on a
+                    vercel.app address — register this; it matters for
+                    credibility, email deliverability and SEO)
+
+  CONTENT STRATEGY (planned, not yet launched)
+    Faceless, English-first, Instagram as the showroom and TikTok as reach.
+    Four content pillars: transformations (before/after), build speed
+    (timelapses), systems education (where leads get lost), and proof
+    (results, testimonials, the MegaStar story).
+    Nine launch posts are written; four design tiles are produced.
+    Rule: content is a byproduct of client work, never a separate job —
+    record everything while building; each client build yields 5–10 posts.
+    Ceiling: 2–4 hours/week while part time.
+    Do not launch the account until all nine posts are ready.
+
+
+================================================================================
+9. FIVE-YEAR PLAN (targets, not promises)
+================================================================================
+
+  YEAR 1 — PROVE IT
+    ~5 clients · ~RM 6k MRR · part time
+    Build the product, land 2 pilots then 3 full-price clients, launch the
+    brand. The metric that matters is renewal and referral, not revenue.
+
+  YEAR 2 — MAKE IT REPEATABLE
+    15–20 clients · ~RM 18k MRR · first freelance help
+    Second vertical live. Setup effort per client drops from weeks to ~2 days
+    as templates mature. Year-one clients hit renewal — first real retention
+    data. Product move: LHDN e-invoicing integration (now mandatory for
+    Malaysian businesses, badly served by SME tools — a genuine local moat).
+    *** THE FULL-TIME GATE SITS HERE. Proposed trigger: 3 consecutive months
+    at RM 18k+ MRR with monthly churn under 3%. Jacky must set the real
+    number — it has to make leaving a Director's income rational. ***
+
+  YEAR 3 — FULL-TIME AND FIRST TEAM
+    40–60 clients · ~RM 50k MRR · 1–2 hires
+    Cross the gate, go full time, and hire IMMEDIATELY. Going full time and
+    staying solo just moves the ceiling from 5 clients to 15. Hire #1 is an
+    account manager; Jacky moves to sales and product.
+
+  YEAR 4 — PLATFORM, NOT AGENCY
+    100–150 clients · ~RM 100k MRR · team of 3–5
+    Self-serve signup goes public — growth decouples from headcount.
+    Payments (FPX), accounting exports, WhatsApp Business API. Referral
+    channels open: accountants and marketing agencies reselling Clancy.
+
+  YEAR 5 — CHOOSE THE ENDGAME
+    250+ clients · RM 150k+ MRR · team of 6–10
+    Three doors, all kept open: a highly profitable lifestyle SaaS owned
+    outright, regional expansion (Singapore/Indonesia), or an exit.
+
+
+================================================================================
+10. SCALING LEVERS (ranked by leverage)
+================================================================================
+
+  1. LAUNCH THE MARKETING ENGINE — biggest untapped asset. Brand, content and
+     assets are all built and sitting unused. Nothing compounds until the
+     first post goes out.
+
+  2. GET TO PAID — one signed, paying, referenceable client changes
+     everything: it validates pricing, produces a testimonial, generates
+     content, and turns the five-year plan from theory into a trajectory.
+
+  3. VERTICAL TEMPLATE PACKS — the fastest route to lower delivery cost.
+     Snapshot a completed client's configuration (stages, fields, sections)
+     as a named template so the next client in that vertical starts 80%
+     pre-configured. Setup time is the whole scaling equation.
+     NOTE: the planned verticals were car workshops and F&B, but the first
+     real client is a CHURCH. Churches are a genuinely strong vertical —
+     recurring events, member retention pipelines, weekly communications,
+     tight referral networks between congregations. Worth reconsidering as
+     vertical #1 based on actual traction rather than the original plan.
+
+  4. TRACK HOURS PER CLIENT FROM CLIENT #1 — currently not measured. This
+     single number drives the full-time gate, the hiring trigger, and whether
+     the pricing works. Without it, scaling decisions are guesses.
+
+  5. SELF-SERVE TIER — the structural unlock that decouples growth from
+     headcount (planned year 4, could come earlier if demand appears).
+
+  6. REFERRAL CHANNELS — accountants and marketing agencies who already have
+     the trust of dozens of local businesses. One good partner outperforms
+     months of content.
+
+  7. HIRE AT THE RIGHT MOMENT — an account manager roughly quadruples
+     capacity. Hiring late is the classic failure; the hours-per-client log
+     is the early warning system.
+
+  8. LOCAL MOAT: LHDN E-INVOICING — mandatory compliance that global SME
+     tools handle badly. A real, defensible Malaysian advantage.
+
+  9. PACKAGING EXPANSION — additional sites, extra workspaces, add-on
+     modules, annual prepay discounts.
+
+
+================================================================================
+11. RISKS
+================================================================================
+
+  CHURN .............. SaaS economics die above ~3–4% monthly churn. Renewals
+                       are the year-1 and year-2 obsession.
+  THE AGENCY TRAP .... Custom per-client work feels helpful and kills scale.
+                       The product-not-projects rule exists for this.
+  TWO FULL-TIME JOBS . Years 2–3 danger zone. The revenue gate protects
+                       against jumping on hope — and against never jumping.
+  KEY-MAN RISK ....... Until operations are documented, Clancy is entirely in
+                       Jacky's head. Documentation is insurance.
+  HIRING TOO LATE .... Capacity fills silently.
+  NO ENTITY YET ...... Contracts should name the company, not Jacky
+                       personally. IP ownership and liability ring-fencing.
+  MSA ENTANGLEMENT ... Keep infrastructure, books and IP fully separate from
+                       MegaStar Arena. (Supabase and GitHub are already
+                       separate; the Vercel project still sits under a
+                       personal account named "MSA" — move it once the entity
+                       exists.)
+  PDPA ............... Real obligations once storing clients' customers' data.
+  EMAIL DELIVERABILITY  Gmail SMTP is transitional and rate-limited; a proper
+                       domain plus an email API is needed before volume.
+
+
+================================================================================
+12. IMMEDIATE NEXT ACTIONS
+================================================================================
+
+  COMMERCIAL
+    [ ] Formalise SGCKL — agreement signed, pilot or full pricing, PDPA
+        acknowledgment. Turn the first live client into the first paying one.
+    [ ] Register the company; move contracts and the Vercel project to it
+    [ ] Set the full-time gate number (the MRR at which going full time is
+        rational)
+
+  MARKETING
+    [ ] Register clancy.my and point the platform at it
+    [ ] Finish the remaining launch posts and LAUNCH Instagram
+    [ ] Ask SGCKL for a testimonial and permission to showcase their site
+
+  PRODUCT / OPERATIONS
+    [ ] Run the outstanding database migrations (015, 016)
+    [ ] Finish automated email setup (Gmail app password in hosting env vars)
+    [ ] Start logging hours per client from today
+    [ ] Snapshot SGCKL's configuration as the first vertical template
+    [ ] Commission the UI/UX redesign (see DESIGN_BRIEF.md)
+
+
+================================================================================
+13. ASSETS — WHERE EVERYTHING LIVES
+================================================================================
+
+  REPOSITORY (github.com/jackywong29/clancy, local: ~/Desktop/Claude/crm-platform)
+    CLAUDE.md ..................... canonical product spec + full build history
+    OPERATIONS.md ................. how the business runs, stage by stage
+    five-year-plan.md ............. year-by-year targets, gate, risks
+    branding-marketing.md ......... identity, voice, content system
+    launch-posts.md ............... the 9 launch posts + pre-launch checklist
+    client-intake-checklist.md .... everything to collect from a new client
+    sales-proposal-template.md .... pitch → trial → close playbook
+    DESIGN_BRIEF.md ............... UI/UX brief for design work
+    CLANCY_OVERVIEW.txt ........... this file
+    supabase/*.sql ................ 16 database migrations (schema history)
+
+  INFRASTRUCTURE
+    App ........... clancy-hq.vercel.app (Vercel, auto-deploy from main)
+    Database ...... Supabase project (own Clancy organisation, Singapore)
+    Auth .......... Google sign-in + email/password
+    Assets ........ Clancy logo and launch post images on the Desktop
+
+  BRAND ACCOUNTS
+    clancy.hq.ai@gmail.com · Instagram @clancy.hq
+    (Passwords are held in Jacky's password manager only — never stored in
+    project files or AI memory.)
+
+================================================================================
+END
+================================================================================
