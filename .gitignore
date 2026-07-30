@@ -8,3 +8,6 @@ build/
 *.tsbuildinfo
 next-env.d.ts
 .DS_Store
+
+# graphify knowledge graph output (regenerate with: graphify update .)
+graphify-out/
