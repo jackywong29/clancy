@@ -8,14 +8,14 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 30 July 2026 · last commit `542150f`
+Last updated: 31 July 2026 · last commit `c611a1e` (Batch 11 built, not yet pushed)
 
 ---
 
 ## Status in one paragraph
 
-Clancy HQ is built and live at **clancy-hq.vercel.app** (10 build batches,
-~44 commits, 16 migrations). It is a genuine two-sided product: Jacky's agency
+Clancy HQ is built and live at **clancy-hq.vercel.app** (11 build batches,
+~44 commits, 17 migrations — batch 11 and migration 017 pending, see below). It is a genuine two-sided product: Jacky's agency
 side (sales pipeline, client intake, two build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
@@ -26,12 +26,22 @@ paying client yet; company not yet registered; brand not yet launched.
 
 ## BLOCKED ON JACKY (do these first — everything below is waiting)
 
+0. **Run migration 017 BEFORE the Batch 11 code deploys.** Order matters here:
+   the new code inserts `broadcasts.attachments`, so if it deploys first,
+   creating any broadcast errors until the SQL runs. Migration 017 adds the
+   `attachments` column and the private `broadcast-files` bucket. Batch 11 is
+   built, typechecked and build-verified locally but **deliberately not
+   pushed** for this reason.
+
 1. ~~Run migrations 015 + 016~~ — **DONE 30 Jul 2026, verified.** All
    migrations 001–016 are now applied. Broadcasts works; the editable Clancy
    homepage (`sites` row `clancy-home`) is live and saveable at
    Sites → "Clancy homepage".
 
-2. **Automated email** — not live yet. Needs, on `clancy.hq.ai@gmail.com`:
+2. **Automated email** — not live yet. **This now gates three features, not
+   one.** Real attachments are impossible without it: `mailto:` has no
+   attachment parameter, so mail-app mode degrades to signed download links
+   and plain-text formatting. Needs, on `clancy.hq.ai@gmail.com`:
    2-Step Verification on, then an App Password from
    myaccount.google.com/apppasswords. Add to Vercel env vars as
    `GMAIL_USER` and `GMAIL_APP_PASSWORD`, then redeploy.
@@ -63,6 +73,11 @@ paying client yet; company not yet registered; brand not yet launched.
 - **PDPA** applies (storing clients' customers' data on their behalf).
 - **Hours-per-client is not being tracked** — the number that drives the
   full-time gate and the hiring trigger. Start logging.
+- **Email deliverability is weak and now matters more.** Broadcasts send HTML
+  with attachments from a plain `@gmail.com` address — no SPF/DKIM on a
+  sending domain, so 100+ BCC newsletters are a spam-filter target. The code
+  is provider-agnostic and swaps to Resend cleanly; the blocker is that
+  `clancy.my` doesn't exist yet. Gmail also caps ~500 recipients/day.
 
 ---
 

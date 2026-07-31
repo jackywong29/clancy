@@ -8,8 +8,20 @@ import {
   requireEditorOrg,
   requireWorkspaceAdmin,
 } from '@/lib/permissions'
-import { isEmailConfigured, sendEmail, fillTokens } from '@/lib/email'
+import {
+  isEmailConfigured,
+  sendEmail,
+  fillTokens,
+  MAX_ATTACHMENT_BYTES,
+  type MailAttachment,
+} from '@/lib/email'
 import { resolveAudience } from '@/lib/audience'
+import {
+  cidFor,
+  renderBroadcastHtml,
+  renderBroadcastText,
+} from '@/lib/broadcast-email'
+import type { BroadcastAttachment, EmailSignature } from '@/types/database'
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
@@ -828,6 +840,24 @@ export async function saveTeamSettings(formData: FormData) {
     }
   }
 
+  const sigText = (field: string) =>
+    String(formData.get(`sig_${field}`) ?? '').trim()
+
+  const signature: EmailSignature = {
+    enabled: formData.get('sig_enabled') === 'on',
+    logo_url: sigText('logo_url'),
+    business_name: sigText('business_name'),
+    tagline: sigText('tagline'),
+    sign_off: sigText('sign_off'),
+    sender_name: sigText('sender_name'),
+    sender_title: sigText('sender_title'),
+    phone: sigText('phone'),
+    email: sigText('email'),
+    website: sigText('website'),
+    address: sigText('address'),
+    footer_note: sigText('footer_note'),
+  }
+
   const crm_config = {
     ...m.crmConfig,
     role_labels: {
@@ -839,6 +869,7 @@ export async function saveTeamSettings(formData: FormData) {
     calendar_categories: parse('calendar_categories'),
     invite_subject: String(formData.get('invite_subject') ?? '').trim(),
     invite_message: String(formData.get('invite_message') ?? '').trim(),
+    signature,
   }
 
   const { error } = await supabase
@@ -849,6 +880,7 @@ export async function saveTeamSettings(formData: FormData) {
   revalidatePath('/team')
   revalidatePath('/tasks')
   revalidatePath('/calendar')
+  revalidatePath('/broadcasts')
   redirect(
     `/team?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
   )
@@ -891,6 +923,34 @@ export async function markAllNotificationsRead() {
   redirect('/notifications')
 }
 
+// Attachment metadata arrives from the browser as JSON, so validate the shape
+// rather than trusting it. `path` is re-checked against the caller's org
+// prefix — storage RLS would block a foreign read anyway, but failing here
+// gives a clear error instead of a silent empty attachment.
+function parseAttachments(raw: FormDataEntryValue | null): BroadcastAttachment[] {
+  try {
+    const value = JSON.parse(String(raw ?? '[]'))
+    if (!Array.isArray(value)) return []
+    return value
+      .filter(
+        (a): a is BroadcastAttachment =>
+          Boolean(a) &&
+          typeof a.name === 'string' &&
+          typeof a.path === 'string' &&
+          typeof a.size === 'number'
+      )
+      .map((a) => ({
+        name: a.name,
+        path: a.path,
+        size: a.size,
+        type: typeof a.type === 'string' ? a.type : 'application/octet-stream',
+        inline: a.inline === true,
+      }))
+  } catch {
+    return []
+  }
+}
+
 export async function createBroadcast(formData: FormData) {
   const supabase = await createClient()
   const m = await requireEditorOrg()
@@ -898,20 +958,20 @@ export async function createBroadcast(formData: FormData) {
   const subject = String(formData.get('subject') ?? '').trim()
   const body = String(formData.get('body') ?? '').trim()
   const audience = String(formData.get('audience') ?? 'all')
+  const attachments = parseAttachments(formData.get('attachments'))
 
   if (!subject || !body) {
     redirect('/broadcasts?error=1&msg=Subject%20and%20message%20are%20required')
   }
 
-  let query = supabase
-    .from('clients')
-    .select('id', { count: 'exact', head: true })
-    .not('email', 'is', null)
-    .neq('email', '')
-  if (audience.startsWith('stage:')) {
-    query = query.eq('stage_id', audience.slice(6))
+  const total = attachments.reduce((sum, a) => sum + a.size, 0)
+  if (total > MAX_ATTACHMENT_BYTES) {
+    redirect('/broadcasts?error=1&msg=Attachments%20are%20too%20large%20to%20email')
   }
-  const { count } = await query
+
+  // resolveAudience handles team audiences too — counting `clients` here
+  // reported 0 recipients for any team broadcast.
+  const recipients = await resolveAudience(supabase, audience)
 
   const { data: created, error } = await supabase
     .from('broadcasts')
@@ -920,7 +980,8 @@ export async function createBroadcast(formData: FormData) {
       subject,
       body,
       audience,
-      recipient_count: count ?? 0,
+      attachments,
+      recipient_count: recipients.length,
       created_by: m.userId,
     })
     .select('id')
@@ -1023,11 +1084,85 @@ export async function sendBroadcastNow(formData: FormData) {
     redirect(`/broadcasts/${broadcastId}?error=1&msg=No%20recipients%20with%20an%20email`)
   }
 
+  const { data: org } = await supabase
+    .from('organizations')
+    .select('name, crm_config')
+    .eq('id', broadcastRow.organization_id)
+    .maybeSingle()
+  const signature: EmailSignature | undefined = org?.crm_config?.signature
+  const fromName = signature?.business_name || org?.name || 'Clancy'
+
+  // Download every file once and reuse the buffers across BCC batches —
+  // re-fetching per batch would multiply the transfer for no reason.
+  const files = (broadcastRow.attachments ?? []) as BroadcastAttachment[]
+  const attachments: MailAttachment[] = []
+  const inlineImages: { src: string; alt: string }[] = []
+
+  for (const [i, file] of files.entries()) {
+    const { data: blob, error: downloadError } = await supabase.storage
+      .from('broadcast-files')
+      .download(file.path)
+    if (downloadError || !blob) {
+      redirect(
+        `/broadcasts/${broadcastId}?error=1&msg=${encodeURIComponent(
+          `Couldn't read attachment "${file.name}"`
+        )}`
+      )
+    }
+    const content = Buffer.from(await blob.arrayBuffer())
+    const cid = file.inline ? cidFor(i) : undefined
+    attachments.push({
+      filename: file.name,
+      content,
+      contentType: file.type,
+      cid,
+    })
+    if (cid) inlineImages.push({ src: `cid:${cid}`, alt: file.name })
+  }
+
+  // The signature logo is embedded too, so it renders in clients that block
+  // remote images by default (Outlook, and Gmail with images off).
+  // Only http(s) — the URL comes from workspace config, and a server-side
+  // fetch of an arbitrary scheme/host is a needless hole to leave open.
+  let logoCid: string | undefined
+  if (signature?.logo_url && /^https?:\/\//i.test(signature.logo_url)) {
+    try {
+      const res = await fetch(signature.logo_url)
+      if (res.ok) {
+        logoCid = 'clancy-signature-logo'
+        attachments.push({
+          filename: 'logo',
+          content: Buffer.from(await res.arrayBuffer()),
+          contentType: res.headers.get('content-type') ?? 'image/png',
+          cid: logoCid,
+        })
+      }
+    } catch {
+      // Fall back to the remote <img src> in the template.
+    }
+  }
+
+  const html = renderBroadcastHtml({
+    subject: broadcastRow.subject,
+    body: broadcastRow.body,
+    signature,
+    inlineImages,
+    logoCid,
+  })
+  const text = renderBroadcastText({
+    body: broadcastRow.body,
+    signature,
+    attachments: files,
+  })
+
   for (let i = 0; i < emails.length; i += 40) {
     const { ok, error } = await sendEmail({
       bcc: emails.slice(i, i + 40),
       subject: broadcastRow.subject,
-      text: broadcastRow.body,
+      text,
+      html,
+      attachments,
+      fromName,
     })
     if (!ok) {
       redirect(`/broadcasts/${broadcastId}?error=1&msg=${encodeURIComponent(error ?? 'send failed')}`)

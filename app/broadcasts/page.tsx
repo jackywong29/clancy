@@ -8,6 +8,9 @@ import { recordLabel } from '@/lib/crm'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { ConfirmForm } from '@/components/ConfirmForm'
+import { AttachmentUpload } from '@/components/AttachmentUpload'
+import { hasSignature } from '@/lib/broadcast-email'
+import { Paperclip } from 'lucide-react'
 import type { Broadcast, PipelineStage, WorkspaceRole } from '@/types/database'
 
 const ROLES: WorkspaceRole[] = ['viewer', 'editor', 'admin']
@@ -42,6 +45,8 @@ export default async function BroadcastsPage({
   const deptName = (key: string) =>
     departments.find((d) => d.key === key)?.name ?? null
   const automated = isEmailConfigured()
+  const signed = hasSignature(m.crmConfig.signature)
+  const isAdmin = hasRole(m, 'admin')
 
   const rowClass = 'flex items-center gap-3 border-b border-ash/50 px-4 py-3'
   const fieldClass =
@@ -125,12 +130,27 @@ export default async function BroadcastsPage({
             />
           </div>
           <div className="border-t border-ash/50 px-4 py-3">
+            <AttachmentUpload name="attachments" orgId={m.orgId} />
+          </div>
+          <div className="flex flex-wrap items-center gap-3 border-t border-ash/50 px-4 py-3">
             <button
               type="submit"
               className="rounded-lg bg-violet-deep px-5 py-2 text-sm font-medium text-white hover:bg-violet"
             >
               Review & send →
             </button>
+            <p className="text-xs text-ivory/50">
+              {signed ? (
+                <>Your sign-off is added automatically.</>
+              ) : (
+                <>No sign-off set — emails go out without a signature.</>
+              )}{' '}
+              {isAdmin && (
+                <Link href="/team" className="text-violet hover:underline">
+                  {signed ? 'Edit it' : 'Set one up'}
+                </Link>
+              )}
+            </p>
           </div>
         </form>
 
@@ -153,10 +173,19 @@ export default async function BroadcastsPage({
                     {b.status}
                   </span>
                 </p>
-                <p className="text-xs text-ivory/60">
-                  {audienceLabel(b.audience, m.crmConfig, stageName, deptName)} ·{' '}
-                  {b.recipient_count} recipient{b.recipient_count === 1 ? '' : 's'} ·{' '}
-                  {b.created_at.slice(0, 10)}
+                <p className="flex flex-wrap items-center gap-x-1 text-xs text-ivory/60">
+                  <span>
+                    {audienceLabel(b.audience, m.crmConfig, stageName, deptName)} ·{' '}
+                    {b.recipient_count} recipient
+                    {b.recipient_count === 1 ? '' : 's'} ·{' '}
+                    {b.created_at.slice(0, 10)}
+                  </span>
+                  {(b.attachments?.length ?? 0) > 0 && (
+                    <span className="inline-flex items-center gap-0.5">
+                      · <Paperclip className="h-3 w-3" aria-hidden />
+                      {b.attachments.length}
+                    </span>
+                  )}
                 </p>
               </div>
               <Link

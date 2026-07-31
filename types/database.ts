@@ -27,6 +27,23 @@ export interface EventCategory {
 
 export type WorkspaceRole = 'viewer' | 'editor' | 'admin'
 
+// The sign-off block appended to every broadcast from this workspace.
+// Lives inside crm_config, so each business gets its own without a migration.
+export interface EmailSignature {
+  enabled?: boolean
+  logo_url?: string
+  business_name?: string
+  tagline?: string
+  sign_off?: string
+  sender_name?: string
+  sender_title?: string
+  phone?: string
+  email?: string
+  website?: string
+  address?: string
+  footer_note?: string
+}
+
 export interface CrmConfig {
   record_singular?: string
   record_plural?: string
@@ -38,6 +55,7 @@ export interface CrmConfig {
   calendar_categories?: EventCategory[]
   invite_subject?: string
   invite_message?: string
+  signature?: EmailSignature
 }
 
 export interface Organization {
@@ -270,6 +288,17 @@ export interface NotificationItem {
   created_at: string
 }
 
+// A file uploaded for a broadcast. `path` is the key inside the private
+// `broadcast-files` bucket — never a public URL. `inline` images are embedded
+// in the message body via cid; everything else rides as a normal attachment.
+export interface BroadcastAttachment {
+  name: string
+  path: string
+  size: number
+  type: string
+  inline: boolean
+}
+
 export interface Broadcast {
   id: string
   organization_id: string
@@ -278,6 +307,7 @@ export interface Broadcast {
   audience: string
   recipient_count: number
   status: string
+  attachments: BroadcastAttachment[]
   created_by: string | null
   created_at: string
 }

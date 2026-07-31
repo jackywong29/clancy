@@ -37,7 +37,7 @@ How the business runs, start to finish. For Jacky and Claude — read this to re
 - **Board** — their records (custom fields via Customize) moving through their stages
 - **View site / Edit website** — their public site (edit = admins only)
 - **Tasks / Calendar** — department-scoped tasks; colour-coded events with repeats and alerts (module toggles on Customize)
-- **Broadcasts** — email announcements to records (BCC mail-app batches for now)
+- **Broadcasts** — email announcements to records or team, with file/image attachments and the business's own sign-off block (set on Team → Workspace settings). Sends properly once automated email is configured; until then it falls back to BCC mail-app batches with download links instead of attachments
 - **Inbox** — website signups and alerts · **Team** — members, roles (renameable), invites, departments, calendar categories (admins only)
 - Roles: view-only / edit / admin — set on Team, labels renameable per business
 

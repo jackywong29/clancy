@@ -10,8 +10,14 @@ import { getMembership, hasRole, roleLabel } from '@/lib/permissions'
 import { redirect } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { CopyButton } from '@/components/CopyButton'
+import { ImageUpload } from '@/components/ImageUpload'
 import { DepartmentListEditor } from '@/components/team/DepartmentListEditor'
 import { CategoryListEditor } from '@/components/team/CategoryListEditor'
+import {
+  DEFAULT_SIGN_OFF,
+  hasSignature,
+  renderBroadcastHtml,
+} from '@/lib/broadcast-email'
 import type {
   Organization,
   OrgInvite,
@@ -61,6 +67,14 @@ export default async function TeamPage({
     departments.find((d) => d.key === key)?.name ?? null
   const orgName = (id: string | null) =>
     orgList.find((o) => o.id === id)?.name ?? null
+  const sig = m.crmConfig.signature ?? {}
+  // Rendered from the *saved* signature, so it confirms what went in rather
+  // than previewing unsaved keystrokes.
+  const signaturePreview = renderBroadcastHtml({
+    subject: 'Subject line',
+    body: 'Your message goes here.',
+    signature: sig,
+  })
 
   return (
     <div className="min-h-screen">
@@ -289,6 +303,123 @@ export default async function TeamPage({
               className={`${inputClass} w-full`}
               aria-label="Invite email message"
             />
+          </div>
+          <div>
+            <p className="mb-2 text-sm font-medium">Email sign-off</p>
+            <p className="mb-3 text-xs text-ivory/50">
+              Added to the bottom of every broadcast — the professional block
+              with your logo, name and contact details. Leave a field blank to
+              hide that line.
+            </p>
+            <label className="mb-3 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                name="sig_enabled"
+                defaultChecked={sig.enabled !== false}
+                className="h-4 w-4 accent-violet"
+              />
+              Add the sign-off to broadcasts
+            </label>
+            <div className="mb-3">
+              <p className="mb-1.5 text-xs text-ivory/50">Logo</p>
+              <ImageUpload
+                name="sig_logo_url"
+                initial={sig.logo_url ?? ''}
+                orgId={m.orgId}
+                slug="signature"
+                kind="signature"
+                label="logo"
+                className="h-12 w-auto rounded bg-white/90 object-contain p-1"
+              />
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input
+                name="sig_sign_off"
+                defaultValue={sig.sign_off ?? DEFAULT_SIGN_OFF}
+                placeholder="Warm regards,"
+                className={inputClass}
+                aria-label="Sign-off line"
+              />
+              <input
+                name="sig_business_name"
+                defaultValue={sig.business_name ?? orgName(m.orgId) ?? ''}
+                placeholder="Business name"
+                className={inputClass}
+                aria-label="Business name"
+              />
+              <input
+                name="sig_sender_name"
+                defaultValue={sig.sender_name ?? ''}
+                placeholder="Your name"
+                className={inputClass}
+                aria-label="Sender name"
+              />
+              <input
+                name="sig_sender_title"
+                defaultValue={sig.sender_title ?? ''}
+                placeholder="Your title"
+                className={inputClass}
+                aria-label="Sender title"
+              />
+              <input
+                name="sig_tagline"
+                defaultValue={sig.tagline ?? ''}
+                placeholder="Tagline (optional)"
+                className={inputClass}
+                aria-label="Tagline"
+              />
+              <input
+                name="sig_phone"
+                defaultValue={sig.phone ?? ''}
+                placeholder="Phone"
+                className={inputClass}
+                aria-label="Phone"
+              />
+              <input
+                name="sig_email"
+                type="email"
+                defaultValue={sig.email ?? ''}
+                placeholder="Reply-to email"
+                className={inputClass}
+                aria-label="Contact email"
+              />
+              <input
+                name="sig_website"
+                defaultValue={sig.website ?? ''}
+                placeholder="yoursite.com"
+                className={inputClass}
+                aria-label="Website"
+              />
+            </div>
+            <textarea
+              name="sig_address"
+              rows={2}
+              defaultValue={sig.address ?? ''}
+              placeholder="Address (optional)"
+              className={`${inputClass} mt-2 w-full`}
+              aria-label="Address"
+            />
+            <textarea
+              name="sig_footer_note"
+              rows={2}
+              defaultValue={sig.footer_note ?? ''}
+              placeholder="Small print — e.g. You're receiving this because you're on our list."
+              className={`${inputClass} mt-2 w-full`}
+              aria-label="Footer note"
+            />
+            {hasSignature(sig) && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs text-ivory/50">
+                  Saved sign-off, as recipients see it:
+                </p>
+                <iframe
+                  srcDoc={signaturePreview}
+                  title="Sign-off preview"
+                  sandbox=""
+                  className="h-64 w-full rounded-lg border border-ash/60 bg-white"
+                />
+              </div>
+            )}
           </div>
           <div>
             <p className="mb-2 text-sm font-medium">Departments</p>

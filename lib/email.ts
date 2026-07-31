@@ -10,16 +10,34 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.GMAIL_USER && process.env.GMAIL_APP_PASSWORD)
 }
 
+// Gmail rejects messages over 25MB. We cap below that so the base64 encoding
+// overhead (~33%) can't push a legal-looking upload over the real limit.
+export const MAX_ATTACHMENT_BYTES = 18 * 1024 * 1024
+
+export interface MailAttachment {
+  filename: string
+  content: Buffer
+  contentType?: string
+  // Set for images embedded in the HTML body via <img src="cid:...">.
+  cid?: string
+}
+
 export async function sendEmail({
   bcc,
   to,
   subject,
   text,
+  html,
+  attachments,
+  fromName,
 }: {
   bcc?: string[]
   to?: string[]
   subject: string
   text: string
+  html?: string
+  attachments?: MailAttachment[]
+  fromName?: string
 }): Promise<{ ok: boolean; error?: string }> {
   if (!isEmailConfigured()) {
     return { ok: false, error: 'Email is not configured' }
@@ -33,11 +51,16 @@ export async function sendEmail({
       },
     })
     await transporter.sendMail({
-      from: `Clancy <${process.env.GMAIL_USER}>`,
+      // Gmail SMTP always sends *from* the authenticated account; the display
+      // name is the only part we control, so a broadcast can at least read as
+      // the client's business rather than "Clancy".
+      from: `${(fromName || 'Clancy').replace(/["<>\\]/g, '')} <${process.env.GMAIL_USER}>`,
       to: to && to.length > 0 ? to : process.env.GMAIL_USER,
       bcc,
       subject,
       text,
+      html,
+      attachments,
     })
     return { ok: true }
   } catch (e) {
