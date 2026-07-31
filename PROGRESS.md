@@ -8,7 +8,7 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 30 July 2026 · last commit `3bdb540`
+Last updated: 30 July 2026 · last commit `542150f`
 
 ---
 
@@ -26,14 +26,10 @@ paying client yet; company not yet registered; brand not yet launched.
 
 ## BLOCKED ON JACKY (do these first — everything below is waiting)
 
-1. **Run migrations 015 + 016** in the Supabase SQL Editor. Both are written and
-   deployed in code but NOT yet run against the database:
-   - `supabase/015_broadcasts.sql` → without it, the Broadcasts page shows
-     "Could not find the table 'public.broadcasts'"
-   - `supabase/016_landing_config.sql` → seeds the editable Clancy homepage
-     (`sites` row `clancy-home`); until run, the landing page shows hardcoded
-     defaults and Sites → "Clancy homepage" edits have nothing to save to
-   - Migrations 001–014 are confirmed run.
+1. ~~Run migrations 015 + 016~~ — **DONE 30 Jul 2026, verified.** All
+   migrations 001–016 are now applied. Broadcasts works; the editable Clancy
+   homepage (`sites` row `clancy-home`) is live and saveable at
+   Sites → "Clancy homepage".
 
 2. **Automated email** — not live yet. Needs, on `clancy.hq.ai@gmail.com`:
    2-Step Verification on, then an App Password from
