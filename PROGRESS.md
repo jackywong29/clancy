@@ -8,14 +8,14 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 31 July 2026 · last commit `c611a1e` (Batch 11 built, not yet pushed)
+Last updated: 31 July 2026 · last commit `bcac84c` (Batch 11, deployed)
 
 ---
 
 ## Status in one paragraph
 
 Clancy HQ is built and live at **clancy-hq.vercel.app** (11 build batches,
-~44 commits, 17 migrations — batch 11 and migration 017 pending, see below). It is a genuine two-sided product: Jacky's agency
+~45 commits, 17 migrations). It is a genuine two-sided product: Jacky's agency
 side (sales pipeline, client intake, two build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
@@ -26,12 +26,10 @@ paying client yet; company not yet registered; brand not yet launched.
 
 ## BLOCKED ON JACKY (do these first — everything below is waiting)
 
-0. **Run migration 017 BEFORE the Batch 11 code deploys.** Order matters here:
-   the new code inserts `broadcasts.attachments`, so if it deploys first,
-   creating any broadcast errors until the SQL runs. Migration 017 adds the
-   `attachments` column and the private `broadcast-files` bucket. Batch 11 is
-   built, typechecked and build-verified locally but **deliberately not
-   pushed** for this reason.
+0. ~~Run migration 017~~ — **DONE 31 Jul 2026**, run before the Batch 11
+   push. All migrations 001–017 applied. **Not yet smoke-tested by a human:**
+   send one broadcast with a file and an image to yourself before using it on
+   SGCKL's congregation.
 
 1. ~~Run migrations 015 + 016~~ — **DONE 30 Jul 2026, verified.** All
    migrations 001–016 are now applied. Broadcasts works; the editable Clancy
