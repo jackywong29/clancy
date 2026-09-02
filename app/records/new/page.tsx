@@ -29,7 +29,7 @@ export default async function NewRecordPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-xl px-6 py-8">
+      <main className="mx-auto w-full max-w-xl px-4 py-8 sm:px-6">
         <h1 className="mb-6 text-2xl font-medium">
           Add {recordLabel(config).toLowerCase()}
         </h1>
@@ -45,7 +45,7 @@ export default async function NewRecordPage({
           />
           <button
             type="submit"
-            className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
+            className="w-full rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:w-auto"
           >
             Save
           </button>

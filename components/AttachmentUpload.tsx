@@ -137,7 +137,7 @@ export function AttachmentUpload({
                 <button
                   type="button"
                   onClick={() => toggleInline(f.path)}
-                  className={`rounded px-2 py-1 text-xs ${
+                  className={`shrink-0 rounded px-2 py-2 text-xs sm:py-1 ${
                     f.inline
                       ? 'bg-violet/15 text-violet'
                       : 'border border-ash text-ivory/60 hover:text-ivory'
@@ -155,7 +155,7 @@ export function AttachmentUpload({
                 type="button"
                 onClick={() => remove(f.path)}
                 aria-label={`Remove ${f.name}`}
-                className="text-ivory/40 hover:text-red-400"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded text-ivory/40 hover:text-red-400 sm:h-6 sm:w-6"
               >
                 ×
               </button>

@@ -48,14 +48,16 @@ export default async function BroadcastsPage({
   const signed = hasSignature(m.crmConfig.signature)
   const isAdmin = hasRole(m, 'admin')
 
-  const rowClass = 'flex items-center gap-3 border-b border-ash/50 px-4 py-3'
+  const rowClass =
+    'flex flex-col gap-1 border-b border-ash/50 px-4 py-3 sm:flex-row sm:items-center sm:gap-3'
+  const labelClass = 'shrink-0 text-sm text-ivory/50 sm:w-16'
   const fieldClass =
-    'flex-1 bg-transparent text-sm outline-none placeholder:text-ivory/40'
+    'w-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-ivory/40'
 
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">Broadcasts</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Announcements, notices, and newsletters — to your {plural.toLowerCase()}{' '}
@@ -81,11 +83,11 @@ export default async function BroadcastsPage({
           className="mb-8 overflow-hidden rounded-xl border border-ash/60 bg-carbon"
         >
           <div className={rowClass}>
-            <span className="w-16 shrink-0 text-sm text-ivory/50">To</span>
+            <span className={labelClass}>To</span>
             <select
               name="audience"
               defaultValue="all"
-              className="flex-1 bg-transparent text-sm outline-none"
+              className="w-full min-w-0 flex-1 bg-transparent text-sm outline-none"
               aria-label="Audience"
             >
               <optgroup label={plural}>
@@ -112,7 +114,7 @@ export default async function BroadcastsPage({
             </select>
           </div>
           <div className={rowClass}>
-            <span className="w-16 shrink-0 text-sm text-ivory/50">Subject</span>
+            <span className={labelClass}>Subject</span>
             <input
               name="subject"
               required
@@ -190,7 +192,7 @@ export default async function BroadcastsPage({
               </div>
               <Link
                 href={`/broadcasts/${b.id}`}
-                className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
               >
                 Open
               </Link>
@@ -202,7 +204,7 @@ export default async function BroadcastsPage({
                 <button
                   type="submit"
                   aria-label={`Delete ${b.subject}`}
-                  className="text-ivory/40 hover:text-red-400"
+                  className="px-2 py-2 text-ivory/40 hover:text-red-400 sm:px-1 sm:py-1"
                 >
                   ×
                 </button>

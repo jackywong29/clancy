@@ -99,13 +99,13 @@ export default async function IntakePage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
         <p className="mb-6 text-sm text-ivory/60">Intake</p>
         <ClientTabs clientId={client.id} active="intake" />
 
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ash/60 bg-carbon p-4">
-          <div>
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ash/60 bg-carbon p-4 sm:p-6">
+          <div className="min-w-0">
             <p className="text-sm font-medium">Let the client fill it in</p>
             <p className="mt-0.5 text-xs text-ivory/60">
               Send them this private link — they fill the client-friendly
@@ -120,7 +120,7 @@ export default async function IntakePage({
           />
         </div>
 
-        <details className="mb-4 rounded-xl border border-ash/60 bg-carbon/50 p-4 text-sm text-ivory/80">
+        <details className="mb-4 rounded-xl border border-ash/60 bg-carbon/50 p-4 text-sm text-ivory/80 sm:p-6">
           <summary className="cursor-pointer font-medium text-ivory">
             How to run an intake (tips)
           </summary>
@@ -145,8 +145,8 @@ export default async function IntakePage({
           </ul>
         </details>
 
-        <div className="mb-6 rounded-xl border border-ash/60 bg-carbon p-4">
-          <div className="mb-2 flex items-baseline justify-between">
+        <div className="mb-6 rounded-xl border border-ash/60 bg-carbon p-4 sm:p-6">
+          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-3">
             <p className="text-sm font-medium">
               {progress.filled} of {progress.total} answered
             </p>
@@ -163,7 +163,7 @@ export default async function IntakePage({
               <span className="font-medium text-red-400">
                 {progress.blockingMissing.length} blocking missing:
               </span>{' '}
-              {progress.blockingMissing.join(' · ')}
+              <span className="break-words">{progress.blockingMissing.join(' · ')}</span>
             </p>
           ) : (
             <p className="mt-3 text-xs font-medium text-violet">
@@ -188,7 +188,7 @@ export default async function IntakePage({
           {INTAKE_SECTIONS.map((section, sectionIndex) => (
             <section key={section.key}>
               <h2 className="mb-3 flex items-center gap-2 text-lg font-medium">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet/15 text-xs text-violet">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet/15 text-xs text-violet">
                   {sectionIndex + 1}
                 </span>
                 {section.title}

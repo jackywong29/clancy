@@ -56,19 +56,19 @@ export function CrmFieldEditor({
           key={i}
           className="space-y-2 rounded-lg border border-ash/60 bg-carbon/50 p-3"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <input
               value={row.label}
               onChange={(e) => update(i, { label: e.target.value })}
               placeholder="Field name (e.g. First visit)"
-              className={`${cell} flex-1`}
+              className={`${cell} w-full min-w-0 sm:w-auto sm:flex-1`}
             />
             <select
               value={row.type}
               onChange={(e) =>
                 update(i, { type: e.target.value as CrmField['type'] })
               }
-              className={cell}
+              className={`${cell} min-w-0 flex-1 sm:flex-none`}
             >
               {CRM_FIELD_TYPES.map((t) => (
                 <option key={t.value} value={t.value}>
@@ -80,7 +80,7 @@ export function CrmFieldEditor({
               type="button"
               onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
               aria-label="Remove field"
-              className="text-ivory/40 hover:text-red-400"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-ivory/40 hover:text-red-400 sm:h-6 sm:w-6"
             >
               ×
             </button>
@@ -102,7 +102,7 @@ export function CrmFieldEditor({
         onClick={() =>
           setRows([...rows, { key: '', label: '', type: 'text' }])
         }
-        className="rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet"
+        className="rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5"
       >
         + Add field
       </button>

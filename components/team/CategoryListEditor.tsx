@@ -52,25 +52,25 @@ export function CategoryListEditor({
         )}
       />
       {rows.map((row, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} className="flex flex-wrap items-center gap-2">
           <input
             type="color"
             value={row.color || DEFAULT_COLORS[i % DEFAULT_COLORS.length]}
             onChange={(e) => update(i, { color: e.target.value })}
             aria-label={`Colour for ${row.name || 'category'}`}
-            className="h-9 w-12 cursor-pointer rounded-lg border border-ash bg-graphite"
+            className="h-9 w-12 shrink-0 cursor-pointer rounded-lg border border-ash bg-graphite"
           />
           <input
             value={row.name}
             onChange={(e) => update(i, { name: e.target.value })}
             placeholder="Category (e.g. Service, Meeting)"
-            className="flex-1 rounded-lg border border-ash bg-graphite px-3 py-1.5 text-sm outline-none focus:border-violet"
+            className="min-w-0 flex-1 rounded-lg border border-ash bg-graphite px-3 py-1.5 text-sm outline-none focus:border-violet"
           />
           <button
             type="button"
             onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
             aria-label={`Remove ${row.name || 'category'}`}
-            className="text-ivory/40 hover:text-red-400"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lg leading-none text-ivory/40 hover:text-red-400"
           >
             ×
           </button>
@@ -84,7 +84,7 @@ export function CategoryListEditor({
             { key: '', name: '', color: DEFAULT_COLORS[rows.length % DEFAULT_COLORS.length] },
           ])
         }
-        className="rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet"
+        className="rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5"
       >
         + Add category
       </button>

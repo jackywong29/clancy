@@ -31,8 +31,8 @@ export default async function LandingEditPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
-        <div className="mb-6 flex items-baseline justify-between">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-medium">Clancy homepage</h1>
             <p className="mt-1 text-sm text-ivory/60">
@@ -81,7 +81,7 @@ export default async function LandingEditPage({
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="cta_label" className="mb-1 block text-sm font-medium">
                 Button label
@@ -160,7 +160,7 @@ export default async function LandingEditPage({
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="footer_line" className="mb-1 block text-sm font-medium">
                 Footer line

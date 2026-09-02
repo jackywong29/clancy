@@ -8,23 +8,37 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 31 July 2026 · last commit `bcac84c` (Batch 11, deployed)
+Last updated: 2 September 2026 · last commit `bcac84c` (Batch 11, deployed) ·
+Batch 12 (responsive pass) is **in the working tree, not committed or pushed**
+— awaiting Jacky's approval at http://localhost:3000.
 
 ---
 
 ## Status in one paragraph
 
-Clancy HQ is built and live at **clancy-hq.vercel.app** (11 build batches,
+Clancy HQ is built and live at **clancy-hq.vercel.app** (12 build batches,
 ~45 commits, 17 migrations). It is a genuine two-sided product: Jacky's agency
 side (sales pipeline, client intake, two build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
 real KL church — first client site at `/s/sgckl`). Latest deploy is green. No
-paying client yet; company not yet registered; brand not yet launched.
+paying client yet; company not yet registered; brand not yet launched. Batch 12
+(the mobile/desktop responsive pass, see `CLAUDE.md`) is written and verified
+locally but **not yet pushed**.
 
 ---
 
 ## BLOCKED ON JACKY (do these first — everything below is waiting)
+
+0. **Delete the QA account when Batch 12 is approved.** A password account,
+   `clancy.hq.ai+qa@gmail.com`, was created on 2 Sep 2026 so the responsive
+   pass could be verified on real pages (the existing accounts are
+   Google-OAuth-only and cannot log in with a password). It currently has
+   Clancy workspace + admin role. Revoke with:
+   `delete from profiles where email = 'clancy.hq.ai+qa@gmail.com';`
+   then delete the user in Supabase → Authentication → Users.
+   Also note `.env.local` now exists locally (gitignored) with the public
+   Supabase URL + anon key, so `npm run dev` works on this machine.
 
 0. ~~Run migration 017~~ — **DONE 31 Jul 2026**, run before the Batch 11
    push. All migrations 001–017 applied. **Not yet smoke-tested by a human:**

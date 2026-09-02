@@ -124,7 +124,7 @@ export default async function PeoplePage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">People</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Everyone connected to this workspace — {plural.toLowerCase()} from
@@ -136,7 +136,7 @@ export default async function PeoplePage({
             <Link
               key={chip.key}
               href={`/people?f=${chip.key}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
-              className={`rounded-full px-3 py-1.5 text-xs ${
+              className={`rounded-full px-3 py-2 text-xs sm:py-1.5 ${
                 filter === chip.key
                   ? 'bg-violet text-white'
                   : 'border border-ash text-ivory/70 hover:border-violet hover:text-violet'
@@ -147,17 +147,17 @@ export default async function PeoplePage({
           ))}
         </div>
 
-        <form method="get" className="mb-4 flex gap-2">
+        <form method="get" className="mb-4 flex flex-col gap-2 sm:flex-row">
           <input type="hidden" name="f" value={filter} />
           <input
             name="q"
             defaultValue={q}
             placeholder="Search name, email, phone…"
-            className="flex-1 rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet"
+            className="w-full min-w-0 flex-1 rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet"
           />
           <button
             type="submit"
-            className="rounded-lg border border-ash px-4 py-2 text-sm hover:border-violet hover:text-violet"
+            className="w-full rounded-lg border border-ash px-4 py-2 text-sm hover:border-violet hover:text-violet sm:w-auto"
           >
             Search
           </button>
@@ -178,11 +178,11 @@ export default async function PeoplePage({
                     </span>
                   )}
                 </p>
-                <p className="text-xs text-ivory/60">{p.detail}</p>
+                <p className="break-words text-xs text-ivory/60">{p.detail}</p>
               </div>
-              <div className="text-right text-xs text-ivory/50">
-                {p.email && <p>{p.email}</p>}
-                {p.phone && <p>{p.phone}</p>}
+              <div className="min-w-0 text-xs text-ivory/50 sm:text-right">
+                {p.email && <p className="break-all">{p.email}</p>}
+                {p.phone && <p className="break-all">{p.phone}</p>}
                 <p className="text-ivory/40">{p.created.slice(0, 10)}</p>
               </div>
             </div>

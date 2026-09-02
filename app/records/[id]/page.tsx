@@ -45,8 +45,8 @@ export default async function RecordDetailPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-xl px-6 py-8">
-        <div className="mb-6 flex items-baseline justify-between">
+      <main className="mx-auto w-full max-w-xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <h1 className="text-2xl font-medium">{record.company_name}</h1>
           <Link href="/pipeline" className="text-sm text-ivory/60 hover:text-ivory">
             ← Board
@@ -73,7 +73,7 @@ export default async function RecordDetailPage({
           />
           <button
             type="submit"
-            className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
+            className="w-full rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:w-auto"
           >
             Save changes
           </button>
@@ -87,7 +87,7 @@ export default async function RecordDetailPage({
             <input type="hidden" name="record_id" value={record.id} />
             <button
               type="submit"
-              className="rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400"
+              className="w-full rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400 sm:w-auto"
             >
               Delete {recordLabel(config).toLowerCase()}
             </button>

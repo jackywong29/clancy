@@ -60,7 +60,7 @@ export default async function TasksPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">Tasks</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Everything the team needs to do, in one list.
@@ -78,7 +78,11 @@ export default async function TasksPage() {
             className={`${inputClass} w-full`}
           />
           <div className="flex flex-wrap gap-2">
-            <select name="assignee_id" className={inputClass} aria-label="Assignee">
+            <select
+              name="assignee_id"
+              className={`${inputClass} w-full sm:w-auto`}
+              aria-label="Assignee"
+            >
               <option value="">Unassigned</option>
               {memberList.map((m) => (
                 <option key={m.id} value={m.id}>
@@ -89,10 +93,14 @@ export default async function TasksPage() {
             <input
               name="due_date"
               type="date"
-              className={inputClass}
+              className={`${inputClass} w-full sm:w-auto`}
               aria-label="Due date"
             />
-            <select name="department" className={inputClass} aria-label="Department">
+            <select
+              name="department"
+              className={`${inputClass} w-full sm:w-auto`}
+              aria-label="Department"
+            >
               <option value="">All departments</option>
               {departments.map((d) => (
                 <option key={d.key} value={d.key}>
@@ -100,7 +108,11 @@ export default async function TasksPage() {
                 </option>
               ))}
             </select>
-            <select name="client_id" className={inputClass} aria-label="Linked record">
+            <select
+              name="client_id"
+              className={`${inputClass} w-full sm:w-auto`}
+              aria-label="Linked record"
+            >
               <option value="">No linked record</option>
               {recordList.map((r) => (
                 <option key={r.id} value={r.id}>
@@ -110,7 +122,7 @@ export default async function TasksPage() {
             </select>
             <button
               type="submit"
-              className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
+              className="w-full rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet sm:w-auto"
             >
               Add task
             </button>
@@ -144,13 +156,13 @@ export default async function TasksPage() {
                     >
                       <div className="min-w-0 flex-1">
                         <p
-                          className={`text-sm font-medium ${
+                          className={`break-words text-sm font-medium ${
                             task.status === 'done' ? 'line-through' : ''
                           }`}
                         >
                           {task.title}
                         </p>
-                        <p className="text-xs text-ivory/60">
+                        <p className="break-words text-xs text-ivory/60">
                           {[
                             memberName(task.assignee_id),
                             task.due_date &&
@@ -168,7 +180,7 @@ export default async function TasksPage() {
                           <input type="hidden" name="status" value={meta.next} />
                           <button
                             type="submit"
-                            className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                            className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
                           >
                             {meta.nextLabel}
                           </button>
@@ -180,7 +192,7 @@ export default async function TasksPage() {
                         <button
                           type="submit"
                           aria-label={`Delete ${task.title}`}
-                          className="text-ivory/40 hover:text-red-400"
+                          className="px-2 py-2 text-ivory/40 hover:text-red-400 sm:px-1 sm:py-1"
                         >
                           ×
                         </button>

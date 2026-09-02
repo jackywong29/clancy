@@ -80,7 +80,7 @@ export default async function CalendarPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-4xl px-6 py-8">
+      <main className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-6">
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
           <h1 className="text-2xl font-medium">
             {MONTH_NAMES[month - 1]} {year}
@@ -88,19 +88,19 @@ export default async function CalendarPage({
           <div className="flex items-center gap-2">
             <Link
               href={`/calendar?m=${shiftMonth(year, month, -1)}`}
-              className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+              className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
             >
               ←
             </Link>
             <Link
               href={`/calendar?m=${ym(now)}`}
-              className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+              className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
             >
               Today
             </Link>
             <Link
               href={`/calendar?m=${shiftMonth(year, month, 1)}`}
-              className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+              className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
             >
               →
             </Link>
@@ -111,9 +111,10 @@ export default async function CalendarPage({
           {WEEKDAYS.map((d) => (
             <div
               key={d}
-              className="bg-carbon px-2 py-1.5 text-center text-xs font-medium text-ivory/60"
+              className="bg-carbon px-1 py-1.5 text-center text-[11px] font-medium text-ivory/60 sm:px-2 sm:text-xs"
             >
-              {d}
+              <span className="sm:hidden">{d.slice(0, 1)}</span>
+              <span className="hidden sm:inline">{d}</span>
             </div>
           ))}
           {cells.map((day, i) => {
@@ -123,12 +124,12 @@ export default async function CalendarPage({
             return (
               <div
                 key={i}
-                className={`min-h-24 bg-graphite p-1.5 ${day ? '' : 'opacity-40'}`}
+                className={`min-h-16 min-w-0 bg-graphite p-1 sm:min-h-24 sm:p-2 ${day ? '' : 'opacity-40'}`}
               >
                 {day && (
                   <>
                     <p
-                      className={`mb-1 text-xs ${
+                      className={`mb-1 text-[11px] sm:text-xs ${
                         ds === today
                           ? 'inline-block rounded bg-violet px-1.5 py-0.5 font-medium text-white'
                           : 'text-ivory/50'
@@ -141,7 +142,7 @@ export default async function CalendarPage({
                         <form
                           key={event.id}
                           action={deleteEvent}
-                          className="group rounded px-1.5 py-1 text-xs"
+                          className="group flex min-w-0 items-baseline rounded px-1 py-0.5 text-[10px] sm:px-1.5 sm:py-1 sm:text-xs"
                           style={{
                             backgroundColor: `${categoryColor(event.category)}26`,
                             color: categoryColor(event.category),
@@ -149,7 +150,7 @@ export default async function CalendarPage({
                           title={event.details ?? event.title}
                         >
                           <input type="hidden" name="event_id" value={event.id} />
-                          <span>
+                          <span className="min-w-0 truncate">
                             {event.all_day ? (
                               <span className="opacity-70">all day </span>
                             ) : (
@@ -169,7 +170,7 @@ export default async function CalendarPage({
                             <button
                               type="submit"
                               aria-label={`Delete ${event.title}`}
-                              className="ml-1 hidden opacity-60 hover:text-red-400 group-hover:inline"
+                              className="ml-1 hidden shrink-0 opacity-60 hover:text-red-400 group-hover:inline"
                             >
                               ×
                             </button>
@@ -180,7 +181,7 @@ export default async function CalendarPage({
                         <Link
                           key={task.id}
                           href="/tasks"
-                          className="block rounded bg-ash/40 px-1.5 py-1 text-xs text-ivory/70"
+                          className="block truncate rounded bg-ash/40 px-1 py-0.5 text-[10px] text-ivory/70 sm:px-1.5 sm:py-1 sm:text-xs"
                         >
                           ☐ {task.title}
                         </Link>
@@ -194,7 +195,7 @@ export default async function CalendarPage({
         </div>
 
         {categories.length > 0 && (
-          <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-ivory/70">
+          <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-ivory/70">
             {categories.map((cat) => (
               <span key={cat.key} className="flex items-center gap-1.5">
                 <span

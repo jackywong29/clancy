@@ -42,23 +42,23 @@ export function SiteLogoUpload({
     <div className="space-y-2">
       <input type="hidden" name={name} value={url} />
       {url && (
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={url}
             alt="Site logo"
-            className="h-12 w-12 rounded-lg bg-white object-contain p-1"
+            className="h-12 w-12 max-w-full rounded-lg bg-white object-contain p-1"
           />
           <button
             type="button"
             onClick={() => setUrl('')}
-            className="text-xs text-ivory/40 hover:text-red-400"
+            className="shrink-0 px-1 py-2 text-xs text-ivory/40 hover:text-red-400 sm:py-0"
           >
             Remove
           </button>
         </div>
       )}
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet">
+      <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5">
         <input
           type="file"
           accept="image/*"

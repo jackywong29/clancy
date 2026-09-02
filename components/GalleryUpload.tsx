@@ -58,7 +58,7 @@ export function GalleryUpload({
     <div className="space-y-2">
       <input type="hidden" name={name} value={JSON.stringify(urls)} />
       {urls.length > 0 && (
-        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
           {urls.map((u, i) => (
             <div key={u} className="group relative">
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -71,7 +71,7 @@ export function GalleryUpload({
                 type="button"
                 onClick={() => setUrls(urls.filter((_, idx) => idx !== i))}
                 aria-label="Remove photo"
-                className="absolute right-1 top-1 flex h-5 w-5 items-center justify-center rounded-full bg-black/70 text-xs text-white opacity-0 group-hover:opacity-100"
+                className="absolute right-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-xs text-white sm:h-5 sm:w-5 sm:opacity-0 sm:group-hover:opacity-100"
               >
                 ×
               </button>
@@ -79,7 +79,7 @@ export function GalleryUpload({
           ))}
         </div>
       )}
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet">
+      <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5">
         <input
           type="file"
           accept="image/*"

@@ -79,7 +79,7 @@ export function ServiceListEditor({
             type="button"
             onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
             aria-label="Remove service"
-            className="justify-self-end text-ivory/40 hover:text-red-400"
+            className="flex h-8 w-8 items-center justify-center justify-self-end text-ivory/40 hover:text-red-400 sm:h-6 sm:w-6"
           >
             ×
           </button>
@@ -90,7 +90,7 @@ export function ServiceListEditor({
         onClick={() =>
           setRows([...rows, { name: '', price: '', duration: '', bookable: false }])
         }
-        className="rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet"
+        className="rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5"
       >
         + Add service
       </button>

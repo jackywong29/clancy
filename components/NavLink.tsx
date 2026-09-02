@@ -17,7 +17,7 @@ import {
   ExternalLink,
 } from 'lucide-react'
 
-const ICONS = {
+export const ICONS = {
   board: LayoutGrid,
   add: Plus,
   tasks: SquareCheck,
@@ -32,6 +32,20 @@ const ICONS = {
   view: ExternalLink,
 } as const
 
+export type NavIcon = keyof typeof ICONS
+
+export type NavItem = {
+  href: string
+  label: string
+  icon: NavIcon
+  external?: boolean
+}
+
+export function useNavActive(href: string, external = false) {
+  const pathname = usePathname()
+  return !external && (pathname === href || pathname.startsWith(`${href}/`))
+}
+
 export function NavLink({
   href,
   label,
@@ -40,13 +54,12 @@ export function NavLink({
 }: {
   href: string
   label: string
-  icon: keyof typeof ICONS
+  icon: NavIcon
   external?: boolean
 }) {
-  const pathname = usePathname()
-  const active = !external && (pathname === href || pathname.startsWith(`${href}/`))
+  const active = useNavActive(href, external)
   const Icon = ICONS[icon]
-  const className = `flex items-center gap-1.5 border-b-2 pb-0.5 transition-colors ${
+  const className = `flex shrink-0 items-center gap-1.5 border-b-2 pb-0.5 transition-colors ${
     active
       ? 'border-violet font-medium text-ivory'
       : 'border-transparent text-ivory/60 hover:text-ivory'

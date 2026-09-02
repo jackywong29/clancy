@@ -21,9 +21,9 @@ export default async function NotificationsPage() {
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
-        <div className="mb-6 flex items-center justify-between">
-          <div>
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
             <h1 className="text-2xl font-medium">Inbox</h1>
             <p className="mt-1 text-sm text-ivory/60">
               Signups from the website and other workspace alerts.
@@ -33,7 +33,7 @@ export default async function NotificationsPage() {
             <form action={markAllNotificationsRead}>
               <button
                 type="submit"
-                className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
               >
                 Mark all read
               </button>
@@ -51,8 +51,8 @@ export default async function NotificationsPage() {
                   : 'border-violet/40 bg-carbon'
               }`}
             >
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="text-sm font-medium">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                <p className="min-w-0 break-words text-sm font-medium">
                   {!n.read && (
                     <span className="mr-2 inline-block h-2 w-2 rounded-full bg-violet" />
                   )}
@@ -63,12 +63,12 @@ export default async function NotificationsPage() {
                 </p>
               </div>
               {n.body && (
-                <p className="mt-1 text-sm text-ivory/70">{n.body}</p>
+                <p className="mt-1 break-words text-sm text-ivory/70">{n.body}</p>
               )}
               {n.link && (
                 <Link
                   href={n.link}
-                  className="mt-2 inline-block text-xs text-violet hover:underline"
+                  className="mt-2 inline-block break-all py-1 text-xs text-violet hover:underline"
                 >
                   Open →
                 </Link>

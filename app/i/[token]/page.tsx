@@ -26,7 +26,7 @@ export default async function ClientIntakePage({
 
   return (
     <div className="min-h-screen bg-[#FAF8F3] text-[#221F1A]">
-      <main className="mx-auto max-w-xl px-6 py-10">
+      <main className="mx-auto w-full max-w-xl px-4 py-8 sm:px-6 sm:py-10">
         <p className="text-sm font-medium text-[#5646E5]">clancy.</p>
         <h1 className="mt-2 text-2xl font-medium">
           {companyName} — tell us about your business
@@ -70,7 +70,7 @@ export default async function ClientIntakePage({
                         {field.label}
                       </label>
                       {field.type === 'services' ? (
-                        <div className="rounded-xl border border-[#221F1A]/10 bg-white p-3 [&_input]:border-[#221F1A]/15 [&_input]:bg-[#FAF8F3] [&_input]:text-[#221F1A] [&_.text-ivory\/50]:text-[#221F1A]/50 [&_.text-ivory\/70]:text-[#221F1A]/70 [&_.text-ivory\/40]:text-[#221F1A]/40 [&_button]:border-[#221F1A]/20 [&_button]:text-[#221F1A]/70">
+                        <div className="rounded-xl border border-[#221F1A]/10 bg-white p-3 [&_input]:min-w-0 [&_input]:border-[#221F1A]/15 [&_input]:bg-[#FAF8F3] [&_input]:text-[#221F1A] [&_input:not([type=checkbox])]:w-full [&_.text-ivory\/50]:text-[#221F1A]/50 [&_.text-ivory\/70]:text-[#221F1A]/70 [&_.text-ivory\/40]:text-[#221F1A]/40 [&_button]:border-[#221F1A]/20 [&_button]:text-[#221F1A]/70">
                         <ServiceListEditor name={name} initial={value} />
                         </div>
                       ) : field.type === 'long' ? (
