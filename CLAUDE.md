@@ -99,3 +99,17 @@ Each client business needs TWO things from Clancy: (1) their **website** (`sites
 - Define the full-time revenue gate (proposed in the 5-year plan — needs Jacky's number)
 - Commit to checkpoints? (guards against open-ended drift with no deadline)
 - Pilot client sourcing for the workshop vertical
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues for `jackywong29/clancy`, via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+The five canonical triage labels, unchanged: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root. See `docs/agents/domain.md`.
