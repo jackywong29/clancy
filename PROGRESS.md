@@ -8,7 +8,7 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 31 July 2026 · last commit `bcac84c` (Batch 11, deployed)
+Last updated: 5 September 2026 · last commit `bcac84c` (Batch 11, deployed)
 
 ---
 
@@ -19,39 +19,45 @@ Clancy HQ is built and live at **clancy-hq.vercel.app** (11 build batches,
 side (sales pipeline, client intake, two build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
-real KL church — first client site at `/s/sgckl`). Latest deploy is green. No
+real KL church — first client site at `/s/sgckl`). Latest deploy is green.
+**Automated email is now live** (Gmail SMTP configured in Vercel — verified
+with a simple send that landed in the main inbox as important). No
 paying client yet; company not yet registered; brand not yet launched.
 
 ---
 
-## BLOCKED ON JACKY (do these first — everything below is waiting)
+## OPEN ACTIONS FOR JACKY (do these first)
 
-0. ~~Run migration 017~~ — **DONE 31 Jul 2026**, run before the Batch 11
-   push. All migrations 001–017 applied. **Not yet smoke-tested by a human:**
-   send one broadcast with a file and an image to yourself before using it on
-   SGCKL's congregation.
+1. **Smoke-test the full Batch 11 broadcast — highest priority.** Automated
+   email is live, but so far only a bare "test" (title + one word) has actually
+   been sent. The Batch 11 features — file attachment, an **in-message** image,
+   and the saved **sign-off** — are built and deployed but **never sent for
+   real.** Before using broadcasts on SGCKL's congregation: send yourself one
+   with a PDF, a photo toggled to "in message", and your Team sign-off, and
+   confirm all three land correctly. "The pipe works" ≠ "the feature works".
 
-1. ~~Run migrations 015 + 016~~ — **DONE 30 Jul 2026, verified.** All
-   migrations 001–016 are now applied. Broadcasts works; the editable Clancy
-   homepage (`sites` row `clancy-home`) is live and saveable at
-   Sites → "Clancy homepage".
+2. **Set up the workspace sign-off if you haven't.** Team → Workspace settings
+   → Email sign-off (logo, name, contact, small print). It's per-workspace, so
+   Clancy and SGCKL each get their own. Empty = broadcasts send without a
+   signature.
 
-2. **Automated email** — not live yet. **This now gates three features, not
-   one.** Real attachments are impossible without it: `mailto:` has no
-   attachment parameter, so mail-app mode degrades to signed download links
-   and plain-text formatting. Needs, on `clancy.hq.ai@gmail.com`:
-   2-Step Verification on, then an App Password from
-   myaccount.google.com/apppasswords. Add to Vercel env vars as
-   `GMAIL_USER` and `GMAIL_APP_PASSWORD`, then redeploy.
-   Until then: Broadcasts fall back to mail-app BCC batches, and Team invites
-   fall back to a "Copy invite" button. Code is already written for both paths
-   (`lib/email.ts` detects the env vars and switches automatically).
+### Done since last session
+- ~~Run migration 017~~ — **DONE**, run before the Batch 11 push. Migrations
+  001–017 all applied.
+- ~~Run migrations 015 + 016~~ — **DONE, verified.** Broadcasts works; editable
+  Clancy homepage (`sites` row `clancy-home`) live at Sites → "Clancy homepage".
+- ~~Automated email~~ — **DONE, live & verified.** Gmail SMTP configured in
+  Vercel (`GMAIL_USER` + `GMAIL_APP_PASSWORD` on `clancy.hq.ai@gmail.com`).
+  Broadcasts now send for real (BCC batches of 40) and invites email
+  automatically; the mailto/copy-link paths are now just the fallback when the
+  env vars are absent. `lib/email.ts` detects and switches automatically.
 
-3. **Fix the calendar category colours (data repair).** The old bug minted
-   category keys from the first keystroke, so existing SGCKL categories have
-   colliding keys. The code is fixed; the stored data isn't. Repair: Team →
-   Calendar categories → delete the three categories, re-add them, save. Then
-   delete and re-add any events showing the wrong colour.
+### Deferred (off the critical path)
+- **Calendar category colour repair (SGCKL).** The old bug minted category keys
+  from the first keystroke, so existing SGCKL categories have colliding keys.
+  Code is fixed; stored data isn't. Repair when there's calendar activity: Team
+  → Calendar categories → delete the three, re-add, save; then re-add any
+  mis-coloured events. Low priority until the calendar is in real use.
 
 ---
 
@@ -59,9 +65,22 @@ paying client yet; company not yet registered; brand not yet launched.
 
 - **No database backups.** Supabase free tier has none. SGCKL's congregation
   data is real people's contact details, and a bad delete is currently
-  unrecoverable. Fix: upgrade Supabase to Pro (~USD 25/mo → daily backups +
-  point-in-time recovery), or have Claude build an export-to-file feature.
-  *This is the highest-value unresolved item on the whole project.*
+  unrecoverable. *This is the highest-value unresolved item on the whole
+  project.* Decided fix path (5 Sep 2026): (a) build an in-app **export**
+  feature now — works on any tier, doubles as a client-facing "your data is
+  yours" feature and the PDPA portability answer; (b) upgrade to **Supabase
+  Pro (~USD 25/mo)** the day the first client pays — daily backups +
+  point-in-time recovery; (c) optional third leg — a scheduled dump from
+  Supabase onto Jacky's new **UGREEN NAS** (backup target only, NOT a
+  production DB — see infra decisions below). Export is a strong candidate for
+  the next batch but is **not yet committed** (decide live).
+- **Email deliverability from a plain Gmail address.** Automated email is live,
+  but sends from `clancy.hq.ai@gmail.com` with no SPF/DKIM on a real sending
+  domain, and Gmail caps ~500 recipients/day. Fine at current scale (a simple
+  send landed in the main inbox), but HTML newsletters with attachments to
+  100+ BCC recipients are a spam-filter target. Proper fix rides on
+  registering **clancy.my** → move to Resend. The broadcast code is already
+  provider-agnostic and swaps cleanly.
 - **Intra-workspace roles are enforced in the application layer**, not the
   database. The wall *between* client businesses IS database-enforced (RLS) and
   is solid. Harden roles to RLS before a client with adversarial-insider risk.
@@ -71,11 +90,26 @@ paying client yet; company not yet registered; brand not yet launched.
 - **PDPA** applies (storing clients' customers' data on their behalf).
 - **Hours-per-client is not being tracked** — the number that drives the
   full-time gate and the hiring trigger. Start logging.
-- **Email deliverability is weak and now matters more.** Broadcasts send HTML
-  with attachments from a plain `@gmail.com` address — no SPF/DKIM on a
-  sending domain, so 100+ BCC newsletters are a spam-filter target. The code
-  is provider-agnostic and swaps to Resend cleanly; the blocker is that
-  `clancy.my` doesn't exist yet. Gmail also caps ~500 recipients/day.
+
+---
+
+## DECIDED THIS SESSION (5 Sep 2026 — canonical home is CLAUDE.md)
+
+- **Database stays on Supabase, NOT Neon.** Neon is Postgres-only; moving there
+  means rebuilding auth + storage and rewriting every RLS policy (the one part
+  that's genuinely solid). Not worth dodging a ~$25/mo bill.
+- **The UGREEN NAS is a backup target, NOT a production database.** Capable
+  hardware, wrong place: the app runs on Vercel, so a home-hosted DB puts every
+  client site behind Jacky's home internet/power, and one 10TB drive is zero
+  redundancy. Use it for scheduled dumps (mirror the drive; add a cheap offsite
+  copy as the third leg since NAS + Mac mini share one building).
+- **Infrastructure stays Clancy-owned (shared multi-tenant), NOT per-client
+  Vercel/Supabase accounts.** Client-owned breaks multi-tenant (1 app = 1 DB),
+  turns one bug-fix into N deploys, and kills the template strategy. The
+  ownership clients actually care about is delivered by registering each
+  client's **domain in their name**, pointed at Clancy infra — costs nothing,
+  changes no architecture, and paired with the export feature gives honest
+  portability.
 
 ---
 
@@ -94,14 +128,19 @@ paying client yet; company not yet registered; brand not yet launched.
 
 ---
 
-## NEXT BUILD CANDIDATES (nothing started)
+## NEXT BUILD CANDIDATES (next batch left OPEN — decide live in the terminal)
 
+- **Export / backup (strong recommendation).** In-app, workspace-scoped export
+  (CSV per table + one JSON dump incl. `crm_config` and `sites.config`). Kills
+  the top risk, is a client-facing feature, and answers PDPA portability in one
+  build. ~half a day, likely no migration. Optionally pair with the scheduled
+  NAS dump. *Recommended first, but not committed.*
 - **UI/UX redesign** — `DESIGN_BRIEF.md` is written and ready to hand to a
   design-focused conversation; implement whatever comes back.
 - **Calendar day/week views** (month view only today).
-- **Real alert delivery** for calendar events — the alert lead-time and
-  department fields are captured and stored, but nothing sends yet (needs
-  scheduled jobs + the email setup above).
+- **Real alert delivery** for calendar events — alert lead-time + department
+  fields are captured and stored; email sending is now live, so this only needs
+  the **scheduled-jobs** half (cron) to actually fire.
 - **Booking engine** (build-plan phase 2) — currently booking is a WhatsApp
   deep-link placeholder on client sites.
 - **Vertical template packs** — snapshot SGCKL's configuration as the first

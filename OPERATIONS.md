@@ -37,7 +37,7 @@ How the business runs, start to finish. For Jacky and Claude — read this to re
 - **Board** — their records (custom fields via Customize) moving through their stages
 - **View site / Edit website** — their public site (edit = admins only)
 - **Tasks / Calendar** — department-scoped tasks; colour-coded events with repeats and alerts (module toggles on Customize)
-- **Broadcasts** — email announcements to records or team, with file/image attachments and the business's own sign-off block (set on Team → Workspace settings). Sends properly once automated email is configured; until then it falls back to BCC mail-app batches with download links instead of attachments
+- **Broadcasts** — email announcements to records or team, with file/image attachments and the business's own sign-off block (set on Team → Workspace settings). **Automated email is live**, so "Send now" delivers for real (BCC batches of 40); the mail-app BCC path is now only the fallback if the email env vars are ever removed
 - **Inbox** — website signups and alerts · **Team** — members, roles (renameable), invites, departments, calendar categories (admins only)
 - Roles: view-only / edit / admin — set on Team, labels renameable per business
 
@@ -56,16 +56,19 @@ How the business runs, start to finish. For Jacky and Claude — read this to re
 | Code | github.com/jackywong29/clancy · local `~/Desktop/Claude/crm-platform` |
 | Database / auth / file storage | Supabase project `zxmklxmtsfercytmpjen` (own Clancy org, Singapore) |
 | Google sign-in | Google Cloud project "Clancy" (consent screen in Testing — only test-user emails can Google-login) |
-| Env vars | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_ENABLE_GOOGLE_AUTH` |
+| Env vars | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `NEXT_PUBLIC_ENABLE_GOOGLE_AUTH`, `GMAIL_USER`, `GMAIL_APP_PASSWORD` (automated email — live) |
+| Automated email | Gmail SMTP on `clancy.hq.ai@gmail.com` (nodemailer, `lib/email.ts`). Live. Move to Resend when `clancy.my` exists. |
+| Backup (planned) | Scheduled `pg_dump` + storage buckets → UGREEN NAS via the M4 Mac mini. Backup only, not a production DB. |
 
-Migrations applied: 001 core schema · 002 open signup · 004 team/admin (+005 repair) · 006 intakes + file storage. (003 was superseded by 006.)
+Migrations applied: 001–017, all applied (core schema · signup · team/admin · intakes + files · sites · intake links · SGCKL · client CRM · tasks/calendar · roles/invites/forms · calendar events · broadcasts · landing config · broadcast attachments). Full history in `supabase/` and `CLAUDE.md`.
 
 Hard lessons already paid for — don't repeat: (1) never save Vercel env values with the "Sensitive" toggle + browser autofill active — a silently corrupted key once broke every login; (2) never delete rows in Supabase Table Editor — profiles/organizations/stages are load-bearing; change data through the app or SQL only.
 
 ## Open items
 
 - Landing page CTA is a mailto placeholder → replace with business WhatsApp link
-- Register `clancy.my` → add as custom domain on Vercel
+- Register `clancy.my` → add as custom domain on Vercel + move email to Resend (fixes deliverability: SPF/DKIM)
 - Entity registration (Jacky confirms when done — then transfer Vercel project to a Clancy team, contracts in company name)
 - Full-time gate number (see `five-year-plan.md`)
-- Batch 4 candidates: client-facing intake link · weekly requests queue · hours log per client
+- Build the in-app **export/backup** feature + wire the NAS dump (top unresolved risk — see `PROGRESS.md`)
+- Register each client's **domain in their name** (pointed at Clancy infra) as the data-ownership answer — decided 2026-09-05
