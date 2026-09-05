@@ -456,44 +456,90 @@ export default async function TeamPage({
             <h2 className="mb-2 mt-8 text-sm font-medium text-ivory/80">
               All accounts (Clancy platform)
             </h2>
+            <p className="mb-3 text-xs text-ivory/50">
+              Assign an account to a workspace, or grant{' '}
+              <strong className="text-ivory/70">Clancy staff</strong> access.
+              Clancy staff can see and manage{' '}
+              <strong className="text-ivory/70">every client workspace</strong>{' '}
+              — give it only to your own people, never to a client. A client&apos;s
+              own admin is set in the Members list above and stays inside their
+              workspace.
+            </p>
             <div className="space-y-2">
-              {allProfiles.map((profile) => (
-                <div
-                  key={profile.id}
-                  className="flex flex-wrap items-center gap-3 rounded-xl border border-ash/60 bg-carbon p-3"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm">{profile.email ?? profile.id}</p>
-                    <p className="text-xs text-ivory/60">
-                      {orgName(profile.organization_id) ?? (
-                        <span className="text-red-400">no access</span>
+              {allProfiles.map((profile) => {
+                const isSelf = profile.id === m.userId
+                return (
+                  <div
+                    key={profile.id}
+                    className="flex flex-wrap items-center gap-3 rounded-xl border border-ash/60 bg-carbon p-3"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm">
+                        {profile.email ?? profile.id}
+                        {isSelf && (
+                          <span className="ml-2 text-xs text-ivory/40">you</span>
+                        )}
+                      </p>
+                      <p className="text-xs text-ivory/60">
+                        {orgName(profile.organization_id) ?? (
+                          <span className="text-red-400">no access</span>
+                        )}
+                      </p>
+                    </div>
+                    <form
+                      action={updateProfileAccess}
+                      className="flex flex-wrap items-center gap-2"
+                    >
+                      <input type="hidden" name="profile_id" value={profile.id} />
+                      <label
+                        className="flex items-center gap-1.5 text-xs text-ivory/70"
+                        title={
+                          isSelf
+                            ? "You can't remove your own Clancy staff access"
+                            : 'Full access to every client workspace'
+                        }
+                      >
+                        <input
+                          type="checkbox"
+                          name="is_platform_admin"
+                          defaultChecked={profile.is_platform_admin}
+                          disabled={isSelf}
+                          className="h-4 w-4 accent-violet disabled:opacity-50"
+                        />
+                        Clancy staff
+                      </label>
+                      {/* A disabled checkbox submits nothing, which would read
+                          as "unchecked" and try to demote you. Resend it. */}
+                      {isSelf && profile.is_platform_admin && (
+                        <input
+                          type="hidden"
+                          name="is_platform_admin"
+                          value="on"
+                        />
                       )}
-                    </p>
+                      <select
+                        name="organization_id"
+                        defaultValue={profile.organization_id ?? ''}
+                        className={inputClass}
+                        aria-label="Workspace"
+                      >
+                        <option value="">No access</option>
+                        {orgList.map((org) => (
+                          <option key={org.id} value={org.id}>
+                            {org.name}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                      >
+                        Save
+                      </button>
+                    </form>
                   </div>
-                  <form action={updateProfileAccess} className="flex gap-2">
-                    <input type="hidden" name="profile_id" value={profile.id} />
-                    <select
-                      name="organization_id"
-                      defaultValue={profile.organization_id ?? ''}
-                      className={inputClass}
-                      aria-label="Workspace"
-                    >
-                      <option value="">No access</option>
-                      {orgList.map((org) => (
-                        <option key={org.id} value={org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="submit"
-                      className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
-                    >
-                      Save
-                    </button>
-                  </form>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </>
         )}

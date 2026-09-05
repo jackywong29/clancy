@@ -15,7 +15,7 @@ import {
   MAX_ATTACHMENT_BYTES,
   type MailAttachment,
 } from '@/lib/email'
-import { resolveAudience } from '@/lib/audience'
+import { resolveAudience, parseEmailList, mergeRecipients } from '@/lib/audience'
 import {
   cidFor,
   renderBroadcastHtml,
@@ -292,16 +292,67 @@ export async function updateProfileAccess(formData: FormData) {
 
   const profileId = String(formData.get('profile_id') ?? '')
   const orgValue = String(formData.get('organization_id') ?? '')
+  const wantsPlatformAdmin = formData.get('is_platform_admin') === 'on'
 
-  if (profileId) {
-    await supabase
-      .from('profiles')
-      .update({ organization_id: orgValue === '' ? null : orgValue })
-      .eq('id', profileId)
+  if (!profileId) {
+    revalidatePath('/team')
+    redirect('/team?saved=1')
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  const { data: target } = await supabase
+    .from('profiles')
+    .select('is_platform_admin')
+    .eq('id', profileId)
+    .maybeSingle()
+
+  const wasPlatformAdmin = target?.is_platform_admin === true
+  const update: {
+    organization_id: string | null
+    is_platform_admin?: boolean
+  } = { organization_id: orgValue === '' ? null : orgValue }
+
+  if (wantsPlatformAdmin !== wasPlatformAdmin) {
+    // Clancy-staff access reaches every client workspace, so removing it needs
+    // two guards against locking the platform out of its own admin surface —
+    // that has already happened twice (see migrations 004/005).
+    if (!wantsPlatformAdmin) {
+      if (user?.id === profileId) {
+        redirect(
+          `/team?error=1&msg=${encodeURIComponent(
+            "You can't remove your own Clancy staff access — ask another Clancy admin to do it."
+          )}`
+        )
+      }
+      const { count } = await supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+        .eq('is_platform_admin', true)
+      if ((count ?? 0) <= 1) {
+        redirect(
+          `/team?error=1&msg=${encodeURIComponent(
+            'At least one Clancy staff account must remain.'
+          )}`
+        )
+      }
+    }
+    update.is_platform_admin = wantsPlatformAdmin
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update(update)
+    .eq('id', profileId)
+
   revalidatePath('/team')
-  redirect('/team?saved=1')
+  redirect(
+    error
+      ? `/team?error=1&msg=${encodeURIComponent(error.message)}`
+      : '/team?saved=1'
+  )
 }
 
 export async function submitClientIntake(formData: FormData) {
@@ -959,9 +1010,26 @@ export async function createBroadcast(formData: FormData) {
   const body = String(formData.get('body') ?? '').trim()
   const audience = String(formData.get('audience') ?? 'all')
   const attachments = parseAttachments(formData.get('attachments'))
+  const { valid: customRecipients, invalid } = parseEmailList(
+    String(formData.get('custom_recipients') ?? '')
+  )
 
   if (!subject || !body) {
     redirect('/broadcasts?error=1&msg=Subject%20and%20message%20are%20required')
+  }
+
+  if (invalid.length > 0) {
+    redirect(
+      `/broadcasts?error=1&msg=${encodeURIComponent(
+        `Not a valid email address: ${invalid.slice(0, 3).join(', ')}`
+      )}`
+    )
+  }
+
+  if (audience === 'custom' && customRecipients.length === 0) {
+    redirect(
+      '/broadcasts?error=1&msg=Type%20at%20least%20one%20email%20address'
+    )
   }
 
   const total = attachments.reduce((sum, a) => sum + a.size, 0)
@@ -971,7 +1039,10 @@ export async function createBroadcast(formData: FormData) {
 
   // resolveAudience handles team audiences too — counting `clients` here
   // reported 0 recipients for any team broadcast.
-  const recipients = await resolveAudience(supabase, audience)
+  const recipients = mergeRecipients(
+    await resolveAudience(supabase, audience),
+    customRecipients
+  )
 
   const { data: created, error } = await supabase
     .from('broadcasts')
@@ -981,6 +1052,7 @@ export async function createBroadcast(formData: FormData) {
       body,
       audience,
       attachments,
+      custom_recipients: customRecipients,
       recipient_count: recipients.length,
       created_by: m.userId,
     })
@@ -1077,7 +1149,10 @@ export async function sendBroadcastNow(formData: FormData) {
   if (!broadcastRow) {
     redirect('/broadcasts?error=1&msg=Broadcast%20not%20found')
   }
-  const recipients = await resolveAudience(supabase, broadcastRow.audience)
+  const recipients = mergeRecipients(
+    await resolveAudience(supabase, broadcastRow.audience),
+    (broadcastRow.custom_recipients ?? []) as string[]
+  )
   const emails = recipients.map((r: { email: string }) => r.email)
 
   if (emails.length === 0) {

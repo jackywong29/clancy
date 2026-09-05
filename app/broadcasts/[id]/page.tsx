@@ -3,7 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { markBroadcastSent, sendBroadcastNow } from '@/lib/actions'
 import { getMembership, hasRole } from '@/lib/permissions'
-import { resolveAudience } from '@/lib/audience'
+import { resolveAudience, mergeRecipients } from '@/lib/audience'
 import { isEmailConfigured } from '@/lib/email'
 import {
   formatBytes,
@@ -40,8 +40,14 @@ export default async function BroadcastDetailPage({
   if (!broadcastRow) notFound()
   const broadcast = broadcastRow as Broadcast
 
-  const recipients = await resolveAudience(supabase, broadcast.audience)
+  const recipients = mergeRecipients(
+    await resolveAudience(supabase, broadcast.audience),
+    broadcast.custom_recipients ?? []
+  )
   const emails = recipients.map((r) => r.email)
+  const customSet = new Set(
+    (broadcast.custom_recipients ?? []).map((e) => e.toLowerCase())
+  )
   const automated = isEmailConfigured()
   const files: BroadcastAttachment[] = broadcast.attachments ?? []
 
@@ -231,11 +237,22 @@ export default async function BroadcastDetailPage({
 
         <p className="mb-2 text-sm font-medium text-ivory/80">Recipients</p>
         <div className="space-y-1">
-          {recipients.map((r, i) => (
-            <p key={i} className="text-sm text-ivory/70">
-              {r.name} <span className="text-ivory/40">· {r.email}</span>
-            </p>
-          ))}
+          {recipients.map((r, i) => {
+            const typed = customSet.has(r.email.toLowerCase())
+            return (
+              <p key={i} className="text-sm text-ivory/70">
+                {r.name}
+                {r.name !== r.email && (
+                  <span className="text-ivory/40"> · {r.email}</span>
+                )}
+                {typed && (
+                  <span className="ml-2 rounded bg-ash/40 px-1.5 py-0.5 text-xs text-ivory/50">
+                    typed
+                  </span>
+                )}
+              </p>
+            )
+          })}
         </div>
       </main>
     </div>

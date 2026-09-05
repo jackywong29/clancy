@@ -8,14 +8,14 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 5 September 2026 · last commit `bcac84c` (Batch 11, deployed)
+Last updated: 6 September 2026 · Batch 12 deployed · migrations 001–018 applied
 
 ---
 
 ## Status in one paragraph
 
-Clancy HQ is built and live at **clancy-hq.vercel.app** (11 build batches,
-~45 commits, 17 migrations). It is a genuine two-sided product: Jacky's agency
+Clancy HQ is built and live at **clancy-hq.vercel.app** (12 build batches,
+~48 commits, 18 migrations). It is a genuine two-sided product: Jacky's agency
 side (sales pipeline, client intake, two build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
@@ -40,6 +40,9 @@ paying client yet; company not yet registered; brand not yet launched.
    → Email sign-off (logo, name, contact, small print). It's per-workspace, so
    Clancy and SGCKL each get their own. Empty = broadcasts send without a
    signature.
+
+3. **Smoke-test Batch 12** (small): tick "Clancy staff" on a second account and
+   confirm they can switch workspaces; send a broadcast to a typed address.
 
 ### Done since last session
 - ~~Run migration 017~~ — **DONE**, run before the Batch 11 push. Migrations

@@ -308,6 +308,9 @@ export interface Broadcast {
   recipient_count: number
   status: string
   attachments: BroadcastAttachment[]
+  // Ad-hoc addresses typed into the compose box, merged with (and deduped
+  // against) whatever the audience picker resolves to.
+  custom_recipients: string[]
   created_by: string | null
   created_at: string
 }

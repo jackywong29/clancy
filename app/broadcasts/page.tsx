@@ -88,6 +88,7 @@ export default async function BroadcastsPage({
               className="flex-1 bg-transparent text-sm outline-none"
               aria-label="Audience"
             >
+              <option value="custom">Just the addresses I type below</option>
               <optgroup label={plural}>
                 <option value="all">All {plural.toLowerCase()} with an email</option>
                 {stageList.map((s) => (
@@ -110,6 +111,23 @@ export default async function BroadcastsPage({
                 ))}
               </optgroup>
             </select>
+          </div>
+          <div className="flex items-start gap-3 border-b border-ash/50 px-4 py-3">
+            <span className="w-16 shrink-0 pt-1 text-sm text-ivory/50">
+              Also to
+            </span>
+            <div className="flex-1">
+              <textarea
+                name="custom_recipients"
+                rows={2}
+                placeholder="Type or paste email addresses — commas, spaces or new lines"
+                className="w-full bg-transparent text-sm leading-relaxed outline-none placeholder:text-ivory/40"
+              />
+              <p className="text-xs text-ivory/40">
+                Added on top of whoever&apos;s picked above. Anyone in both
+                lists is only emailed once.
+              </p>
+            </div>
           </div>
           <div className={rowClass}>
             <span className="w-16 shrink-0 text-sm text-ivory/50">Subject</span>
@@ -175,7 +193,14 @@ export default async function BroadcastsPage({
                 </p>
                 <p className="flex flex-wrap items-center gap-x-1 text-xs text-ivory/60">
                   <span>
-                    {audienceLabel(b.audience, m.crmConfig, stageName, deptName)} ·{' '}
+                    {audienceLabel(
+                      b.audience,
+                      m.crmConfig,
+                      stageName,
+                      deptName,
+                      b.custom_recipients?.length ?? 0
+                    )}{' '}
+                    ·{' '}
                     {b.recipient_count} recipient
                     {b.recipient_count === 1 ? '' : 's'} ·{' '}
                     {b.created_at.slice(0, 10)}
