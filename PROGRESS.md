@@ -29,14 +29,16 @@ paying client yet; company not yet registered; brand not yet launched.
 
 ## OPEN ACTIONS FOR JACKY (do these first)
 
-0. **Smoke-test stage checklists (Batch 14, deployed — untested by a human).**
-   Migration 019 is applied and the code is live, but the feature has only been
-   verified against a fake database, never against real data. Check: add a
-   checklist to a stage on `/stages`, move a record into it, confirm the tasks
-   appear and the `n/m` pill shows on the board card; tick a "Must finish
-   first" item and confirm a **forward** move is refused with the task named,
-   while a **backward** move still works. Then try "Generate checklist" on a
-   record that was already sitting in the stage.
+0. **Re-run the stage-checklist smoke test (Batch 15).** The first attempt
+   failed because the checklist UI was invisible on the Clancy workspace —
+   fixed, along with a redesign: **Stages is now Workflow** (`/workflow`).
+   Check: on `/workflow`, add tasks under a stage and hit **Save workflow**
+   (one button now, no rival Save to click by mistake); move a record into
+   that stage; confirm the tasks appear on the record and an `n/m` pill shows
+   on the board card; tick a "blocks" item and confirm a **forward** move is
+   refused naming the task, while a **backward** move still works. Then try
+   "Add this stage's tasks" on a record that predates the checklist.
+   No migration needed — 019 already covers it.
 
 1. **Smoke-test the full Batch 11 broadcast — highest priority.** Automated
    email is live, but so far only a bare "test" (title + one word) has actually

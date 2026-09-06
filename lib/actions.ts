@@ -28,7 +28,6 @@ import {
 } from '@/lib/checklist'
 import type {
   BroadcastAttachment,
-  ChecklistItem,
   EmailSignature,
   PipelineStage,
 } from '@/types/database'
@@ -233,9 +232,9 @@ export async function addStage(formData: FormData) {
     })
   }
 
-  revalidatePath('/stages')
+  revalidatePath('/workflow')
   revalidatePath('/pipeline')
-  redirect('/stages')
+  redirect('/workflow')
 }
 
 export async function updateStage(formData: FormData) {
@@ -253,9 +252,9 @@ export async function updateStage(formData: FormData) {
       .eq('id', stageId)
   }
 
-  revalidatePath('/stages')
+  revalidatePath('/workflow')
   revalidatePath('/pipeline')
-  redirect('/stages?saved=1')
+  redirect('/workflow?saved=1')
 }
 
 export async function deleteStage(formData: FormData) {
@@ -270,14 +269,14 @@ export async function deleteStage(formData: FormData) {
       .eq('stage_id', stageId)
 
     if ((count ?? 0) > 0) {
-      redirect(`/stages?error=in-use&count=${count}`)
+      redirect(`/workflow?error=in-use&count=${count}`)
     }
     await supabase.from('pipeline_stages').delete().eq('id', stageId)
   }
 
-  revalidatePath('/stages')
+  revalidatePath('/workflow')
   revalidatePath('/pipeline')
-  redirect('/stages')
+  redirect('/workflow')
 }
 
 export async function requireAdmin() {
@@ -930,41 +929,64 @@ export async function generateChecklistNow(formData: FormData) {
   redirect(`${backTo}?saved=1`)
 }
 
-export async function saveStageChecklist(formData: FormData) {
+// One save for the whole workflow — stage names, order, and every checklist.
+// Replaces the old per-card pair of rival Save buttons on /stages.
+export async function saveWorkflow(formData: FormData) {
   await requireWorkspaceAdmin()
   const supabase = await createClient()
 
-  const stageId = String(formData.get('stage_id') ?? '')
-  let checklist: ChecklistItem[] = []
+  let rows: { id: string; name: string; position: number; checklist: unknown }[]
   try {
-    checklist = parseChecklist(JSON.parse(String(formData.get('checklist') ?? '[]')))
+    const parsed = JSON.parse(String(formData.get('workflow') ?? '[]'))
+    rows = Array.isArray(parsed) ? parsed : []
   } catch {
-    checklist = []
+    redirect('/workflow?error=1&msg=Could%20not%20read%20the%20workflow')
   }
 
-  // Ask for the updated row back so a write that matched nothing (wrong id, or
-  // RLS silently filtering it out) can't report "Saved."
-  const { data: updated, error } = await supabase
-    .from('pipeline_stages')
-    .update({ checklist })
-    .eq('id', stageId)
-    .select('id')
+  const clean = rows
+    .filter((r) => r && typeof r.id === 'string' && String(r.name ?? '').trim())
+    .map((r, i) => ({
+      id: r.id,
+      name: String(r.name).trim(),
+      position: i + 1,
+      checklist: parseChecklist(r.checklist),
+    }))
 
-  revalidatePath('/stages')
+  if (clean.length === 0) {
+    redirect('/workflow?error=1&msg=Every%20stage%20needs%20a%20name')
+  }
+
+  // Updated one at a time rather than upserted: an upsert would need the
+  // organization_id on every row and could insert a stage into the wrong
+  // workspace if an id were ever tampered with. RLS scopes each update.
+  for (const row of clean) {
+    const { data, error } = await supabase
+      .from('pipeline_stages')
+      .update({
+        name: row.name,
+        position: row.position,
+        checklist: row.checklist,
+      })
+      .eq('id', row.id)
+      .select('id')
+
+    if (error) {
+      redirect(`/workflow?error=1&msg=${encodeURIComponent(error.message)}`)
+    }
+    if (!data || data.length === 0) {
+      redirect(
+        `/workflow?error=1&msg=${encodeURIComponent(
+          `"${row.name}" didn't update — you may not have permission to edit it.`
+        )}`
+      )
+    }
+  }
+
+  revalidatePath('/workflow')
   revalidatePath('/pipeline')
-
-  if (error) {
-    redirect(`/stages?error=1&msg=${encodeURIComponent(error.message)}`)
-  }
-  if (!updated || updated.length === 0) {
-    redirect(
-      `/stages?error=1&msg=${encodeURIComponent(
-        "That stage didn't update — you may not have permission to edit it."
-      )}`
-    )
-  }
-  redirect('/stages?saved=1')
+  redirect('/workflow?saved=1')
 }
+
 
 export async function updateMember(formData: FormData) {
   const supabase = await createClient()
