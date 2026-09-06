@@ -37,7 +37,7 @@ export function StepListEditor({
         value={JSON.stringify(steps.filter((s) => s.trim() !== ''))}
       />
       {steps.map((step, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} className="flex flex-wrap items-center gap-2">
           <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-violet/15 text-xs font-medium text-violet">
             {i + 1}
           </span>
@@ -49,13 +49,13 @@ export function StepListEditor({
             placeholder={
               i === 0 ? 'e.g. Customer WhatsApps or walks in' : 'Next step…'
             }
-            className="flex-1 rounded-lg border border-ash bg-graphite px-3 py-1.5 text-sm outline-none focus:border-violet"
+            className="min-w-32 flex-1 rounded-lg border border-ash bg-graphite px-3 py-1.5 text-sm outline-none focus:border-violet"
           />
           <button
             type="button"
             onClick={() => move(i, -1)}
             aria-label="Move up"
-            className="text-ivory/40 hover:text-ivory disabled:opacity-30"
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-ivory/40 hover:text-ivory disabled:opacity-30 sm:h-6 sm:w-6"
             disabled={i === 0}
           >
             ↑
@@ -64,7 +64,7 @@ export function StepListEditor({
             type="button"
             onClick={() => move(i, 1)}
             aria-label="Move down"
-            className="text-ivory/40 hover:text-ivory disabled:opacity-30"
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-ivory/40 hover:text-ivory disabled:opacity-30 sm:h-6 sm:w-6"
             disabled={i === steps.length - 1}
           >
             ↓
@@ -73,7 +73,7 @@ export function StepListEditor({
             type="button"
             onClick={() => setSteps(steps.filter((_, idx) => idx !== i))}
             aria-label="Remove step"
-            className="text-ivory/40 hover:text-red-400"
+            className="flex h-8 w-8 shrink-0 items-center justify-center text-ivory/40 hover:text-red-400 sm:h-6 sm:w-6"
           >
             ×
           </button>
@@ -82,7 +82,7 @@ export function StepListEditor({
       <button
         type="button"
         onClick={() => setSteps([...steps, ''])}
-        className="rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet"
+        className="rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5"
       >
         + Add step
       </button>

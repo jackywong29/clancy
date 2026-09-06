@@ -3,7 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 import { signOut } from '@/lib/actions'
 import { Wordmark } from '@/components/Wordmark'
 import { WorkspaceSwitcher } from '@/components/WorkspaceSwitcher'
-import { NavLink } from '@/components/NavLink'
+import { NavLink, type NavItem } from '@/components/NavLink'
+import { MobileNav } from '@/components/MobileNav'
+import { Inbox } from 'lucide-react'
 import type { Organization } from '@/types/database'
 
 export async function Header() {
@@ -67,78 +69,99 @@ export async function Header() {
     ownSiteSlug = (ownSite as { slug?: string } | null)?.slug ?? null
   }
 
+  const navItems: NavItem[] = []
+  navItems.push({
+    href: '/pipeline',
+    label: isClancy ? 'Pipeline' : 'Board',
+    icon: 'board',
+  })
+  if (isClancy) {
+    navItems.push({ href: '/clients/new', label: 'Add client', icon: 'add' })
+  } else if (isEditor) {
+    navItems.push({ href: '/records/new', label: 'Add', icon: 'add' })
+  }
+  if (showTasks) navItems.push({ href: '/tasks', label: 'Tasks', icon: 'tasks' })
+  if (showCalendar)
+    navItems.push({ href: '/calendar', label: 'Calendar', icon: 'calendar' })
+  navItems.push({ href: '/people', label: 'People', icon: 'people' })
+  if (isEditor) navItems.push({ href: '/stages', label: 'Stages', icon: 'stages' })
+  if (isEditor)
+    navItems.push({ href: '/broadcasts', label: 'Broadcasts', icon: 'broadcasts' })
+  if (!isClancy && isWorkspaceAdmin)
+    navItems.push({ href: '/crm', label: 'Customize', icon: 'customize' })
+  if (!isClancy && ownSiteSlug)
+    navItems.push({
+      href: `/s/${ownSiteSlug}`,
+      label: 'View site',
+      icon: 'view',
+      external: true,
+    })
+  if (!isClancy && isWorkspaceAdmin && ownSiteSlug)
+    navItems.push({
+      href: `/sites/${ownSiteSlug}/edit`,
+      label: 'Edit website',
+      icon: 'edit',
+    })
+  if (profile?.is_platform_admin)
+    navItems.push({ href: '/sites', label: 'Sites', icon: 'sites' })
+  if (isWorkspaceAdmin) navItems.push({ href: '/team', label: 'Team', icon: 'team' })
+
+  const signOutButton = (
+    <form action={signOut}>
+      <button
+        type="submit"
+        className="text-sm text-ivory/60 hover:text-ivory"
+      >
+        Sign out
+      </button>
+    </form>
+  )
+
+  const switcher = profile?.is_platform_admin ? (
+    <WorkspaceSwitcher orgs={orgs} currentId={profile.organization_id} />
+  ) : null
+
   return (
-    <header className="flex items-center justify-between border-b border-ash/60 bg-graphite px-6 py-3">
-      <div className="flex items-center gap-8">
-        <Link href="/pipeline">
+    <header className="sticky top-0 z-40 border-b border-ash/60 bg-graphite">
+      <div className="flex items-center gap-3 px-4 py-3 sm:px-6 lg:gap-6">
+        <MobileNav
+          items={navItems}
+          footer={
+            <>
+              {switcher}
+              {signOutButton}
+            </>
+          }
+        />
+        <Link href="/pipeline" className="shrink-0">
           <Wordmark />
         </Link>
-        <nav className="flex items-center gap-4 overflow-x-auto whitespace-nowrap text-sm">
-          <NavLink href="/pipeline" label={isClancy ? 'Pipeline' : 'Board'} icon="board" />
-          {isClancy ? (
-            <NavLink href="/clients/new" label="Add client" icon="add" />
-          ) : (
-            <>
-              {isEditor && <NavLink href="/records/new" label="Add" icon="add" />}
-            </>
-          )}
-          {showTasks && <NavLink href="/tasks" label="Tasks" icon="tasks" />}
-          {showCalendar && (
-            <NavLink href="/calendar" label="Calendar" icon="calendar" />
-          )}
-          <NavLink href="/people" label="People" icon="people" />
-          {isEditor && <NavLink href="/stages" label="Stages" icon="stages" />}
-          {isEditor && (
-            <NavLink href="/broadcasts" label="Broadcasts" icon="broadcasts" />
-          )}
-          {!isClancy && isWorkspaceAdmin && (
-            <NavLink href="/crm" label="Customize" icon="customize" />
-          )}
-          {!isClancy && ownSiteSlug && (
-            <NavLink href={`/s/${ownSiteSlug}`} label="View site" icon="view" external />
-          )}
-          {!isClancy && isWorkspaceAdmin && ownSiteSlug && (
-            <NavLink
-              href={`/sites/${ownSiteSlug}/edit`}
-              label="Edit website"
-              icon="edit"
-            />
-          )}
-          {profile?.is_platform_admin && (
-            <NavLink href="/sites" label="Sites" icon="sites" />
-          )}
-          {isWorkspaceAdmin && <NavLink href="/team" label="Team" icon="team" />}
+        <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm lg:flex">
+          {navItems.map((item) => (
+            <NavLink key={item.href} {...item} />
+          ))}
         </nav>
-      </div>
-      <div className="flex items-center gap-4">
-        {profile?.organization_id && (
-          <Link
-            href="/notifications"
-            className="relative text-sm text-ivory/60 hover:text-ivory"
-            aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ''}`}
-          >
-            Inbox
-            {unread > 0 && (
-              <span className="ml-1 rounded-full bg-violet px-1.5 py-0.5 text-xs font-medium text-white">
-                {unread}
-              </span>
-            )}
-          </Link>
-        )}
-        {profile?.is_platform_admin && (
-          <WorkspaceSwitcher
-            orgs={orgs}
-            currentId={profile.organization_id}
-          />
-        )}
-        <form action={signOut}>
-          <button
-            type="submit"
-            className="text-sm text-ivory/60 hover:text-ivory"
-          >
-            Sign out
-          </button>
-        </form>
+        <div className="ml-auto flex shrink-0 items-center gap-3 lg:gap-4">
+          {profile?.organization_id && (
+            <Link
+              href="/notifications"
+              className="relative flex items-center gap-1 text-sm text-ivory/60 hover:text-ivory"
+              aria-label={`Notifications${unread > 0 ? ` (${unread} unread)` : ''}`}
+            >
+              <Inbox size={17} aria-hidden className="sm:hidden" />
+              <span className="hidden sm:inline">Inbox</span>
+              {unread > 0 && (
+                <span className="rounded-full bg-violet px-1.5 py-0.5 text-xs font-medium text-white">
+                  {unread}
+                </span>
+              )}
+            </Link>
+          )}
+          <div className="hidden items-center gap-4 lg:flex">
+            {switcher}
+            {signOutButton}
+          </div>
+        </div>
       </div>
     </header>
   )

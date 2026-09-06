@@ -100,10 +100,10 @@ export default async function BroadcastDetailPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
-        <div className="mb-6 flex items-baseline justify-between">
-          <div>
-            <h1 className="text-2xl font-medium">{broadcast.subject}</h1>
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="break-words text-2xl font-medium">{broadcast.subject}</h1>
             <p className="mt-1 text-sm text-ivory/60">
               {broadcast.status === 'sent' ? 'Sent' : 'Ready to send'} ·{' '}
               {emails.length} recipient{emails.length === 1 ? '' : 's'}
@@ -133,12 +133,14 @@ export default async function BroadcastDetailPage({
         <p className="mb-2 text-sm font-medium text-ivory/80">
           Preview — this is what lands in their inbox
         </p>
-        <iframe
-          srcDoc={previewHtml}
-          title="Email preview"
-          sandbox=""
-          className="mb-6 h-[520px] w-full rounded-xl border border-ash/60 bg-white"
-        />
+        <div className="mb-6 w-full overflow-x-auto">
+          <iframe
+            srcDoc={previewHtml}
+            title="Email preview"
+            sandbox=""
+            className="h-[520px] w-full min-w-0 rounded-xl border border-ash/60 bg-white"
+          />
+        </div>
 
         {files.length > 0 && (
           <div className="mb-6">
@@ -147,7 +149,7 @@ export default async function BroadcastDetailPage({
               {files.map((f) => (
                 <div
                   key={f.path}
-                  className="flex items-center gap-2 rounded-lg border border-ash/60 bg-carbon px-3 py-2 text-sm"
+                  className="flex flex-wrap items-center gap-2 rounded-lg border border-ash/60 bg-carbon px-3 py-2 text-sm"
                 >
                   <Paperclip className="h-3.5 w-3.5 shrink-0 text-ivory/40" aria-hidden />
                   <span className="min-w-0 flex-1 truncate">{f.name}</span>
@@ -240,7 +242,7 @@ export default async function BroadcastDetailPage({
           {recipients.map((r, i) => {
             const typed = customSet.has(r.email.toLowerCase())
             return (
-              <p key={i} className="text-sm text-ivory/70">
+              <p key={i} className="break-words text-sm text-ivory/70">
                 {r.name}
                 {r.name !== r.email && (
                   <span className="text-ivory/40"> · {r.email}</span>

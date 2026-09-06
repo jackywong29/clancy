@@ -20,7 +20,7 @@ export function ColorField({
   const pickerValue = valid ? value : '#000000'
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       <input type="hidden" name={name} value={value} />
       <input
         type="color"
@@ -34,13 +34,13 @@ export function ColorField({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
-        className="w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet"
+        className="min-w-0 flex-1 rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet"
       />
       {allowEmpty && value && (
         <button
           type="button"
           onClick={() => setValue('')}
-          className="shrink-0 text-xs text-ivory/40 hover:text-red-400"
+          className="shrink-0 px-1 py-2 text-xs text-ivory/40 hover:text-red-400 sm:py-0"
         >
           clear
         </button>

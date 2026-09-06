@@ -39,12 +39,12 @@ export default async function CrmBriefPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
         <p className="mb-6 text-sm text-ivory/60">CRM build brief</p>
         <ClientTabs clientId={client.id} active="crm-brief" />
 
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
           <p className="text-sm text-ivory/60">
             Configures the client&apos;s internal back-end (records, stages,
             departments).
@@ -52,7 +52,7 @@ export default async function CrmBriefPage({
           <CopyButton text={brief} label="Copy CRM brief" />
         </div>
 
-        <pre className="overflow-x-auto whitespace-pre-wrap rounded-xl border border-ash/60 bg-carbon p-5 font-mono text-xs leading-relaxed">
+        <pre className="overflow-x-auto whitespace-pre-wrap break-words rounded-xl border border-ash/60 bg-carbon p-4 font-mono text-xs leading-relaxed sm:p-5">
           {brief}
         </pre>
 

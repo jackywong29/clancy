@@ -31,7 +31,7 @@ export function RecordsBoard({
 
   return (
     <div className="min-h-screen">
-      <main className="px-6 py-5">
+      <main className="w-full px-4 py-5 sm:px-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-medium">{plural}</h1>
@@ -39,7 +39,7 @@ export function RecordsBoard({
               {records.length} {records.length === 1 ? singular.toLowerCase() : plural.toLowerCase()} across {stages.length} stages
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Link
               href="/crm"
               className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet"
@@ -60,7 +60,7 @@ export function RecordsBoard({
             No stages yet — add some on the Stages page.
           </p>
         ) : records.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-ash bg-carbon/50 p-10 text-center">
+          <div className="rounded-xl border border-dashed border-ash bg-carbon/50 p-6 text-center sm:p-10">
             <p className="text-lg font-medium">No {plural.toLowerCase()} yet.</p>
             <p className="mx-auto mt-2 max-w-sm text-sm text-ivory/60">
               Add your first {singular.toLowerCase()} to start tracking.
@@ -73,13 +73,13 @@ export function RecordsBoard({
             </Link>
           </div>
         ) : (
-          <div className="flex gap-3 overflow-x-auto pb-4">
+          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-4 sm:mx-0 sm:snap-none sm:px-0">
             {stages.map((stage) => {
               const stageRecords = records.filter((r) => r.stage_id === stage.id)
               return (
                 <section
                   key={stage.id}
-                  className="w-64 shrink-0 rounded-xl bg-carbon/50 p-3"
+                  className="w-[78vw] max-w-[17rem] shrink-0 snap-start rounded-xl bg-carbon/50 p-3 sm:w-64 sm:max-w-none"
                 >
                   <h2 className="mb-3 flex items-baseline justify-between px-1 text-sm font-medium">
                     {stage.name}
@@ -95,7 +95,7 @@ export function RecordsBoard({
                       >
                         <Link
                           href={`/records/${record.id}`}
-                          className="text-sm font-medium hover:text-violet"
+                          className="block break-words text-sm font-medium hover:text-violet"
                         >
                           {record.company_name}
                         </Link>
@@ -103,20 +103,20 @@ export function RecordsBoard({
                           const val = displayValue(record, key, config)
                           if (!val) return null
                           return (
-                            <p key={key} className="mt-0.5 text-xs text-ivory/60">
+                            <p key={key} className="mt-0.5 break-words text-xs text-ivory/60">
                               {fieldLabel(key)}: {val}
                             </p>
                           )
                         })}
                         <form
                           action={moveClientStage}
-                          className="mt-2 flex gap-1"
+                          className="mt-2 flex flex-wrap gap-1"
                         >
                           <input type="hidden" name="client_id" value={record.id} />
                           <select
                             name="stage_id"
                             defaultValue={stage.id}
-                            className="w-full rounded border border-ash bg-graphite px-1 py-1 text-xs"
+                            className="min-w-0 flex-1 rounded border border-ash bg-graphite px-1 py-1.5 sm:text-xs"
                           >
                             {stages.map((s) => (
                               <option key={s.id} value={s.id}>
@@ -126,7 +126,7 @@ export function RecordsBoard({
                           </select>
                           <button
                             type="submit"
-                            className="rounded border border-ash px-2 py-1 text-xs hover:border-violet hover:text-violet"
+                            className="rounded border border-ash px-2 py-1.5 text-xs hover:border-violet hover:text-violet"
                           >
                             Move
                           </button>

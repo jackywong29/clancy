@@ -39,7 +39,7 @@ export default async function ClientDetailPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">{client.company_name}</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Added {client.created_at.slice(0, 10)}
@@ -69,7 +69,7 @@ export default async function ClientDetailPage({
               className={inputClass}
             />
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="contact_person" className="mb-1 block text-sm font-medium">
                 Contact person
@@ -93,7 +93,7 @@ export default async function ClientDetailPage({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="email" className="mb-1 block text-sm font-medium">
                 Email
@@ -118,7 +118,7 @@ export default async function ClientDetailPage({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="source" className="mb-1 block text-sm font-medium">
                 Source
@@ -148,7 +148,7 @@ export default async function ClientDetailPage({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
               <label htmlFor="tier" className="mb-1 block text-sm font-medium">
                 Tier
@@ -216,7 +216,7 @@ export default async function ClientDetailPage({
               className={inputClass}
             />
           </div>
-          <SubmitButton className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet">
+          <SubmitButton className="w-full rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:w-auto">
             Save changes
           </SubmitButton>
         </form>
@@ -228,7 +228,7 @@ export default async function ClientDetailPage({
             <input type="hidden" name="client_id" value={client.id} />
             <button
               type="submit"
-              className="rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400"
+              className="w-full rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400 sm:w-auto"
             >
               Delete client
             </button>

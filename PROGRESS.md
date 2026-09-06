@@ -8,7 +8,7 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 6 September 2026 · Batch 12 deployed · migrations 001–018 applied
+Last updated: 6 September 2026 · Batch 13 deployed · migrations 001–018 applied
 
 ---
 
@@ -21,7 +21,8 @@ side (sales pipeline, client intake, two build briefs) and per-client workspaces
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
 real KL church — first client site at `/s/sgckl`). Latest deploy is green.
 **Automated email is now live** (Gmail SMTP configured in Vercel — verified
-with a simple send that landed in the main inbox as important). No
+with a simple send that landed in the main inbox as important). The app is
+**responsive** since Batch 12 (works at 360px, unchanged at desktop). No
 paying client yet; company not yet registered; brand not yet launched.
 
 ---
@@ -35,6 +36,16 @@ paying client yet; company not yet registered; brand not yet launched.
    real.** Before using broadcasts on SGCKL's congregation: send yourself one
    with a PDF, a photo toggled to "in message", and your Team sign-off, and
    confirm all three land correctly. "The pipe works" ≠ "the feature works".
+
+2. **Delete the QA account now that Batch 12 is live.** A password account,
+   `clancy.hq.ai+qa@gmail.com`, was created 2 Sep 2026 so the responsive pass
+   could be verified on real pages (existing accounts are Google-OAuth-only and
+   can't log in with a password). It currently holds Clancy workspace + admin.
+   Revoke with:
+   `delete from profiles where email = 'clancy.hq.ai+qa@gmail.com';`
+   then delete the user in Supabase → Authentication → Users.
+   Note `.env.local` now exists locally (gitignored) with the public Supabase
+   URL + anon key, so `npm run dev` works on this machine.
 
 2. **Set up the workspace sign-off if you haven't.** Team → Workspace settings
    → Email sign-off (logo, name, contact, small print). It's per-workspace, so

@@ -35,7 +35,7 @@ export default async function CrmConfigPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-xl px-6 py-8">
+      <main className="mx-auto w-full max-w-xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">Customize CRM</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Decide what this workspace tracks — what a record is called and what
@@ -54,7 +54,7 @@ export default async function CrmConfigPage({
         )}
 
         <form action={updateCrmConfig} className="space-y-5">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="record_singular" className="mb-1 block text-sm font-medium">
                 Record name (singular)
@@ -111,7 +111,7 @@ export default async function CrmConfigPage({
 
           <div>
             <p className="mb-2 text-sm font-medium">Modules</p>
-            <div className="flex gap-4 rounded-xl border border-ash/60 bg-carbon p-4 text-sm">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 rounded-xl border border-ash/60 bg-carbon p-4 text-sm">
               <label className="flex items-center gap-2">
                 <input
                   type="checkbox"

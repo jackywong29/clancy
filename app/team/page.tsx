@@ -79,7 +79,7 @@ export default async function TeamPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-3xl px-6 py-8">
+      <main className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">Team</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Who can see and do what in this workspace.{' '}
@@ -104,7 +104,7 @@ export default async function TeamPage({
           {workspaceMembers.map((member) => (
             <div
               key={member.id}
-              className="flex flex-wrap items-center gap-3 rounded-xl border border-ash/60 bg-carbon p-4"
+              className="flex flex-col gap-2 rounded-xl border border-ash/60 bg-carbon p-4 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium">
@@ -133,7 +133,7 @@ export default async function TeamPage({
                         ? member.role
                         : 'admin'
                     }
-                    className={inputClass}
+                    className={`${inputClass} min-w-0 flex-1 sm:flex-none`}
                     aria-label="Role"
                   >
                     {ROLES.map((r) => (
@@ -145,7 +145,7 @@ export default async function TeamPage({
                   <select
                     name="department"
                     defaultValue={member.department ?? ''}
-                    className={inputClass}
+                    className={`${inputClass} min-w-0 flex-1 sm:flex-none`}
                     aria-label="Department"
                   >
                     <option value="">No department</option>
@@ -157,7 +157,7 @@ export default async function TeamPage({
                   </select>
                   <button
                     type="submit"
-                    className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                    className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
                   >
                     Save
                   </button>
@@ -179,7 +179,7 @@ export default async function TeamPage({
           {inviteList.map((invite) => (
             <div
               key={invite.id}
-              className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-ash/60 bg-carbon/50 p-3"
+              className="flex flex-col gap-2 rounded-xl border border-dashed border-ash/60 bg-carbon/50 p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
             >
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm">{invite.email}</p>
@@ -191,52 +191,64 @@ export default async function TeamPage({
                   · waiting for first sign-in
                 </p>
               </div>
-              <CopyButton
-                text={`You're invited to join our workspace on Clancy! Create your account with this email (${invite.email}) here: https://clancy-hq.vercel.app/signup`}
-                label="Copy invite"
-                variant="outline"
-              />
-              <form action={removeInvite}>
-                <input type="hidden" name="invite_id" value={invite.id} />
-                <button
-                  type="submit"
-                  aria-label={`Remove invite for ${invite.email}`}
-                  className="text-ivory/40 hover:text-red-400"
-                >
-                  ×
-                </button>
-              </form>
+              <div className="flex flex-wrap items-center gap-2 [&>button]:py-2 sm:[&>button]:py-1.5">
+                <CopyButton
+                  text={`You're invited to join our workspace on Clancy! Create your account with this email (${invite.email}) here: https://clancy-hq.vercel.app/signup`}
+                  label="Copy invite"
+                  variant="outline"
+                />
+                <form action={removeInvite}>
+                  <input type="hidden" name="invite_id" value={invite.id} />
+                  <button
+                    type="submit"
+                    aria-label={`Remove invite for ${invite.email}`}
+                    className="flex h-9 w-9 items-center justify-center rounded-lg text-lg leading-none text-ivory/40 hover:text-red-400"
+                  >
+                    ×
+                  </button>
+                </form>
+              </div>
             </div>
           ))}
           <form
             action={addInvite}
-            className="flex flex-wrap items-center gap-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3"
+            className="flex flex-col gap-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3 sm:flex-row sm:flex-wrap sm:items-center"
           >
             <input
               name="email"
               type="email"
               required
               placeholder="person@email.com"
-              className={`${inputClass} flex-1`}
+              className={`${inputClass} w-full sm:flex-1`}
             />
-            <select name="role" defaultValue="viewer" className={inputClass}>
-              {ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {roleLabel(m.crmConfig, r)}
-                </option>
-              ))}
-            </select>
-            <select name="department" defaultValue="" className={inputClass}>
-              <option value="">No department</option>
-              {departments.map((d) => (
-                <option key={d.key} value={d.key}>
-                  {d.name}
-                </option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                name="role"
+                defaultValue="viewer"
+                className={`${inputClass} min-w-0 flex-1 sm:flex-none`}
+              >
+                {ROLES.map((r) => (
+                  <option key={r} value={r}>
+                    {roleLabel(m.crmConfig, r)}
+                  </option>
+                ))}
+              </select>
+              <select
+                name="department"
+                defaultValue=""
+                className={`${inputClass} min-w-0 flex-1 sm:flex-none`}
+              >
+                <option value="">No department</option>
+                {departments.map((d) => (
+                  <option key={d.key} value={d.key}>
+                    {d.name}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button
               type="submit"
-              className="rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet"
+              className="w-full rounded-lg bg-violet-deep px-4 py-2 text-sm font-medium text-white hover:bg-violet sm:w-auto"
             >
               Invite
             </button>
@@ -257,23 +269,23 @@ export default async function TeamPage({
               permissions stay the same (view only · view + edit · full
               control).
             </p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid gap-2 sm:grid-cols-3">
               <input
                 name="label_viewer"
                 defaultValue={roleLabel(m.crmConfig, 'viewer')}
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Name for view-only role"
               />
               <input
                 name="label_editor"
                 defaultValue={roleLabel(m.crmConfig, 'editor')}
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Name for editor role"
               />
               <input
                 name="label_admin"
                 defaultValue={roleLabel(m.crmConfig, 'admin')}
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Name for admin role"
               />
             </div>
@@ -337,42 +349,42 @@ export default async function TeamPage({
                 name="sig_sign_off"
                 defaultValue={sig.sign_off ?? DEFAULT_SIGN_OFF}
                 placeholder="Warm regards,"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Sign-off line"
               />
               <input
                 name="sig_business_name"
                 defaultValue={sig.business_name ?? orgName(m.orgId) ?? ''}
                 placeholder="Business name"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Business name"
               />
               <input
                 name="sig_sender_name"
                 defaultValue={sig.sender_name ?? ''}
                 placeholder="Your name"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Sender name"
               />
               <input
                 name="sig_sender_title"
                 defaultValue={sig.sender_title ?? ''}
                 placeholder="Your title"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Sender title"
               />
               <input
                 name="sig_tagline"
                 defaultValue={sig.tagline ?? ''}
                 placeholder="Tagline (optional)"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Tagline"
               />
               <input
                 name="sig_phone"
                 defaultValue={sig.phone ?? ''}
                 placeholder="Phone"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Phone"
               />
               <input
@@ -380,14 +392,14 @@ export default async function TeamPage({
                 type="email"
                 defaultValue={sig.email ?? ''}
                 placeholder="Reply-to email"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Contact email"
               />
               <input
                 name="sig_website"
                 defaultValue={sig.website ?? ''}
                 placeholder="yoursite.com"
-                className={inputClass}
+                className={`${inputClass} w-full`}
                 aria-label="Website"
               />
             </div>
@@ -445,7 +457,7 @@ export default async function TeamPage({
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet"
+            className="w-full rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:w-auto"
           >
             Save settings
           </button>
@@ -471,7 +483,7 @@ export default async function TeamPage({
                 return (
                   <div
                     key={profile.id}
-                    className="flex flex-wrap items-center gap-3 rounded-xl border border-ash/60 bg-carbon p-3"
+                    className="flex flex-col gap-2 rounded-xl border border-ash/60 bg-carbon p-3 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm">
@@ -488,11 +500,11 @@ export default async function TeamPage({
                     </div>
                     <form
                       action={updateProfileAccess}
-                      className="flex flex-wrap items-center gap-2"
+                      className="flex flex-wrap items-center gap-2 sm:flex-nowrap"
                     >
                       <input type="hidden" name="profile_id" value={profile.id} />
                       <label
-                        className="flex items-center gap-1.5 text-xs text-ivory/70"
+                        className="flex shrink-0 items-center gap-1.5 text-xs text-ivory/70"
                         title={
                           isSelf
                             ? "You can't remove your own Clancy staff access"
@@ -520,7 +532,7 @@ export default async function TeamPage({
                       <select
                         name="organization_id"
                         defaultValue={profile.organization_id ?? ''}
-                        className={inputClass}
+                        className={`${inputClass} min-w-0 flex-1`}
                         aria-label="Workspace"
                       >
                         <option value="">No access</option>
@@ -532,7 +544,7 @@ export default async function TeamPage({
                       </select>
                       <button
                         type="submit"
-                        className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                        className="w-full rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:w-auto sm:py-1.5"
                       >
                         Save
                       </button>

@@ -32,7 +32,7 @@ export default async function StagesPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
         <h1 className="mb-1 text-2xl font-medium">Pipeline stages</h1>
         <p className="mb-6 text-sm text-ivory/60">
           Rename, reorder (lower number = further left), add, or delete
@@ -57,11 +57,11 @@ export default async function StagesPage({
             return (
               <div
                 key={stage.id}
-                className="flex flex-wrap items-center gap-2 rounded-xl border border-ash/60 bg-carbon p-3"
+                className="flex flex-col gap-2 rounded-xl border border-ash/60 bg-carbon p-3 sm:flex-row sm:items-center"
               >
                 <form
                   action={updateStage}
-                  className="flex flex-1 items-center gap-2"
+                  className="flex flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center"
                 >
                   <input type="hidden" name="stage_id" value={stage.id} />
                   <input
@@ -70,25 +70,27 @@ export default async function StagesPage({
                     min="1"
                     step="1"
                     defaultValue={stage.position}
-                    className={`${inputClass} w-16`}
+                    className={`${inputClass} w-20`}
                     aria-label="Position"
                   />
                   <input
                     name="name"
                     required
                     defaultValue={stage.name}
-                    className={`${inputClass} flex-1`}
+                    className={`${inputClass} min-w-0 sm:flex-1`}
                     aria-label="Stage name"
                   />
-                  <span className="text-xs text-ivory/50">
-                    {inUse} client{inUse === 1 ? '' : 's'}
-                  </span>
-                  <button
-                    type="submit"
-                    className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
-                  >
-                    Save
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-ivory/50">
+                      {inUse} client{inUse === 1 ? '' : 's'}
+                    </span>
+                    <button
+                      type="submit"
+                      className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
+                    >
+                      Save
+                    </button>
+                  </div>
                 </form>
                 <ConfirmForm
                   action={deleteStage}
@@ -97,7 +99,7 @@ export default async function StagesPage({
                   <input type="hidden" name="stage_id" value={stage.id} />
                   <button
                     type="submit"
-                    className="rounded-lg border border-red-950 px-3 py-1.5 text-sm text-red-400 hover:border-red-400"
+                    className="w-full rounded-lg border border-red-950 px-3 py-2 text-sm text-red-400 hover:border-red-400 sm:w-auto sm:py-1.5"
                   >
                     Delete
                   </button>
@@ -108,13 +110,13 @@ export default async function StagesPage({
         </div>
         <form
           action={addStage}
-          className="mt-6 flex items-center gap-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3"
+          className="mt-6 flex flex-col gap-2 rounded-xl border border-dashed border-ash bg-carbon/50 p-3 sm:flex-row sm:items-center"
         >
           <input
             name="name"
             required
             placeholder="New stage name"
-            className={`${inputClass} flex-1`}
+            className={`${inputClass} min-w-0 sm:flex-1`}
           />
           <button
             type="submit"

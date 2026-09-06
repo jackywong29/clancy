@@ -60,19 +60,19 @@ export function EventForm({
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
           <label className="mb-1 block text-xs text-ivory/60">Starts</label>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               name="starts_on"
               type="date"
               required
               defaultValue={defaultDate}
-              className={`${inputClass} flex-1`}
+              className={`${inputClass} w-full min-w-0 sm:flex-1`}
             />
             {!allDay && (
               <input
                 name="event_time"
                 type="time"
-                className={inputClass}
+                className={`${inputClass} w-full min-w-0 sm:flex-1`}
                 aria-label="Start time"
               />
             )}
@@ -80,18 +80,18 @@ export function EventForm({
         </div>
         <div>
           <label className="mb-1 block text-xs text-ivory/60">Ends</label>
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <input
               name="ends_on"
               type="date"
               defaultValue={defaultDate}
-              className={`${inputClass} flex-1`}
+              className={`${inputClass} w-full min-w-0 sm:flex-1`}
             />
             {!allDay && (
               <input
                 name="end_time"
                 type="time"
-                className={inputClass}
+                className={`${inputClass} w-full min-w-0 sm:flex-1`}
                 aria-label="End time"
               />
             )}
@@ -182,17 +182,17 @@ export function EventForm({
         />
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button
           type="submit"
-          className="rounded-lg bg-violet-deep px-5 py-2 text-sm font-medium text-white hover:bg-violet"
+          className="rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:py-2"
         >
           Add event
         </button>
         <button
           type="button"
           onClick={() => setOpen(false)}
-          className="rounded-lg border border-ash px-4 py-2 text-sm text-ivory/70 hover:border-violet hover:text-violet"
+          className="rounded-lg border border-ash px-4 py-2.5 text-sm text-ivory/70 hover:border-violet hover:text-violet sm:py-2"
         >
           Cancel
         </button>

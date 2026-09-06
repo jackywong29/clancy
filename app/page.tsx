@@ -75,9 +75,9 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen">
-      <header className="mx-auto flex max-w-4xl items-center justify-between px-6 py-5">
+      <header className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
         <Wordmark size="text-2xl" />
-        <div className="flex items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
           <Link href="/login" className="text-sm text-ivory/60 hover:text-ivory">
             Sign in
           </Link>
@@ -90,9 +90,9 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-4xl px-6">
-        <section className="py-20 text-center sm:py-28">
-          <h1 className="whitespace-pre-line text-4xl font-medium leading-tight sm:text-5xl">
+      <main className="mx-auto w-full max-w-4xl px-4 sm:px-6">
+        <section className="py-16 text-center sm:py-28">
+          <h1 className="whitespace-pre-line text-3xl font-medium leading-tight sm:text-4xl lg:text-5xl">
             {t('hero_title')}
           </h1>
           <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-ivory/60">
@@ -100,7 +100,7 @@ export default async function HomePage() {
           </p>
           <a
             href={contactHref}
-            className="mt-8 inline-block rounded-lg bg-violet-deep px-6 py-3 text-sm font-medium text-white hover:bg-violet"
+            className="mt-8 inline-block w-full rounded-lg bg-violet-deep px-6 py-3 text-center text-sm font-medium text-white hover:bg-violet sm:w-auto"
           >
             {t('cta_label')}
           </a>
@@ -143,21 +143,21 @@ export default async function HomePage() {
           </p>
           <a
             href={contactHref}
-            className="mt-6 inline-block rounded-lg bg-violet-deep px-6 py-3 text-sm font-medium text-white hover:bg-violet"
+            className="mt-6 inline-block w-full rounded-lg bg-violet-deep px-6 py-3 text-center text-sm font-medium text-white hover:bg-violet sm:w-auto"
           >
             {t('cta_label')}
           </a>
         </section>
       </main>
 
-      <footer className="border-t border-ash/60 py-8 text-center text-xs text-ivory/40">
+      <footer className="border-t border-ash/60 px-4 py-8 text-center text-xs text-ivory/40">
         <p>{t('footer_line')}</p>
         <p className="mt-2">
           <a href={t('instagram_url')} className="hover:text-ivory">
             Instagram
           </a>
           <span className="mx-2">·</span>
-          <a href={`mailto:${t('contact_email')}`} className="hover:text-ivory">
+          <a href={`mailto:${t('contact_email')}`} className="break-words hover:text-ivory">
             {t('contact_email')}
           </a>
         </p>

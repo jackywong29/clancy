@@ -69,13 +69,13 @@ export function SectionOrderEditor({
           key={row.key}
           className="flex items-center gap-3 rounded-lg border border-ash/60 bg-carbon/50 px-3 py-2"
         >
-          <div className="flex flex-col leading-none">
+          <div className="flex shrink-0 flex-col leading-none">
             <button
               type="button"
               aria-label={`Move ${labelFor(row.key)} up`}
               disabled={i === 0}
               onClick={() => move(i, -1)}
-              className="text-ivory/50 hover:text-violet disabled:opacity-25"
+              className="flex h-7 w-7 items-center justify-center text-ivory/50 hover:text-violet disabled:opacity-25 sm:h-5 sm:w-5"
             >
               ▲
             </button>
@@ -84,19 +84,19 @@ export function SectionOrderEditor({
               aria-label={`Move ${labelFor(row.key)} down`}
               disabled={i === rows.length - 1}
               onClick={() => move(i, 1)}
-              className="text-ivory/50 hover:text-violet disabled:opacity-25"
+              className="flex h-7 w-7 items-center justify-center text-ivory/50 hover:text-violet disabled:opacity-25 sm:h-5 sm:w-5"
             >
               ▼
             </button>
           </div>
           <span
-            className={`flex-1 text-sm ${
+            className={`min-w-0 flex-1 break-words text-sm ${
               row.enabled ? '' : 'text-ivory/40 line-through'
             }`}
           >
             {labelFor(row.key)}
           </span>
-          <label className="flex items-center gap-1.5 text-xs text-ivory/70">
+          <label className="flex shrink-0 items-center gap-1.5 py-1 text-xs text-ivory/70 sm:py-0">
             <input
               type="checkbox"
               checked={row.enabled}

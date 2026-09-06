@@ -46,7 +46,7 @@ export function DepartmentListEditor({
         )}
       />
       {rows.map((row, i) => (
-        <div key={i} className="flex items-center gap-2">
+        <div key={i} className="flex flex-wrap items-center gap-2">
           <input
             value={row.name}
             onChange={(e) =>
@@ -57,13 +57,13 @@ export function DepartmentListEditor({
               )
             }
             placeholder="Department name (e.g. Sales)"
-            className="flex-1 rounded-lg border border-ash bg-graphite px-3 py-1.5 text-sm outline-none focus:border-violet"
+            className="min-w-0 flex-1 rounded-lg border border-ash bg-graphite px-3 py-1.5 text-sm outline-none focus:border-violet"
           />
           <button
             type="button"
             onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
             aria-label={`Remove ${row.name || 'department'}`}
-            className="text-ivory/40 hover:text-red-400"
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-lg leading-none text-ivory/40 hover:text-red-400"
           >
             ×
           </button>
@@ -72,7 +72,7 @@ export function DepartmentListEditor({
       <button
         type="button"
         onClick={() => setRows([...rows, { key: '', name: '' }])}
-        className="rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet"
+        className="rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5"
       >
         + Add department
       </button>

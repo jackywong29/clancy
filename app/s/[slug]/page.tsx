@@ -293,20 +293,20 @@ export default async function ClientSitePage({
 
       <div className="relative">
         <header
-          className={`mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-6 py-6 sm:px-10 lg:px-14 ${
+          className={`mx-auto flex w-full max-w-7xl flex-wrap items-center gap-3 px-4 py-6 sm:px-10 lg:px-14 ${
             logoCentered ? 'justify-center' : 'justify-between'
           }`}
         >
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {config.logo_url ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={config.logo_url}
                 alt={`${name} logo`}
-                className="h-10 w-10 rounded-lg object-contain"
+                className="h-10 w-10 max-w-full shrink-0 rounded-lg object-contain"
               />
             ) : null}
-            <span className="text-lg font-medium">{name}</span>
+            <span className="min-w-0 break-words text-lg font-medium">{name}</span>
           </div>
           {book && !logoCentered && (
             <a
@@ -319,12 +319,12 @@ export default async function ClientSitePage({
           )}
         </header>
 
-        <main className="mx-auto w-full max-w-7xl px-6 sm:px-10 lg:px-14">
+        <main className="mx-auto w-full max-w-7xl px-4 sm:px-10 lg:px-14">
           <section
             className={
               heroImage
-                ? 'relative my-8 overflow-hidden rounded-2xl px-6 py-24 text-center sm:py-32 lg:py-44'
-                : 'py-20 text-center sm:py-28 lg:py-36'
+                ? 'relative my-8 overflow-hidden rounded-2xl px-4 py-16 text-center sm:px-6 sm:py-32 lg:py-44'
+                : 'py-14 text-center sm:py-28 lg:py-36'
             }
           >
             {heroImage && (
@@ -350,7 +350,7 @@ export default async function ClientSitePage({
               style={heroImage ? { color: '#FFFFFF' } : undefined}
             >
               <h1
-                className="text-4xl font-medium leading-tight sm:text-5xl lg:text-6xl"
+                className="text-3xl font-medium leading-tight sm:text-5xl lg:text-6xl"
                 style={headingStyle('center')}
               >
                 {config.tagline ?? name}
@@ -446,7 +446,7 @@ export default async function ClientSitePage({
                           }}
                         >
                           <div className="flex items-baseline justify-between gap-3">
-                            <p className="font-medium">{service.name}</p>
+                            <p className="min-w-0 break-words font-medium">{service.name}</p>
                             {service.price.trim() && (
                               <p
                                 className="shrink-0 text-sm"
@@ -464,7 +464,7 @@ export default async function ClientSitePage({
                           {service.bookable && book && (
                             <a
                               href={contactHref(config, name, service.name)!}
-                              className="mt-3 inline-block rounded-lg border px-3 py-1.5 text-xs font-medium"
+                              className="mt-3 inline-block rounded-lg border px-3 py-2 text-xs font-medium sm:py-1.5"
                               style={{
                                 borderColor: accent,
                                 color: accent,
@@ -629,7 +629,7 @@ export default async function ClientSitePage({
                           {mapsHref ? (
                             <a
                               href={mapsHref}
-                              className="mt-1 block underline"
+                              className="mt-1 block break-words underline"
                               style={{ color: c.muted }}
                             >
                               {config.address}
@@ -654,7 +654,7 @@ export default async function ClientSitePage({
                           <p className="font-medium">Phone</p>
                           <a
                             href={`tel:${config.phone.replace(/\D/g, '')}`}
-                            className="mt-1 block underline"
+                            className="mt-1 block break-words underline"
                             style={{ color: c.muted }}
                           >
                             {config.phone}
@@ -693,7 +693,7 @@ export default async function ClientSitePage({
                     <div className="grid gap-x-10 gap-y-5 sm:grid-cols-2">
                       {faq.map((item) => (
                         <div key={item.q}>
-                          <p className="font-medium" style={headingStyle()}>
+                          <p className="break-words font-medium" style={headingStyle()}>
                             {item.q}
                           </p>
                           <p
@@ -736,7 +736,7 @@ export default async function ClientSitePage({
         </main>
 
         <footer
-          className="py-8 text-center"
+          className="px-4 py-8 text-center"
           style={{ borderTop: `1px solid ${c.border}` }}
         >
           {socials.length > 0 && (

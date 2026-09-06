@@ -77,9 +77,9 @@ export function FileUploadField({
       {files.map((file) => (
         <div
           key={file.path}
-          className="flex items-center gap-2 rounded-lg border border-ash/60 bg-carbon/50 px-3 py-1.5 text-sm"
+          className="flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-ash/60 bg-carbon/50 px-3 py-2 text-sm sm:py-1.5"
         >
-          <span className="min-w-0 flex-1 truncate">{file.name}</span>
+          <span className="min-w-0 flex-1 break-all">{file.name}</span>
           <button
             type="button"
             onClick={() => view(file)}
@@ -97,7 +97,7 @@ export function FileUploadField({
           </button>
         </div>
       ))}
-      <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet">
+      <label className="inline-flex max-w-full cursor-pointer items-center gap-2 rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5">
         <input
           ref={inputRef}
           type="file"

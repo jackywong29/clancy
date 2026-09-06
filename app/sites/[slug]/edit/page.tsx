@@ -56,8 +56,8 @@ export default async function SiteEditPage({
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="mx-auto max-w-2xl px-6 py-8">
-        <div className="mb-6 flex items-baseline justify-between">
+      <main className="mx-auto w-full max-w-2xl px-4 py-8 sm:px-6">
+        <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
           <div>
             <h1 className="text-2xl font-medium">{config.name ?? site.slug}</h1>
             <p className="mt-1 text-sm text-ivory/60">
@@ -95,7 +95,7 @@ export default async function SiteEditPage({
 
           {/* ---------- Basics ---------- */}
           <h2 className={groupClass}>Basics</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="name" className="mb-1 block text-sm font-medium">
                 Business name
@@ -156,7 +156,7 @@ export default async function SiteEditPage({
 
           {/* ---------- Contact ---------- */}
           <h2 className={groupClass}>Contact & location</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="phone" className="mb-1 block text-sm font-medium">
                 Phone (shown on site)
@@ -180,7 +180,7 @@ export default async function SiteEditPage({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="address" className="mb-1 block text-sm font-medium">
                 Address
@@ -207,7 +207,7 @@ export default async function SiteEditPage({
 
           {/* ---------- Appearance ---------- */}
           <h2 className={groupClass}>Appearance</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Accent colour
@@ -243,7 +243,7 @@ export default async function SiteEditPage({
               </select>
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="font" className="mb-1 block text-sm font-medium">
                 Font
@@ -304,7 +304,7 @@ export default async function SiteEditPage({
               Text colour is auto-chosen for contrast.
             </p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium">
                 Background image (optional)
@@ -378,7 +378,7 @@ export default async function SiteEditPage({
               key={row.key}
               className="grid grid-cols-2 items-end gap-3 sm:grid-cols-4"
             >
-              <div>
+              <div className="col-span-2 sm:col-span-1">
                 <label className="mb-1 block text-sm font-medium">
                   {row.label}
                 </label>
@@ -396,7 +396,7 @@ export default async function SiteEditPage({
                   ))}
                 </select>
               </div>
-              <div>
+              <div className="col-span-2 sm:col-span-1">
                 <label className="mb-1 block text-xs text-ivory/60">
                   Alignment
                 </label>
@@ -452,7 +452,7 @@ export default async function SiteEditPage({
 
           {/* ---------- Buttons & headings ---------- */}
           <h2 className={groupClass}>Buttons & headings</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="book_label" className="mb-1 block text-sm font-medium">
                 Booking button text
@@ -481,7 +481,7 @@ export default async function SiteEditPage({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="contact_method"
@@ -521,7 +521,7 @@ export default async function SiteEditPage({
             <code>{'{name}'}</code> and <code>{'{service}'}</code> in any message
             below; leave blank for the defaults.
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="book_message"
@@ -555,7 +555,7 @@ export default async function SiteEditPage({
               />
             </div>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label
                 htmlFor="email_subject"
@@ -629,7 +629,7 @@ export default async function SiteEditPage({
 
           {/* ---------- About section ---------- */}
           <h2 className={groupClass}>About section (optional)</h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="about_title" className="mb-1 block text-sm font-medium">
                 Heading
@@ -721,7 +721,7 @@ export default async function SiteEditPage({
             />
             Show the signup form on the site
           </label>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <label htmlFor="form_title" className="mb-1 block text-sm font-medium">
                 Form heading

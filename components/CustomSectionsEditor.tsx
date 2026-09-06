@@ -59,18 +59,18 @@ export function CustomSectionsEditor({
           key={i}
           className="space-y-2 rounded-lg border border-ash/60 bg-carbon/50 p-3"
         >
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <input
               value={row.title}
               onChange={(e) => update(i, { title: e.target.value })}
               placeholder="Section heading (e.g. Our story)"
-              className={cell}
+              className={`${cell} min-w-0`}
             />
             <button
               type="button"
               onClick={() => setRows(rows.filter((_, idx) => idx !== i))}
               aria-label={`Remove ${row.title || 'section'}`}
-              className="text-ivory/40 hover:text-red-400"
+              className="flex h-8 w-8 shrink-0 items-center justify-center text-ivory/40 hover:text-red-400 sm:h-6 sm:w-6"
             >
               ×
             </button>
@@ -87,7 +87,7 @@ export function CustomSectionsEditor({
       <button
         type="button"
         onClick={() => setRows([...rows, { key: '', title: '', body: '' }])}
-        className="rounded-lg border border-dashed border-ash px-3 py-1.5 text-xs text-ivory/70 hover:border-violet hover:text-violet"
+        className="rounded-lg border border-dashed border-ash px-3 py-2 text-xs text-ivory/70 hover:border-violet hover:text-violet sm:py-1.5"
       >
         + Add section
       </button>

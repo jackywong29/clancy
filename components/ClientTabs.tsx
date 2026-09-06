@@ -15,15 +15,15 @@ export function ClientTabs({
   ]
 
   return (
-    <nav className="mb-6 flex gap-4 border-b border-ash/60 text-sm">
+    <nav className="-mx-4 mb-6 flex gap-4 overflow-x-auto border-b border-ash/60 px-4 text-sm sm:mx-0 sm:px-0">
       {tabs.map((tab) => (
         <Link
           key={tab.key}
           href={tab.href}
           className={
             tab.key === active
-              ? 'border-b-2 border-violet pb-2 font-medium'
-              : 'pb-2 text-ivory/60 hover:text-ivory'
+              ? 'shrink-0 whitespace-nowrap border-b-2 border-violet pb-2 font-medium'
+              : 'shrink-0 whitespace-nowrap pb-2 text-ivory/60 hover:text-ivory'
           }
         >
           {tab.label}
