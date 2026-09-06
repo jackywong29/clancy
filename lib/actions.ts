@@ -21,7 +21,17 @@ import {
   renderBroadcastHtml,
   renderBroadcastText,
 } from '@/lib/broadcast-email'
-import type { BroadcastAttachment, EmailSignature } from '@/types/database'
+import {
+  parseChecklist,
+  generateStageTasks,
+  blockingTasksFor,
+} from '@/lib/checklist'
+import type {
+  BroadcastAttachment,
+  ChecklistItem,
+  EmailSignature,
+  PipelineStage,
+} from '@/types/database'
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
@@ -561,20 +571,49 @@ export async function addRecord(formData: FormData) {
     return v === '' ? null : v
   }
 
-  const { error } = await supabase.from('clients').insert({
-    organization_id: organizationId,
-    company_name: name,
-    stage_id: optional('stage_id'),
-    phone: optional('phone'),
-    email: optional('email'),
-    notes: optional('notes'),
-    custom: collectCustom(formData),
-  })
+  const stageId = optional('stage_id')
+  const { data: created, error } = await supabase
+    .from('clients')
+    .insert({
+      organization_id: organizationId,
+      company_name: name,
+      stage_id: stageId,
+      phone: optional('phone'),
+      email: optional('email'),
+      notes: optional('notes'),
+      custom: collectCustom(formData),
+    })
+    .select('id')
+    .single()
 
   if (error) {
     redirect(`/records/new?error=1&msg=${encodeURIComponent(error.message)}`)
   }
+
+  // A record created straight into a stage gets that stage's checklist too,
+  // not just one that arrives by being moved.
+  if (created && stageId) {
+    const { data: stage } = await supabase
+      .from('pipeline_stages')
+      .select('id, checklist')
+      .eq('id', stageId)
+      .maybeSingle()
+    if (stage) {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+      await generateStageTasks({
+        supabase,
+        organizationId,
+        clientId: created.id,
+        stage: stage as Pick<PipelineStage, 'id' | 'checklist'>,
+        userId: user?.id ?? null,
+      })
+    }
+  }
+
   revalidatePath('/pipeline')
+  revalidatePath('/tasks')
   redirect('/pipeline')
 }
 
@@ -704,6 +743,14 @@ export async function updateTaskStatus(formData: FormData) {
       .eq('id', taskId)
   }
   revalidatePath('/tasks')
+
+  // Ticking a checklist item off a record's page should update that page and
+  // the board pill, not just /tasks.
+  const recordId = String(formData.get('record_id') ?? '')
+  if (recordId) {
+    revalidatePath('/pipeline')
+    revalidatePath(`/records/${recordId}`)
+  }
 }
 
 export async function deleteTask(formData: FormData) {
@@ -773,19 +820,119 @@ export async function deleteEvent(formData: FormData) {
 }
 
 export async function moveClientStage(formData: FormData) {
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
   const stageId = String(formData.get('stage_id') ?? '')
 
-  if (clientId && stageId) {
-    await supabase
-      .from('clients')
-      .update({ stage_id: stageId, updated_at: new Date().toISOString() })
-      .eq('id', clientId)
+  if (!clientId || !stageId) {
+    revalidatePath('/pipeline')
+    return
+  }
+
+  const [{ data: client }, { data: stageRows }] = await Promise.all([
+    supabase.from('clients').select('stage_id').eq('id', clientId).maybeSingle(),
+    supabase.from('pipeline_stages').select('id, position, checklist'),
+  ])
+
+  const stages = (stageRows ?? []) as Pick<
+    PipelineStage,
+    'id' | 'position' | 'checklist'
+  >[]
+  const target = stages.find((s) => s.id === stageId)
+  const current = stages.find((s) => s.id === client?.stage_id)
+
+  // Blocking checklist items on the stage being LEFT hold a record back, but
+  // only from moving forward — sending a job back to an earlier stage has to
+  // stay possible even with work outstanding.
+  if (current && target && target.position > current.position) {
+    const outstanding = await blockingTasksFor(supabase, clientId, current)
+    if (outstanding.length > 0) {
+      redirect(
+        `/pipeline?error=1&msg=${encodeURIComponent(
+          `Finish first: ${outstanding.join(', ')}`
+        )}`
+      )
+    }
+  }
+
+  await supabase
+    .from('clients')
+    .update({ stage_id: stageId, updated_at: new Date().toISOString() })
+    .eq('id', clientId)
+
+  if (target) {
+    await generateStageTasks({
+      supabase,
+      organizationId: m.orgId,
+      clientId,
+      stage: target,
+      userId: m.userId,
+    })
   }
 
   revalidatePath('/pipeline')
+  revalidatePath('/tasks')
+  revalidatePath(`/records/${clientId}`)
+}
+
+// Pull in a stage's checklist for a record that was already sitting in the
+// stage before the checklist existed. Deliberately manual — auto-backfilling
+// would mass-create tasks across every record at once.
+export async function generateChecklistNow(formData: FormData) {
+  const m = await requireEditorOrg()
+  const supabase = await createClient()
+  const recordId = String(formData.get('record_id') ?? '')
+
+  const { data: client } = await supabase
+    .from('clients')
+    .select('stage_id')
+    .eq('id', recordId)
+    .maybeSingle()
+
+  if (client?.stage_id) {
+    const { data: stage } = await supabase
+      .from('pipeline_stages')
+      .select('id, checklist')
+      .eq('id', client.stage_id)
+      .maybeSingle()
+    if (stage) {
+      await generateStageTasks({
+        supabase,
+        organizationId: m.orgId,
+        clientId: recordId,
+        stage: stage as Pick<PipelineStage, 'id' | 'checklist'>,
+        userId: m.userId,
+      })
+    }
+  }
+
+  revalidatePath('/tasks')
+  revalidatePath(`/records/${recordId}`)
+  redirect(`/records/${recordId}?saved=1`)
+}
+
+export async function saveStageChecklist(formData: FormData) {
+  await requireWorkspaceAdmin()
+  const supabase = await createClient()
+
+  const stageId = String(formData.get('stage_id') ?? '')
+  let checklist: ChecklistItem[] = []
+  try {
+    checklist = parseChecklist(JSON.parse(String(formData.get('checklist') ?? '[]')))
+  } catch {
+    checklist = []
+  }
+
+  const { error } = await supabase
+    .from('pipeline_stages')
+    .update({ checklist })
+    .eq('id', stageId)
+
+  revalidatePath('/stages')
+  redirect(
+    `/stages?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
+  )
 }
 
 export async function updateMember(formData: FormData) {

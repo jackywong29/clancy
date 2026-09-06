@@ -17,3 +17,11 @@ export function klToday(): string {
 export function klYearMonth(): string {
   return klToday().slice(0, 7)
 }
+
+// Add whole days to a YYYY-MM-DD string, returning YYYY-MM-DD. Parsed as UTC
+// midnight so the arithmetic can't be shifted by the server's own timezone.
+export function addDays(isoDate: string, days: number): string {
+  const d = new Date(`${isoDate}T00:00:00Z`)
+  d.setUTCDate(d.getUTCDate() + days)
+  return d.toISOString().slice(0, 10)
+}

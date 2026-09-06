@@ -1,7 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
-import { addStage, updateStage, deleteStage, requireOrg } from '@/lib/actions'
+import {
+  addStage,
+  updateStage,
+  deleteStage,
+  saveStageChecklist,
+} from '@/lib/actions'
+import { getMembership, hasRole } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { ConfirmForm } from '@/components/ConfirmForm'
+import { ChecklistEditor } from '@/components/ChecklistEditor'
+import { parseChecklist } from '@/lib/checklist'
 import type { Client, PipelineStage } from '@/types/database'
 
 const inputClass =
@@ -13,8 +21,10 @@ export default async function StagesPage({
   searchParams: Promise<{ saved?: string; error?: string; count?: string }>
 }) {
   const flags = await searchParams
-  await requireOrg()
+  const m = await getMembership()
   const supabase = await createClient()
+  const canEditChecklist = hasRole(m, 'admin')
+  const departments = m.crmConfig.departments ?? []
 
   const [{ data: stages }, { data: clients }] = await Promise.all([
     supabase
@@ -54,11 +64,13 @@ export default async function StagesPage({
         <div className="space-y-2">
           {stageList.map((stage) => {
             const inUse = countFor(stage.id)
+            const checklist = parseChecklist(stage.checklist)
             return (
               <div
                 key={stage.id}
-                className="flex flex-col gap-2 rounded-xl border border-ash/60 bg-carbon p-3 sm:flex-row sm:items-center"
+                className="rounded-xl border border-ash/60 bg-carbon p-3"
               >
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <form
                   action={updateStage}
                   className="flex flex-col gap-2 sm:flex-1 sm:flex-row sm:items-center"
@@ -104,6 +116,38 @@ export default async function StagesPage({
                     Delete
                   </button>
                 </ConfirmForm>
+                </div>
+
+                {canEditChecklist && (
+                  <details className="mt-3 border-t border-ash/40 pt-3" open={checklist.length > 0}>
+                    <summary className="cursor-pointer text-xs text-ivory/60 hover:text-violet">
+                      Checklist
+                      {checklist.length > 0
+                        ? ` — ${checklist.length} task${checklist.length === 1 ? '' : 's'}`
+                        : ' — none yet'}
+                    </summary>
+                    <p className="mb-2 mt-2 text-xs text-ivory/50">
+                      These appear as tasks on a record the moment it lands in
+                      this stage. Existing records aren&apos;t touched — use
+                      &ldquo;Generate checklist&rdquo; on a record to pull them
+                      in.
+                    </p>
+                    <form action={saveStageChecklist} className="space-y-2">
+                      <input type="hidden" name="stage_id" value={stage.id} />
+                      <ChecklistEditor
+                        name="checklist"
+                        initial={JSON.stringify(checklist)}
+                        departments={departments}
+                      />
+                      <button
+                        type="submit"
+                        className="rounded-lg border border-ash px-3 py-1.5 text-sm hover:border-violet hover:text-violet"
+                      >
+                        Save checklist
+                      </button>
+                    </form>
+                  </details>
+                )}
               </div>
             )
           })}

@@ -16,7 +16,17 @@ function formatRM(value: number) {
   return `RM ${value.toLocaleString('en-MY', { maximumFractionDigits: 0 })}`
 }
 
-export default async function PipelinePage() {
+export default async function PipelinePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; msg?: string; denied?: string }>
+}) {
+  const flags = await searchParams
+  const notice = flags.denied
+    ? "You don't have permission to do that."
+    : flags.error
+      ? (flags.msg ?? "That move couldn't be completed.")
+      : null
   const orgId = await requireOrg()
   const supabase = await createClient()
 
@@ -30,23 +40,48 @@ export default async function PipelinePage() {
   // Client workspaces get the configurable records CRM. Clancy's own
   // workspace keeps its dedicated sales board (the code below).
   if (org && org.slug !== 'clancy') {
-    const [{ data: stages }, { data: records }] = await Promise.all([
-      supabase
-        .from('pipeline_stages')
-        .select('*')
-        .order('position', { ascending: true }),
-      supabase
-        .from('clients')
-        .select('*')
-        .order('created_at', { ascending: false }),
-    ])
+    const [{ data: stages }, { data: records }, { data: checklistTasks }] =
+      await Promise.all([
+        supabase
+          .from('pipeline_stages')
+          .select('*')
+          .order('position', { ascending: true }),
+        supabase
+          .from('clients')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('tasks')
+          .select('client_id, origin_stage_id, status')
+          .not('origin_stage_id', 'is', null),
+      ])
+
+    const recordList = (records ?? []) as Client[]
+    const stageOf = new Map(recordList.map((r) => [r.id, r.stage_id]))
+
+    // Only count checklist tasks from the stage the record is in right now —
+    // tasks left behind in an earlier stage shouldn't skew the pill.
+    const progress: Record<string, { done: number; total: number }> = {}
+    for (const t of (checklistTasks ?? []) as {
+      client_id: string | null
+      origin_stage_id: string | null
+      status: string
+    }[]) {
+      if (!t.client_id || t.origin_stage_id !== stageOf.get(t.client_id)) continue
+      const entry = (progress[t.client_id] ??= { done: 0, total: 0 })
+      entry.total += 1
+      if (t.status === 'done') entry.done += 1
+    }
+
     return (
       <div className="min-h-screen">
         <Header />
         <RecordsBoard
           stages={(stages ?? []) as PipelineStage[]}
-          records={(records ?? []) as Client[]}
+          records={recordList}
           config={(org.crm_config ?? {}) as CrmConfig}
+          checklistProgress={progress}
+          notice={notice}
         />
       </div>
     )

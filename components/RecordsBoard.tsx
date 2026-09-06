@@ -18,10 +18,16 @@ export function RecordsBoard({
   stages,
   records,
   config,
+  // Checklist progress for the stage each record currently sits in, keyed by
+  // record id. Absent when the record's stage has no checklist.
+  checklistProgress = {},
+  notice = null,
 }: {
   stages: PipelineStage[]
   records: Client[]
   config: CrmConfig
+  checklistProgress?: Record<string, { done: number; total: number }>
+  notice?: string | null
 }) {
   const singular = recordLabel(config)
   const plural = recordLabel(config, true)
@@ -54,6 +60,12 @@ export function RecordsBoard({
             </Link>
           </div>
         </div>
+
+        {notice && (
+          <p className="mb-4 rounded-lg bg-amber-950/30 px-3 py-2 text-sm text-amber-300">
+            {notice}
+          </p>
+        )}
 
         {stages.length === 0 ? (
           <p className="text-sm text-ivory/60">
@@ -93,12 +105,28 @@ export function RecordsBoard({
                         key={record.id}
                         className="rounded-lg border border-ash/60 bg-carbon p-3"
                       >
-                        <Link
-                          href={`/records/${record.id}`}
-                          className="block break-words text-sm font-medium hover:text-violet"
-                        >
-                          {record.company_name}
-                        </Link>
+                        <div className="flex items-start justify-between gap-2">
+                          <Link
+                            href={`/records/${record.id}`}
+                            className="block min-w-0 flex-1 break-words text-sm font-medium hover:text-violet"
+                          >
+                            {record.company_name}
+                          </Link>
+                          {checklistProgress[record.id] && (
+                            <span
+                              title="Stage checklist progress"
+                              className={`shrink-0 rounded px-1.5 py-0.5 text-xs ${
+                                checklistProgress[record.id].done ===
+                                checklistProgress[record.id].total
+                                  ? 'bg-violet/15 text-violet'
+                                  : 'bg-ash/40 text-ivory/60'
+                              }`}
+                            >
+                              {checklistProgress[record.id].done}/
+                              {checklistProgress[record.id].total}
+                            </span>
+                          )}
+                        </div>
                         {cardKeys.map((key) => {
                           const val = displayValue(record, key, config)
                           if (!val) return null

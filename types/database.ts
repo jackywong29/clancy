@@ -77,11 +77,22 @@ export interface Profile {
   created_at: string
 }
 
+// One line of a stage's checklist. `blocking` items must be done before a
+// record can move FORWARD out of the stage; moving backwards is never blocked.
+export interface ChecklistItem {
+  title: string
+  details?: string
+  department?: string
+  due_in_days?: number
+  blocking?: boolean
+}
+
 export interface PipelineStage {
   id: string
   organization_id: string
   name: string
   position: number
+  checklist: ChecklistItem[]
   created_at: string
 }
 
@@ -207,6 +218,9 @@ export interface Task {
   due_date: string | null
   department: string | null
   status: TaskStatus
+  // Set when the task was generated from a stage's checklist — used to keep
+  // generation idempotent and to show per-stage progress on a record.
+  origin_stage_id: string | null
   created_by: string | null
   created_at: string
   updated_at: string

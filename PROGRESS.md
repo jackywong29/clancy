@@ -8,7 +8,8 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 6 September 2026 · Batch 13 deployed · migrations 001–018 applied
+Last updated: 6 September 2026 · Batch 13 deployed · Batch 14 built, **awaiting
+migration 019 + push** · migrations 001–018 applied
 
 ---
 
@@ -28,6 +29,14 @@ paying client yet; company not yet registered; brand not yet launched.
 ---
 
 ## OPEN ACTIONS FOR JACKY (do these first)
+
+0. **Run migration 019 before Batch 14 deploys.** Ordering matters: the new
+   code reads `pipeline_stages.checklist` and writes `tasks.origin_stage_id`.
+   Batch 14 (stage checklists) is committed locally but **not pushed** until
+   the SQL is in. After deploying, smoke-test: add a checklist to a stage on
+   `/stages`, move a record into it, confirm the tasks appear and the `n/m`
+   pill shows on the board; then tick a `blocking` item and confirm a forward
+   move is refused with the task named.
 
 1. **Smoke-test the full Batch 11 broadcast — highest priority.** Automated
    email is live, but so far only a bare "test" (title + one word) has actually
