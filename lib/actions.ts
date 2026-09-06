@@ -862,18 +862,27 @@ export async function moveClientStage(formData: FormData) {
     .eq('id', clientId)
 
   if (target) {
-    await generateStageTasks({
+    const { error } = await generateStageTasks({
       supabase,
       organizationId: m.orgId,
       clientId,
       stage: target,
       userId: m.userId,
     })
+    if (error) {
+      revalidatePath('/pipeline')
+      redirect(
+        `/pipeline?error=1&msg=${encodeURIComponent(
+          `Moved, but the stage checklist couldn't be created: ${error}`
+        )}`
+      )
+    }
   }
 
   revalidatePath('/pipeline')
   revalidatePath('/tasks')
   revalidatePath(`/records/${clientId}`)
+  revalidatePath(`/clients/${clientId}`)
 }
 
 // Pull in a stage's checklist for a record that was already sitting in the
@@ -890,6 +899,10 @@ export async function generateChecklistNow(formData: FormData) {
     .eq('id', recordId)
     .maybeSingle()
 
+  // Clancy's own workspace shows client detail at /clients/[id]; client
+  // workspaces use /records/[id]. Return the user to whichever they came from.
+  const backTo = String(formData.get('back_to') ?? `/records/${recordId}`)
+
   if (client?.stage_id) {
     const { data: stage } = await supabase
       .from('pipeline_stages')
@@ -897,19 +910,24 @@ export async function generateChecklistNow(formData: FormData) {
       .eq('id', client.stage_id)
       .maybeSingle()
     if (stage) {
-      await generateStageTasks({
+      const { error } = await generateStageTasks({
         supabase,
         organizationId: m.orgId,
         clientId: recordId,
         stage: stage as Pick<PipelineStage, 'id' | 'checklist'>,
         userId: m.userId,
       })
+      if (error) {
+        redirect(`${backTo}?error=1&msg=${encodeURIComponent(error)}`)
+      }
     }
   }
 
   revalidatePath('/tasks')
+  revalidatePath('/pipeline')
   revalidatePath(`/records/${recordId}`)
-  redirect(`/records/${recordId}?saved=1`)
+  revalidatePath(`/clients/${recordId}`)
+  redirect(`${backTo}?saved=1`)
 }
 
 export async function saveStageChecklist(formData: FormData) {
@@ -924,15 +942,28 @@ export async function saveStageChecklist(formData: FormData) {
     checklist = []
   }
 
-  const { error } = await supabase
+  // Ask for the updated row back so a write that matched nothing (wrong id, or
+  // RLS silently filtering it out) can't report "Saved."
+  const { data: updated, error } = await supabase
     .from('pipeline_stages')
     .update({ checklist })
     .eq('id', stageId)
+    .select('id')
 
   revalidatePath('/stages')
-  redirect(
-    `/stages?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
-  )
+  revalidatePath('/pipeline')
+
+  if (error) {
+    redirect(`/stages?error=1&msg=${encodeURIComponent(error.message)}`)
+  }
+  if (!updated || updated.length === 0) {
+    redirect(
+      `/stages?error=1&msg=${encodeURIComponent(
+        "That stage didn't update — you may not have permission to edit it."
+      )}`
+    )
+  }
+  redirect('/stages?saved=1')
 }
 
 export async function updateMember(formData: FormData) {

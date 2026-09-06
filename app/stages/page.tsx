@@ -18,7 +18,12 @@ const inputClass =
 export default async function StagesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ saved?: string; error?: string; count?: string }>
+  searchParams: Promise<{
+    saved?: string
+    error?: string
+    count?: string
+    msg?: string
+  }>
 }) {
   const flags = await searchParams
   const m = await getMembership()
@@ -52,6 +57,11 @@ export default async function StagesPage({
         {flags.saved && (
           <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
             Saved.
+          </p>
+        )}
+        {flags.error && flags.error !== 'in-use' && (
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
+            {flags.msg ?? "Couldn't save."}
           </p>
         )}
         {flags.error === 'in-use' && (

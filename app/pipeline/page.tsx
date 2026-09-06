@@ -4,6 +4,7 @@ import { moveClientStage, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { RecordsBoard } from '@/components/RecordsBoard'
 import { intakeProgress } from '@/lib/intake'
+import { stageProgressByRecord } from '@/lib/checklist'
 import type {
   Client,
   CrmConfig,
@@ -57,21 +58,7 @@ export default async function PipelinePage({
       ])
 
     const recordList = (records ?? []) as Client[]
-    const stageOf = new Map(recordList.map((r) => [r.id, r.stage_id]))
-
-    // Only count checklist tasks from the stage the record is in right now —
-    // tasks left behind in an earlier stage shouldn't skew the pill.
-    const progress: Record<string, { done: number; total: number }> = {}
-    for (const t of (checklistTasks ?? []) as {
-      client_id: string | null
-      origin_stage_id: string | null
-      status: string
-    }[]) {
-      if (!t.client_id || t.origin_stage_id !== stageOf.get(t.client_id)) continue
-      const entry = (progress[t.client_id] ??= { done: 0, total: 0 })
-      entry.total += 1
-      if (t.status === 'done') entry.done += 1
-    }
+    const progress = stageProgressByRecord(recordList, checklistTasks)
 
     return (
       <div className="min-h-screen">
@@ -87,7 +74,7 @@ export default async function PipelinePage({
     )
   }
 
-  const [{ data: stages }, { data: clients }, { data: intakes }] =
+  const [{ data: stages }, { data: clients }, { data: intakes }, { data: ckTasks }] =
     await Promise.all([
       supabase
         .from('pipeline_stages')
@@ -98,10 +85,15 @@ export default async function PipelinePage({
         .select('*')
         .order('created_at', { ascending: false }),
       supabase.from('intakes').select('client_id, data'),
+      supabase
+        .from('tasks')
+        .select('client_id, origin_stage_id, status')
+        .not('origin_stage_id', 'is', null),
     ])
 
   const stageList = (stages ?? []) as PipelineStage[]
   const clientList = (clients ?? []) as Client[]
+  const checklistProgress = stageProgressByRecord(clientList, ckTasks)
   const intakeByClient = new Map(
     ((intakes ?? []) as Pick<Intake, 'client_id' | 'data'>[]).map((i) => [
       i.client_id,
@@ -146,6 +138,12 @@ export default async function PipelinePage({
           </div>
         </div>
 
+        {notice && (
+          <p className="mb-4 rounded-lg bg-amber-950/30 px-3 py-2 text-sm text-amber-300">
+            {notice}
+          </p>
+        )}
+
         {stageList.length === 0 ? (
           <p className="text-sm text-ivory/60">
             No pipeline stages found — run the schema SQL in Supabase first.
@@ -187,12 +185,28 @@ export default async function PipelinePage({
                         key={client.id}
                         className="rounded-lg border border-ash/60 bg-carbon p-3"
                       >
-                        <Link
-                          href={`/clients/${client.id}`}
-                          className="block break-words text-sm font-medium hover:text-violet"
-                        >
-                          {client.company_name}
-                        </Link>
+                        <div className="flex items-start justify-between gap-2">
+                          <Link
+                            href={`/clients/${client.id}`}
+                            className="block min-w-0 flex-1 break-words text-sm font-medium hover:text-violet"
+                          >
+                            {client.company_name}
+                          </Link>
+                          {checklistProgress[client.id] && (
+                            <span
+                              title="Stage checklist progress"
+                              className={`shrink-0 rounded px-1.5 py-0.5 text-xs ${
+                                checklistProgress[client.id].done ===
+                                checklistProgress[client.id].total
+                                  ? 'bg-violet/15 text-violet'
+                                  : 'bg-ash/40 text-ivory/60'
+                              }`}
+                            >
+                              {checklistProgress[client.id].done}/
+                              {checklistProgress[client.id].total}
+                            </span>
+                          )}
+                        </div>
                         <p className="mt-0.5 text-xs text-ivory/60">
                           {[client.vertical, client.tier, client.source]
                             .filter(Boolean)

@@ -33,24 +33,16 @@ export function parseChecklist(value: unknown): ChecklistItem[] {
     }))
 }
 
-// Have this record's tasks for this stage already been generated? One query,
-// head-only — this runs on every stage move.
-async function alreadyGenerated(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: SupabaseClient<any>,
-  clientId: string,
-  stageId: string
-): Promise<boolean> {
-  const { count } = await supabase
-    .from('tasks')
-    .select('id', { count: 'exact', head: true })
-    .eq('client_id', clientId)
-    .eq('origin_stage_id', stageId)
-  return (count ?? 0) > 0
-}
-
-// Create the stage's checklist as tasks against the record. Returns how many
-// were created (0 when the stage has no checklist, or they already exist).
+// Create the stage's checklist as tasks against the record.
+//
+// Idempotent by TITLE rather than all-or-nothing: moving a record out of a
+// stage and back creates nothing new, but an item added to the stage after the
+// record arrived can still be pulled in. An all-or-nothing check made the
+// "Add this stage's tasks" button silently do nothing whenever the record
+// already had even one task from the stage.
+//
+// Errors are returned, never swallowed — a silent 0 here is exactly what made
+// the first version of this feature impossible to diagnose.
 export async function generateStageTasks({
   supabase,
   organizationId,
@@ -64,13 +56,25 @@ export async function generateStageTasks({
   clientId: string
   stage: Pick<PipelineStage, 'id' | 'checklist'>
   userId: string | null
-}): Promise<number> {
+}): Promise<{ created: number; error?: string }> {
   const items = parseChecklist(stage.checklist)
-  if (items.length === 0) return 0
-  if (await alreadyGenerated(supabase, clientId, stage.id)) return 0
+  if (items.length === 0) return { created: 0 }
+
+  const { data: existing, error: readError } = await supabase
+    .from('tasks')
+    .select('title')
+    .eq('client_id', clientId)
+    .eq('origin_stage_id', stage.id)
+  if (readError) return { created: 0, error: readError.message }
+
+  const have = new Set(
+    ((existing ?? []) as { title: string }[]).map((t) => t.title)
+  )
+  const missing = items.filter((i) => !have.has(i.title))
+  if (missing.length === 0) return { created: 0 }
 
   const today = klToday()
-  const rows = items.map((item) => ({
+  const rows = missing.map((item) => ({
     organization_id: organizationId,
     client_id: clientId,
     origin_stage_id: stage.id,
@@ -84,7 +88,8 @@ export async function generateStageTasks({
   }))
 
   const { error } = await supabase.from('tasks').insert(rows)
-  return error ? 0 : rows.length
+  if (error) return { created: 0, error: error.message }
+  return { created: rows.length }
 }
 
 // Blocking items on the stage the record is LEAVING must be done before it can
@@ -122,4 +127,25 @@ export function checklistProgress(
     done: tasks.filter((t) => t.status === 'done').length,
     total: tasks.length,
   }
+}
+
+// Board pill data, keyed by record id. Counts ONLY tasks from the stage each
+// record is in right now — tasks left behind in an earlier stage would
+// otherwise inflate the denominator and make the pill meaningless.
+export function stageProgressByRecord(
+  records: { id: string; stage_id: string | null }[],
+  tasks:
+    | { client_id: string | null; origin_stage_id: string | null; status: string }[]
+    | null
+): Record<string, { done: number; total: number }> {
+  const stageOf = new Map(records.map((r) => [r.id, r.stage_id]))
+  const out: Record<string, { done: number; total: number }> = {}
+  for (const t of tasks ?? []) {
+    if (!t.client_id) continue
+    if (t.origin_stage_id !== stageOf.get(t.client_id)) continue
+    const entry = (out[t.client_id] ??= { done: 0, total: 0 })
+    entry.total += 1
+    if (t.status === 'done') entry.done += 1
+  }
+  return out
 }

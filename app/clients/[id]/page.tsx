@@ -3,9 +3,10 @@ import { createClient } from '@/lib/supabase/server'
 import { updateClient, deleteClient, requireOrg } from '@/lib/actions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
+import { StageChecklist } from '@/components/StageChecklist'
 import { ConfirmForm } from '@/components/ConfirmForm'
 import { SubmitButton } from '@/components/SubmitButton'
-import type { Client, PipelineStage } from '@/types/database'
+import type { Client, PipelineStage, Task } from '@/types/database'
 
 const inputClass =
   'w-full rounded-lg border border-ash bg-graphite px-3 py-2 text-sm outline-none focus:border-violet'
@@ -36,6 +37,19 @@ export default async function ClientDetailPage({
   const client = clientRow as Client
   const stageList = (stages ?? []) as PipelineStage[]
 
+  // Checklist for the stage this client currently sits in. Clancy's own sales
+  // pipeline gets the same SOP layer as a client workspace.
+  const currentStage = stageList.find((s) => s.id === client.stage_id)
+  const { data: stageTaskRows } = currentStage
+    ? await supabase
+        .from('tasks')
+        .select('*')
+        .eq('client_id', client.id)
+        .eq('origin_stage_id', currentStage.id)
+        .order('created_at', { ascending: true })
+    : { data: [] }
+  const stageTasks = (stageTaskRows ?? []) as Task[]
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -55,6 +69,13 @@ export default async function ClientDetailPage({
             Couldn&apos;t save{flags.msg ? `: ${flags.msg}` : '. Check the fields and try again.'}
           </p>
         )}
+        <StageChecklist
+          recordId={client.id}
+          stage={currentStage}
+          tasks={stageTasks}
+          backTo={`/clients/${client.id}`}
+        />
+
         <form action={updateClient} className="space-y-4">
           <input type="hidden" name="client_id" value={client.id} />
           <div>
