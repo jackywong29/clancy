@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { submitClientIntake } from '@/lib/actions'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
+import { WorkflowStepsEditor } from '@/components/intake/WorkflowStepsEditor'
 import { CLIENT_FACING_SECTIONS, type IntakeData } from '@/lib/intake'
 
 const inputClass =
@@ -69,7 +70,11 @@ export default async function ClientIntakePage({
                       <label htmlFor={name} className="mb-1 block text-sm">
                         {field.label}
                       </label>
-                      {field.type === 'services' ? (
+                      {field.type === 'workflow' ? (
+                        <div className="rounded-xl border border-[#221F1A]/10 bg-white p-3 [&_input]:min-w-0 [&_input]:border-[#221F1A]/15 [&_input]:bg-[#FAF8F3] [&_input]:text-[#221F1A] [&_textarea]:min-w-0 [&_textarea]:border-[#221F1A]/15 [&_textarea]:bg-[#FAF8F3] [&_textarea]:text-[#221F1A] [&_.bg-carbon\/40]:bg-transparent [&_.border-ash\/60]:border-[#221F1A]/10 [&_.border-ash\/40]:border-[#221F1A]/10 [&_.text-ivory\/70]:text-[#221F1A]/70 [&_.text-ivory\/50]:text-[#221F1A]/50 [&_.text-ivory\/40]:text-[#221F1A]/40 [&_button]:border-[#221F1A]/20">
+                          <WorkflowStepsEditor name={name} initial={value} />
+                        </div>
+                      ) : field.type === 'services' ? (
                         <div className="rounded-xl border border-[#221F1A]/10 bg-white p-3 [&_input]:min-w-0 [&_input]:border-[#221F1A]/15 [&_input]:bg-[#FAF8F3] [&_input]:text-[#221F1A] [&_input:not([type=checkbox])]:w-full [&_.text-ivory\/50]:text-[#221F1A]/50 [&_.text-ivory\/70]:text-[#221F1A]/70 [&_.text-ivory\/40]:text-[#221F1A]/40 [&_button]:border-[#221F1A]/20 [&_button]:text-[#221F1A]/70">
                         <ServiceListEditor name={name} initial={value} />
                         </div>

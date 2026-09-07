@@ -7,6 +7,7 @@ import { CopyButton } from '@/components/CopyButton'
 import { SubmitButton } from '@/components/SubmitButton'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
 import { StepListEditor } from '@/components/intake/StepListEditor'
+import { WorkflowStepsEditor } from '@/components/intake/WorkflowStepsEditor'
 import { FileUploadField } from '@/components/intake/FileUploadField'
 import {
   INTAKE_SECTIONS,
@@ -37,6 +38,9 @@ function FieldInput({
   }
   if (field.type === 'steps') {
     return <StepListEditor name={name} initial={value} />
+  }
+  if (field.type === 'workflow') {
+    return <WorkflowStepsEditor name={name} initial={value} />
   }
   if (field.type === 'files') {
     return (
@@ -210,6 +214,7 @@ export default async function IntakePage({
                       {field.hint &&
                         (field.type === 'services' ||
                           field.type === 'steps' ||
+                          field.type === 'workflow' ||
                           field.type === 'files') && (
                           <p className="mb-2 text-xs text-ivory/50">
                             {field.hint}

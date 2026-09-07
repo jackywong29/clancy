@@ -6,7 +6,13 @@ import type { Client, CrmConfig } from '@/types/database'
 // in intakes.data as JSON keyed "<section>.<field>". Structured field types
 // (services, steps, files) store JSON strings under the same keys.
 
-export type IntakeFieldType = 'text' | 'long' | 'services' | 'steps' | 'files'
+export type IntakeFieldType =
+  | 'text'
+  | 'long'
+  | 'services'
+  | 'steps'
+  | 'workflow'
+  | 'files'
 
 export interface IntakeField {
   key: string
@@ -35,6 +41,20 @@ export interface ServiceRow {
 export interface UploadedFile {
   path: string
   name: string
+}
+
+// One step of the client's real process, with the detail needed to build it.
+// Each field maps onto something concrete: `tasks` become the stage checklist,
+// `who` the department, `duration` the due-in-days, `blocker` the blocking
+// flag, and `automatic` is the wishlist that tells us which curated
+// automations to build first.
+export interface WorkflowStep {
+  name: string
+  tasks?: string
+  who?: string
+  duration?: string
+  blocker?: string
+  automatic?: string
 }
 
 export const INTAKE_SECTIONS: IntakeSection[] = [
@@ -83,11 +103,11 @@ export const INTAKE_SECTIONS: IntakeSection[] = [
     key: 'workflow',
     title: 'Workflow mapping',
     fields: [
-      { key: 'lead_channels', label: 'How new customers reach them today' },
-      { key: 'pipeline_steps', label: 'Steps from first inquiry to paid', type: 'steps', hint: 'Their real process, in order — these become their pipeline stages' },
-      { key: 'lost_leads', label: 'Where leads currently get lost', type: 'long', hint: 'Pitch ammo — remember it' },
-      { key: 'staff', label: 'Staff list: who needs a login, who sees what', type: 'long' },
-      { key: 'followups', label: 'Follow-ups they do today or wish they did' },
+      { key: 'lead_channels', label: 'How new customers reach you today', hint: 'e.g. WhatsApp, walk-in, Facebook, word of mouth', clientFacing: true },
+      { key: 'pipeline_steps', label: 'Your process, step by step', type: 'workflow', blocking: true, hint: 'From the first time you hear from someone to the job being done and paid. List the steps in order, then add detail where you can — the detail is what lets us build it for you.', clientFacing: true },
+      { key: 'lost_leads', label: 'Where do jobs or customers currently slip through the cracks?', type: 'long', hint: 'e.g. "we forget to follow up on quotes" — be honest, this is the part we can fix', clientFacing: true },
+      { key: 'staff', label: 'Who works here and what should each person see?', type: 'long', hint: 'e.g. "Ah Meng runs the workshop and sees everything; two mechanics only need their own jobs"', clientFacing: true },
+      { key: 'followups', label: 'Follow-ups you do today, or wish you did', hint: 'e.g. "we call a week after a service" or "we should ask for a Google review but never do"', clientFacing: true },
     ],
   },
   {
@@ -141,11 +161,53 @@ function parseArray<T>(raw: string | undefined): T[] {
   }
 }
 
+// Tolerates both shapes: the current array of step objects, and the plain
+// string[] this field held before it gained per-step detail. Old intakes keep
+// working and simply carry no detail.
+export function parseWorkflowSteps(raw: string | undefined): WorkflowStep[] {
+  if (!raw || !raw.trim()) return []
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return raw.trim() ? [{ name: raw.trim() }] : []
+  }
+  if (!Array.isArray(parsed)) return []
+  const out: WorkflowStep[] = []
+  for (const row of parsed) {
+    if (typeof row === 'string') {
+      if (row.trim()) out.push({ name: row.trim() })
+      continue
+    }
+    if (row && typeof row === 'object') {
+      const r = row as Record<string, unknown>
+      const name = typeof r.name === 'string' ? r.name.trim() : ''
+      if (!name) continue
+      const str = (k: string) =>
+        typeof r[k] === 'string' && (r[k] as string).trim()
+          ? (r[k] as string).trim()
+          : undefined
+      out.push({
+        name,
+        tasks: str('tasks'),
+        who: str('who'),
+        duration: str('duration'),
+        blocker: str('blocker'),
+        automatic: str('automatic'),
+      })
+    }
+  }
+  return out
+}
+
 export function fieldFilled(field: IntakeField, raw: string | undefined): boolean {
   const value = (raw ?? '').trim()
   if (value === '') return false
   if (field.type === 'services') {
     return parseArray<ServiceRow>(value).some((r) => r.name.trim() !== '')
+  }
+  if (field.type === 'workflow') {
+    return parseWorkflowSteps(value).length > 0
   }
   if (field.type === 'steps') {
     return parseArray<string>(value).some((s) => s.trim() !== '')
@@ -271,21 +333,129 @@ export const CLIENT_FACING_KEYS = new Set(
   CLIENT_FACING_SECTIONS.flatMap((s) => s.fields.map((f) => `${s.key}.${f.key}`))
 )
 
-function parseSteps(raw: string | undefined): string[] {
-  if (!raw) return []
-  try {
-    const v = JSON.parse(raw)
-    return Array.isArray(v) ? v.filter((s) => String(s).trim() !== '') : []
-  } catch {
-    return raw.trim() ? [raw.trim()] : []
-  }
-}
 
 // The CRM build brief — the internal-management analogue of buildBrief. Hands
 // Claude everything needed to configure the client's back-end CRM: record
 // type, pipeline stages (from their real process), departments, and the
 // fields worth tracking. Suggestions are flagged so Jacky confirms before I
 // apply them.
+// The workflow build brief — the process analogue of the CRM brief. The CRM
+// brief configures the SHAPE of a workspace (record type, fields, modules);
+// this one configures the PROCESS (stages, per-stage checklists, who does
+// what, what blocks, what should fire automatically).
+//
+// Everything here comes from the client's own words in the intake. Nothing is
+// invented — where the intake is thin, the brief says so and asks, because a
+// guessed workflow is worse than an admitted gap.
+export function buildWorkflowBrief(
+  client: Client,
+  data: IntakeData,
+  config: CrmConfig
+): string {
+  const lines: string[] = []
+  const get = (k: string) => (data[k] ?? '').trim()
+  const steps = parseWorkflowSteps(data['workflow.pipeline_steps'])
+
+  lines.push(`# Workflow build brief — ${client.company_name}`)
+  lines.push('')
+  lines.push(
+    `Generated ${new Date().toISOString().slice(0, 10)} from Clancy HQ. This configures their **process** — pipeline stages and the checklist that fires at each one. The CRM brief covers the shape of the workspace (record type, fields); the website has its own brief.`
+  )
+  lines.push('')
+
+  lines.push('## What the business does')
+  lines.push(get('basics.description') || '_Not captured in intake yet._')
+  lines.push('')
+
+  lines.push('## How work arrives')
+  lines.push(get('workflow.lead_channels') || '_Not captured._')
+  lines.push('')
+
+  lines.push('## The process, in their words')
+  if (steps.length === 0) {
+    lines.push(
+      '_No process captured yet._ Ask them to walk through one job from first contact to done, and write each step down. Without this there is nothing to build.'
+    )
+  } else {
+    lines.push(
+      `${steps.length} step${steps.length === 1 ? '' : 's'}. Each becomes a pipeline stage on \`/workflow\`; the tasks under it become that stage's checklist.`
+    )
+    lines.push('')
+    steps.forEach((s, i) => {
+      lines.push(`### ${i + 1}. ${s.name}`)
+      lines.push(
+        `- **What happens here:** ${s.tasks ? s.tasks.replace(/\n+/g, ' · ') : '_not given — ask, or leave the stage with no checklist_'}`
+      )
+      lines.push(`- **Who does it:** ${s.who ?? '_not given_'}`)
+      lines.push(`- **How long it takes:** ${s.duration ?? '_not given_'}`)
+      lines.push(
+        `- **Must be finished before moving on:** ${s.blocker ?? '_nothing stated_'}`
+      )
+      if (s.automatic) {
+        lines.push(`- **They want automatic:** ${s.automatic}`)
+      }
+      lines.push('')
+    })
+  }
+
+  lines.push('## Where work currently slips')
+  lines.push(get('workflow.lost_leads') || '_Not captured._')
+  lines.push('')
+
+  lines.push('## Follow-ups')
+  lines.push(get('workflow.followups') || '_Not captured._')
+  lines.push('')
+
+  lines.push('## Who works here')
+  lines.push(get('workflow.staff') || '_Not captured._')
+  const depts = config.departments ?? []
+  lines.push(
+    depts.length > 0
+      ? `**Departments already set:** ${depts.map((d) => d.name).join(', ')}`
+      : '**Departments:** none set yet — create them if different teams should only see their own tasks.'
+  )
+  lines.push('')
+
+  const wishes = steps.filter((s) => s.automatic)
+  lines.push('## Automation wishlist')
+  if (wishes.length === 0 && !get('workflow.followups')) {
+    lines.push('_Nothing captured._')
+  } else {
+    lines.push(
+      'Things they said should happen by itself. **Do not build a rule builder for this** — these are the candidates for specific, named automations, and this list is how we decide which to build first.'
+    )
+    wishes.forEach((s) => lines.push(`- At **${s.name}**: ${s.automatic}`))
+    if (get('workflow.followups')) {
+      lines.push(`- Follow-ups: ${get('workflow.followups')}`)
+    }
+  }
+  lines.push('')
+
+  lines.push('---')
+  lines.push('')
+  lines.push('## What to do with this')
+  lines.push(
+    '1. Configure the stages on `/workflow` in the order above, using their words for stage names — never rename their process into jargon.'
+  )
+  lines.push(
+    "2. Turn each step's *what happens here* into checklist items on that stage. Split run-on sentences into separate tasks."
+  )
+  lines.push(
+    '3. Set the department from *who does it*, and a due-in-days from *how long it takes* where a number is stated. Leave it blank rather than guessing.'
+  )
+  lines.push(
+    '4. Tick **blocking** only where they actually said something must be finished first. Over-blocking is the fastest way to make people abandon the system.'
+  )
+  lines.push(
+    '5. Leave the automation wishlist unbuilt for now — record it, and raise anything that recurs across clients as a candidate for a curated automation.'
+  )
+  lines.push(
+    '6. Flag any gap marked _not given_ back to Jacky rather than inventing an answer.'
+  )
+
+  return lines.join('\n')
+}
+
 export function buildCrmBrief(
   client: Client,
   data: IntakeData,
@@ -317,16 +487,16 @@ export function buildCrmBrief(
   }
   lines.push('')
 
-  lines.push('## Pipeline stages (from their real process)')
-  const steps = parseSteps(data['workflow.pipeline_steps'])
+  lines.push('## Pipeline stages')
+  const steps = parseWorkflowSteps(data['workflow.pipeline_steps'])
   if (steps.length > 0) {
     lines.push(
-      'From the intake, their process from first contact to done — use these as the board stages:'
+      `Their process has ${steps.length} step${steps.length === 1 ? '' : 's'} — **see the Workflow brief**, which carries the stages plus what happens at each one. Listed here for context only:`
     )
-    steps.forEach((s, i) => lines.push(`${i + 1}. ${s}`))
+    steps.forEach((s, i) => lines.push(`${i + 1}. ${s.name}`))
   } else {
     lines.push(
-      '_No process captured._ Ask how a record moves from first contact to finished, and turn each step into a stage.'
+      '_No process captured._ Fill the Workflow section of the intake — stages are configured from the Workflow brief, not this one.'
     )
   }
   lines.push('')

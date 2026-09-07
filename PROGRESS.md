@@ -8,15 +8,15 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 6 September 2026 · Batch 14 deployed · migrations 001–019 applied
+Last updated: 7 September 2026 · Batch 16 deployed · migrations 001–019 applied
 
 ---
 
 ## Status in one paragraph
 
-Clancy HQ is built and live at **clancy-hq.vercel.app** (12 build batches,
-~48 commits, 18 migrations). It is a genuine two-sided product: Jacky's agency
-side (sales pipeline, client intake, two build briefs) and per-client workspaces
+Clancy HQ is built and live at **clancy-hq.vercel.app** (16 build batches,
+~55 commits, 19 migrations). It is a genuine two-sided product: Jacky's agency
+side (sales pipeline, client intake, three build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
 real KL church — first client site at `/s/sgckl`). Latest deploy is green.
@@ -58,13 +58,21 @@ paying client yet; company not yet registered; brand not yet launched.
    Note `.env.local` now exists locally (gitignored) with the public Supabase
    URL + anon key, so `npm run dev` works on this machine.
 
-2. **Set up the workspace sign-off if you haven't.** Team → Workspace settings
+3. **Set up the workspace sign-off if you haven't.** Team → Workspace settings
    → Email sign-off (logo, name, contact, small print). It's per-workspace, so
    Clancy and SGCKL each get their own. Empty = broadcasts send without a
    signature.
 
-3. **Smoke-test Batch 12** (small): tick "Clancy staff" on a second account and
+4. **Smoke-test Batch 13** (small): tick "Clancy staff" on a second account and
    confirm they can switch workspaces; send a broadcast to a typed address.
+
+5. **Try the Workflow brief (Batch 16).** On a client: Intake → *Workflow
+   mapping → Your process, step by step* now captures each step plus five
+   questions (what happens here / who / how long / what blocks / what you wish
+   was automatic). The whole section is **client-facing**, so you can send the
+   intake link and let them describe it themselves. Then open the new
+   **Workflow brief** tab and paste it here. Gaps are marked `_not given_`
+   rather than guessed.
 
 ### Done since last session
 - ~~Run migration 017~~ — **DONE**, run before the Batch 11 push. Migrations
