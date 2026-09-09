@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "tsc -p tsconfig.test.json && node -r ./tests/alias-hook.js .test-build/tests/index.js"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.0",
