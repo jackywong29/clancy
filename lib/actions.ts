@@ -72,26 +72,10 @@ export async function signOut() {
   redirect('/login')
 }
 
+// Org scope for a mutation with no role requirement. Shares the cached
+// membership with the page and the Header, so it costs no extra round-trip.
 export async function requireOrg(): Promise<string> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (!user) {
-    redirect('/login')
-  }
-
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id')
-    .eq('id', user.id)
-    .maybeSingle()
-
-  if (!profile?.organization_id) {
-    redirect('/no-access')
-  }
-  return profile.organization_id
+  return (await getMembership()).orgId
 }
 
 export async function addClient(formData: FormData) {
@@ -279,20 +263,14 @@ export async function deleteStage(formData: FormData) {
   redirect('/workflow')
 }
 
+// Platform-admin surfaces (client list, sites, account access). Reads the
+// membership already loaded this request instead of re-querying.
 export async function requireAdmin() {
-  const supabase = await createClient()
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('is_platform_admin')
-    .eq(
-      'id',
-      (await supabase.auth.getUser()).data.user?.id ?? ''
-    )
-    .maybeSingle()
-
-  if (!profile?.is_platform_admin) {
+  const m = await getMembership()
+  if (!m.isPlatformAdmin) {
     redirect('/pipeline')
   }
+  return m
 }
 
 export async function updateProfileAccess(formData: FormData) {
@@ -598,15 +576,13 @@ export async function addRecord(formData: FormData) {
       .eq('id', stageId)
       .maybeSingle()
     if (stage) {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const userId = (await getMembership()).userId
       await generateStageTasks({
         supabase,
         organizationId,
         clientId: created.id,
         stage: stage as Pick<PipelineStage, 'id' | 'checklist'>,
-        userId: user?.id ?? null,
+        userId,
       })
     }
   }
@@ -702,10 +678,8 @@ export async function updateCrmConfig(formData: FormData) {
 
 export async function addTask(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = (await requireEditorOrg()).orgId
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const m = await requireEditorOrg()
+  const organizationId = m.orgId
 
   const title = String(formData.get('title') ?? '').trim()
   const optional = (n: string) => {
@@ -722,7 +696,7 @@ export async function addTask(formData: FormData) {
       client_id: optional('client_id'),
       due_date: optional('due_date'),
       department: optional('department'),
-      created_by: user?.id ?? null,
+      created_by: m.userId,
     })
   }
   revalidatePath('/tasks')
@@ -765,10 +739,8 @@ export async function deleteTask(formData: FormData) {
 
 export async function addEvent(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = (await requireEditorOrg()).orgId
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const m = await requireEditorOrg()
+  const organizationId = m.orgId
 
   const title = String(formData.get('title') ?? '').trim()
   const startsOn = String(formData.get('starts_on') ?? '').trim()
@@ -800,7 +772,7 @@ export async function addEvent(formData: FormData) {
       alert_departments: alertDepartments,
       alert_minutes: alertRaw === '' ? null : Number(alertRaw),
       category: optional('category'),
-      created_by: user?.id ?? null,
+      created_by: m.userId,
     })
   }
   revalidatePath('/calendar')

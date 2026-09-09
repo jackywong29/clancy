@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import type { CrmConfig, WorkspaceRole } from '@/types/database'
@@ -27,36 +28,58 @@ function normalizeRole(role: string, isPlatformAdmin: boolean): WorkspaceRole {
   return 'viewer'
 }
 
-export async function getMembership(): Promise<Membership> {
-  const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+// Loaded once per request. Every authenticated page used to pay for this three
+// times over — the page, the Header, and a require* helper each ran their own
+// getUser + profiles + organizations round-trip, and each hop is a call to
+// Supabase from the other side of the world. Now: one auth call, one query.
+//
+// Returns state rather than redirecting so the Header can render for a
+// logged-out or org-less visitor without bouncing them in a loop.
+export const loadMembership = cache(
+  async (): Promise<{ signedIn: boolean; membership: Membership | null }> => {
+    const supabase = await createClient()
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) return { signedIn: false, membership: null }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('organization_id, role, department, is_platform_admin')
-    .eq('id', user.id)
-    .maybeSingle()
+    // The organization rides along on the profile via its foreign key, so the
+    // workspace slug and crm_config arrive in the same round-trip.
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select(
+        'organization_id, role, department, is_platform_admin, organizations(slug, crm_config)'
+      )
+      .eq('id', user.id)
+      .maybeSingle()
 
-  if (!profile?.organization_id) redirect('/no-access')
+    if (!profile?.organization_id) return { signedIn: true, membership: null }
 
-  const { data: org } = await supabase
-    .from('organizations')
-    .select('slug, crm_config')
-    .eq('id', profile.organization_id)
-    .maybeSingle()
+    const org = (profile.organizations ?? null) as {
+      slug?: string
+      crm_config?: CrmConfig
+    } | null
 
-  return {
-    userId: user.id,
-    orgId: profile.organization_id,
-    orgSlug: (org?.slug as string) ?? '',
-    role: normalizeRole(profile.role ?? 'viewer', profile.is_platform_admin),
-    department: profile.department ?? null,
-    isPlatformAdmin: profile.is_platform_admin === true,
-    crmConfig: ((org?.crm_config as CrmConfig) ?? {}) as CrmConfig,
+    return {
+      signedIn: true,
+      membership: {
+        userId: user.id,
+        orgId: profile.organization_id,
+        orgSlug: org?.slug ?? '',
+        role: normalizeRole(profile.role ?? 'viewer', profile.is_platform_admin),
+        department: profile.department ?? null,
+        isPlatformAdmin: profile.is_platform_admin === true,
+        crmConfig: (org?.crm_config ?? {}) as CrmConfig,
+      },
+    }
   }
+)
+
+export async function getMembership(): Promise<Membership> {
+  const { signedIn, membership } = await loadMembership()
+  if (!signedIn) redirect('/login')
+  if (!membership) redirect('/no-access')
+  return membership
 }
 
 export function hasRole(m: Membership, needed: WorkspaceRole): boolean {

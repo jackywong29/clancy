@@ -1,7 +1,12 @@
+import { cache } from 'react'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
-export async function createClient() {
+// Memoised per request: a single page render calls this from the page, the
+// Header, and any permission helper, and each call used to build a fresh
+// client that re-validated the session over the network. React's `cache`
+// scope is one request, so cookies are never shared between users.
+export const createClient = cache(async () => {
   const cookieStore = await cookies()
 
   return createServerClient(
@@ -24,4 +29,4 @@ export async function createClient() {
       },
     }
   )
-}
+})

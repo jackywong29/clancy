@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { moveClientStage, requireOrg } from '@/lib/actions'
+import { moveClientStage } from '@/lib/actions'
+import { getMembership } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { RecordsBoard } from '@/components/RecordsBoard'
 import { intakeProgress } from '@/lib/intake'
@@ -28,15 +29,13 @@ export default async function PipelinePage({
     : flags.error
       ? (flags.msg ?? "That move couldn't be completed.")
       : null
-  const orgId = await requireOrg()
+  // The membership carries the slug and crm_config already, so the landing
+  // page no longer re-queries the organization it just authenticated against.
+  const m = await getMembership()
+  const orgId = m.orgId
   const supabase = await createClient()
 
-  const { data: orgRow } = await supabase
-    .from('organizations')
-    .select('slug, crm_config')
-    .eq('id', orgId)
-    .maybeSingle()
-  const org = orgRow as Pick<Organization, 'slug' | 'crm_config'> | null
+  const org = { slug: m.orgSlug, crm_config: m.crmConfig }
 
   // Client workspaces get the configurable records CRM. Clancy's own
   // workspace keeps its dedicated sales board (the code below).
