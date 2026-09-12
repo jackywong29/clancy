@@ -94,6 +94,45 @@ paying client yet; company not yet registered; brand not yet launched.
 
 ---
 
+## LATENCY PASS (9 Sep 2026)
+
+Symptom: several seconds of loading on any click. Cause was request count, not
+slow queries — every navigation ran the same auth work three times over, and
+each Supabase round-trip is KL→Supabase→KL.
+
+- **`createClient()` and membership are now memoised per request** (React
+  `cache` in `lib/supabase/server.ts` and `loadMembership` in
+  `lib/permissions.ts`), and the profile query embeds the organization, so slug
+  + `crm_config` arrive in the same round-trip.
+- **`Header` runs no auth queries of its own.** It reads the membership the
+  page already loaded, then fetches unread count, own-site slug and (for
+  platform admins) the org list in one parallel batch.
+- **`requireOrg`/`requireAdmin` delegate to the cached membership**, and the
+  server actions that only needed a user id (`addTask`, `addEvent`,
+  `addRecord`) take it from there instead of calling `getUser()` again.
+- **`proxy.ts` no longer validates the session over the network on every
+  request.** It reads `expires_at` out of the session cookie and only calls
+  `getUser()` when the token is within 120s of expiry (or the path is
+  `/login`). This is a skip-work optimisation only — the cookie is unverified,
+  every page and action still validates the user, and a forged unexpired
+  cookie lands on `/login` (verified live). `/login` is deliberately excluded:
+  bouncing to `/pipeline` on an invalid-but-unexpired cookie loops forever.
+- **`/people` filters and searches in the browser** (`PeopleDirectory`).
+  Chips were `?f=` links, so each click was a full server render: measured
+  4–9ms and **zero network requests** now. The URL no longer carries the
+  filter, which is the deliberate trade.
+- **Broadcast previews reuse still-valid signed URLs** (`lib/signed-urls.ts`).
+  A fresh token per render meant a guaranteed browser-cache miss, so the
+  preview re-downloaded every image each time a broadcast was opened.
+- `next.config.ts` pins `turbopack.root`: a stray `~/package-lock.json` was
+  making Next infer the home directory as the workspace root.
+
+Dev server on this machine: system node is v16 (Next 16 needs 20+). A
+self-contained Node 22 lives at `~/.local/node/bin/node` — run
+`~/.local/node/bin/node node_modules/next/dist/bin/next dev`.
+
+---
+
 ## KNOWN RISKS (unresolved, ranked)
 
 - **No database backups.** Supabase free tier has none. SGCKL's congregation
@@ -212,6 +251,11 @@ provides — system Python is 3.9.6 and was left untouched).
   the Supabase SQL Editor; the file also lands in `supabase/` for history.
 - **`npm run typecheck` before every push.** Push = production deploy (Vercel
   auto-deploys `main`) and stays permission-gated.
+- **`npm test` covers the pure logic** (stage checklists, broadcast recipients,
+  workflow-step parsing, KL dates). Dependency-free: it compiles `tests/` with
+  the project's own `tsc` and runs it on plain node, so it works on any machine
+  and adds nothing to the Vercel build. Run it after touching `lib/checklist.ts`,
+  `lib/audience.ts`, `lib/intake.ts`, or `lib/dates.ts`.
 - **Product, not projects**: every client request lands as reusable config or a
   platform feature — never a bespoke fork for one client. This is the rule that
   makes scale possible.

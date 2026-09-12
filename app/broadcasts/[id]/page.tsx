@@ -10,6 +10,7 @@ import {
   renderBroadcastHtml,
   renderBroadcastText,
 } from '@/lib/broadcast-email'
+import { signedUrls } from '@/lib/signed-urls'
 import { Header } from '@/components/Header'
 import { CopyButton } from '@/components/CopyButton'
 import { SubmitButton } from '@/components/SubmitButton'
@@ -52,20 +53,19 @@ export default async function BroadcastDetailPage({
   const files: BroadcastAttachment[] = broadcast.attachments ?? []
 
   // The bucket is private, so both the on-screen preview and the mail-app
-  // fallback links need short-lived signed URLs. Sending doesn't — that path
-  // downloads the bytes server-side and attaches them directly.
-  const signedByPath: Record<string, string> = {}
-  if (files.length > 0) {
-    const { data: signed } = await supabase.storage
-      .from('broadcast-files')
-      .createSignedUrls(
-        files.map((f) => f.path),
-        LINK_TTL_SECONDS
-      )
-    ;(signed ?? []).forEach((s, i) => {
-      if (s.signedUrl) signedByPath[files[i].path] = s.signedUrl
-    })
-  }
+  // fallback links need signed URLs. Sending doesn't — that path downloads the
+  // bytes server-side and attaches them directly. Still-valid URLs are reused
+  // (lib/signed-urls) so an image opened twice is served from browser cache
+  // instead of re-downloaded under a fresh token.
+  const signedByPath =
+    files.length > 0
+      ? await signedUrls(
+          supabase,
+          'broadcast-files',
+          files.map((f) => f.path),
+          LINK_TTL_SECONDS
+        )
+      : {}
 
   const previewHtml = renderBroadcastHtml({
     subject: broadcast.subject,
