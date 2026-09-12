@@ -26,12 +26,24 @@ export function WorkflowEditor({
   initial,
   departments,
   recordPlural,
+  // Tasks that already exist on records from each stage, keyed by stage id.
+  // A stage can have an empty checklist while records still carry tasks it
+  // generated earlier — removing a template item deliberately does NOT delete
+  // work someone may have already done. Surfaced here so the two views
+  // reconcile instead of looking broken.
+  liveTasks = {},
 }: {
   name: string
   initial: StageDraft[]
   departments: Department[]
   recordPlural: string
+  liveTasks?: Record<string, { done: number; total: number }>
 }) {
+  // NOTE: useState only seeds on mount. The page passes a `key` derived from
+  // the server data so this remounts whenever the stored workflow changes —
+  // without it, adding or deleting a stage left this holding stale state, and
+  // the next "Save workflow" wrote that stale copy back, silently wiping
+  // checklists that existed on the server.
   const [stages, setStages] = useState<StageDraft[]>(initial)
   const [copyFrom, setCopyFrom] = useState<Record<string, string>>({})
 
@@ -76,6 +88,7 @@ export function WorkflowEditor({
       <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
         {stages.map((stage, si) => {
           const blocking = stage.checklist.filter((c) => c.blocking).length
+          const live = liveTasks[stage.id]
           return (
             <section
               key={stage.id}
@@ -108,7 +121,7 @@ export function WorkflowEditor({
                 </button>
               </div>
 
-              <p className="mb-3 text-xs text-ivory/50">
+              <p className="mb-2 text-xs text-ivory/50">
                 {stage.inUse} {stage.inUse === 1 ? 'record' : 'records'}
                 {stage.checklist.length > 0 && (
                   <>
@@ -119,6 +132,23 @@ export function WorkflowEditor({
                   </>
                 )}
               </p>
+
+              {live && live.total > 0 && (
+                <p className="mb-3 rounded-lg bg-ash/30 px-2 py-1.5 text-xs text-ivory/60">
+                  {live.done}/{live.total} task
+                  {live.total === 1 ? '' : 's'} already live on records here
+                  {stage.checklist.length === 0 && (
+                    <>
+                      {' — '}
+                      <span className="text-amber-300">
+                        this stage has no checklist, so these came from an
+                        earlier version of it. They stay until someone ticks or
+                        deletes them.
+                      </span>
+                    </>
+                  )}
+                </p>
+              )}
 
               <div className="space-y-2">
                 {stage.checklist.map((item, ii) => (

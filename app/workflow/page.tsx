@@ -22,13 +22,18 @@ export default async function WorkflowPage({
   if (!hasRole(m, 'admin')) redirect('/pipeline?denied=1')
   const supabase = await createClient()
 
-  const [{ data: stages }, { data: clients }] = await Promise.all([
-    supabase
-      .from('pipeline_stages')
-      .select('*')
-      .order('position', { ascending: true }),
-    supabase.from('clients').select('id, stage_id'),
-  ])
+  const [{ data: stages }, { data: clients }, { data: liveTaskRows }] =
+    await Promise.all([
+      supabase
+        .from('pipeline_stages')
+        .select('*')
+        .order('position', { ascending: true }),
+      supabase.from('clients').select('id, stage_id'),
+      supabase
+        .from('tasks')
+        .select('origin_stage_id, status')
+        .not('origin_stage_id', 'is', null),
+    ])
 
   const stageList = (stages ?? []) as PipelineStage[]
   const clientList = (clients ?? []) as Pick<Client, 'id' | 'stage_id'>[]
@@ -42,7 +47,29 @@ export default async function WorkflowPage({
     inUse: clientList.filter((c) => c.stage_id === s.id).length,
   }))
 
+  // Real tasks generated from each stage, regardless of what its checklist
+  // says today. Without this, a stage whose checklist was emptied reads as
+  // "no tasks" here while the board still shows a progress pill — which is
+  // exactly the mismatch that looked like a bug.
+  const liveTasks: Record<string, { done: number; total: number }> = {}
+  for (const t of (liveTaskRows ?? []) as {
+    origin_stage_id: string | null
+    status: string
+  }[]) {
+    if (!t.origin_stage_id) continue
+    const entry = (liveTasks[t.origin_stage_id] ??= { done: 0, total: 0 })
+    entry.total += 1
+    if (t.status === 'done') entry.done += 1
+  }
+
   const totalTasks = drafts.reduce((n, s) => n + s.checklist.length, 0)
+
+  // Remount the editor whenever the stored workflow changes. useState only
+  // seeds on mount, so without this the editor kept stale state after adding
+  // or deleting a stage and the next save wrote that stale copy back.
+  const serverSignature = JSON.stringify(
+    drafts.map((d) => [d.id, d.name, d.position, d.checklist])
+  )
 
   return (
     <div className="min-h-screen">
@@ -79,10 +106,12 @@ export default async function WorkflowPage({
         ) : (
           <form action={saveWorkflow}>
             <WorkflowEditor
+              key={serverSignature}
               name="workflow"
               initial={drafts}
               departments={m.crmConfig.departments ?? []}
               recordPlural={plural}
+              liveTasks={liveTasks}
             />
             <div className="mt-4 flex flex-wrap items-center gap-3">
               <SubmitButton
