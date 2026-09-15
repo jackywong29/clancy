@@ -1,5 +1,8 @@
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { cookies } from 'next/headers'
+import { looksSignedIn } from '@/lib/session-cookie'
 import { Wordmark } from '@/components/Wordmark'
 import type { LandingConfig } from '@/types/database'
 
@@ -57,7 +60,31 @@ const DEFAULT_STEPS = [
   },
 ]
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    code?: string
+    error?: string
+    error_description?: string
+  }>
+}) {
+  const params = await searchParams
+
+  // An OAuth sign-in can land here instead of /auth/callback: Supabase falls
+  // back to the project's Site URL when the redirect target isn't in its
+  // Redirect URLs allow-list, and appends the PKCE code to it. Dropping that
+  // code silently is what makes a perfectly valid Google login look like it
+  // "bounced me back to the marketing page" — the session is never created.
+  // Finish the exchange instead of ignoring it.
+  if (params.code) {
+    redirect(`/auth/callback?code=${encodeURIComponent(params.code)}`)
+  }
+  const oauthError = params.error_description ?? params.error
+  if (oauthError) {
+    redirect(`/login?error=oauth&msg=${encodeURIComponent(oauthError)}`)
+  }
+
   const supabase = await createClient()
   const { data } = await supabase
     .from('sites')
@@ -72,15 +99,29 @@ export default async function HomePage() {
     cfg.features && cfg.features.length > 0 ? cfg.features : DEFAULT_FEATURES
   const steps = cfg.steps && cfg.steps.length > 0 ? cfg.steps : DEFAULT_STEPS
   const contactHref = t('cta_href')
+  // Cosmetic only, and free: read from the cookie rather than asking Supabase,
+  // so the public page keeps costing zero auth round-trips. A signed-in
+  // visitor seeing "Sign in" here reads as "I'm logged out", which is half of
+  // why a dropped OAuth redirect was so confusing.
+  const signedIn = looksSignedIn((await cookies()).getAll())
 
   return (
     <div className="min-h-screen">
       <header className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-3 px-4 py-5 sm:px-6">
         <Wordmark size="text-2xl" />
         <div className="flex flex-wrap items-center gap-4">
-          <Link href="/login" className="text-sm text-ivory/60 hover:text-ivory">
-            Sign in
-          </Link>
+          {signedIn ? (
+            <Link
+              href="/pipeline"
+              className="text-sm text-ivory/60 hover:text-ivory"
+            >
+              Open Clancy
+            </Link>
+          ) : (
+            <Link href="/login" className="text-sm text-ivory/60 hover:text-ivory">
+              Sign in
+            </Link>
+          )}
           <a
             href={contactHref}
             className="rounded-lg border border-ash px-4 py-2 text-sm hover:border-violet hover:text-violet"
