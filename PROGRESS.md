@@ -8,7 +8,13 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-Last updated: 7 September 2026 · Batch 16 deployed · migrations 001–019 applied
+> **Start of the 15 Sep 2026 session: read `HANDOFF-2026-09-15.md` first.** It
+> carries the terminal/permissions landmines, what shipped since Batch 16, the
+> diagnosed login bug, and the open actions — chiefly moving the Vercel
+> function region to Singapore, which is worth ~10× on every click.
+
+Last updated: 15 September 2026 · `main` at `109f3b0`, deployed · production is
+**clancyhq.com** · migrations: 001–017 confirmed applied, **018 + 019 unverified**
 
 ---
 
