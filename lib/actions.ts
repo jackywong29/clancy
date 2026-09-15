@@ -363,22 +363,22 @@ export async function submitClientIntake(formData: FormData) {
 }
 
 export async function switchWorkspace(formData: FormData) {
-  await requireAdmin()
+  // requireAdmin already validated the user and loaded the membership this
+  // request, so the id comes from there rather than a second getUser() call
+  // across the Pacific. Switching workspace changes every org-scoped query on
+  // every page, so the layout-wide revalidate has to stay.
+  const m = await requireAdmin()
   const supabase = await createClient()
 
   const orgId = String(formData.get('organization_id') ?? '')
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-
-  if (orgId && user) {
+  if (orgId && orgId !== m.orgId) {
     await supabase
       .from('profiles')
       .update({ organization_id: orgId })
-      .eq('id', user.id)
+      .eq('id', m.userId)
+    revalidatePath('/', 'layout')
   }
 
-  revalidatePath('/', 'layout')
   redirect('/pipeline')
 }
 

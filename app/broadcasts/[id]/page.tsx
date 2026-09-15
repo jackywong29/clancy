@@ -29,20 +29,40 @@ export default async function BroadcastDetailPage({
 }) {
   const { id } = await params
   const flags = await searchParams
-  const m = await getMembership()
-  if (!hasRole(m, 'editor')) redirect('/pipeline?denied=1')
   const supabase = await createClient()
 
-  const { data: broadcastRow } = await supabase
-    .from('broadcasts')
-    .select('*')
-    .eq('id', id)
-    .maybeSingle()
+  // Independent: who you are, and which broadcast this is. Awaiting them in
+  // sequence put two Supabase round-trips end to end before the page could
+  // start, and from a Vercel function those are not local calls.
+  const [m, { data: broadcastRow }] = await Promise.all([
+    getMembership(),
+    supabase.from('broadcasts').select('*').eq('id', id).maybeSingle(),
+  ])
+  if (!hasRole(m, 'editor')) redirect('/pipeline?denied=1')
   if (!broadcastRow) notFound()
   const broadcast = broadcastRow as Broadcast
 
+  const files: BroadcastAttachment[] = broadcast.attachments ?? []
+
+  // Both depend on the broadcast but not on each other. The bucket is private,
+  // so the on-screen preview and the mail-app fallback links need signed URLs
+  // (sending doesn't — that path downloads the bytes server-side). Still-valid
+  // URLs are reused from lib/signed-urls, so an image opened twice comes from
+  // browser cache instead of being re-downloaded under a fresh token.
+  const [audienceRecipients, signedByPath] = await Promise.all([
+    resolveAudience(supabase, broadcast.audience),
+    files.length > 0
+      ? signedUrls(
+          supabase,
+          'broadcast-files',
+          files.map((f) => f.path),
+          LINK_TTL_SECONDS
+        )
+      : Promise.resolve({} as Record<string, string>),
+  ])
+
   const recipients = mergeRecipients(
-    await resolveAudience(supabase, broadcast.audience),
+    audienceRecipients,
     broadcast.custom_recipients ?? []
   )
   const emails = recipients.map((r) => r.email)
@@ -50,22 +70,6 @@ export default async function BroadcastDetailPage({
     (broadcast.custom_recipients ?? []).map((e) => e.toLowerCase())
   )
   const automated = isEmailConfigured()
-  const files: BroadcastAttachment[] = broadcast.attachments ?? []
-
-  // The bucket is private, so both the on-screen preview and the mail-app
-  // fallback links need signed URLs. Sending doesn't — that path downloads the
-  // bytes server-side and attaches them directly. Still-valid URLs are reused
-  // (lib/signed-urls) so an image opened twice is served from browser cache
-  // instead of re-downloaded under a fresh token.
-  const signedByPath =
-    files.length > 0
-      ? await signedUrls(
-          supabase,
-          'broadcast-files',
-          files.map((f) => f.path),
-          LINK_TTL_SECONDS
-        )
-      : {}
 
   const previewHtml = renderBroadcastHtml({
     subject: broadcast.subject,
