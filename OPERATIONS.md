@@ -34,7 +34,9 @@ How the business runs, start to finish. For Jacky and Claude — read this to re
 - Database changes: Claude pastes SQL in chat → Jacky runs it in Supabase SQL Editor → the file also lands in `supabase/` for history.
 
 ## Client workspace cheat-sheet (what each client's team sees)
+- **Overview** — where they land after signing in: open work, what finished this month, overdue and due-today tasks, records per stage, the longest-waiting records (amber from 7 days, red from 14), team load per department
 - **Board** — their records (custom fields via Customize) moving through their stages
+- **Workflow** — stages, the checklist each stage creates, "must finish first" items, and the finish line (admins)
 - **View site / Edit website** — their public site (edit = admins only)
 - **Tasks / Calendar** — department-scoped tasks; colour-coded events with repeats and alerts (module toggles on Customize)
 - **Broadcasts** — email announcements to records or team, with file/image attachments and the business's own sign-off block (set on Team → Workspace settings). **Automated email is live**, so "Send now" delivers for real (BCC batches of 40); the mail-app BCC path is now only the fallback if the email env vars are ever removed

@@ -8,20 +8,22 @@
 > `OPERATIONS.md` (how the business runs) · `CLANCY_OVERVIEW.txt` (whole-venture
 > summary for scaling) · `DESIGN_BRIEF.md` (UI/UX brief).
 
-> **Start of the 15 Sep 2026 session: read `HANDOFF-2026-09-15.md` first.** It
-> carries the terminal/permissions landmines, what shipped since Batch 16, the
-> diagnosed login bug, and the open actions — chiefly moving the Vercel
-> function region to Singapore, which is worth ~10× on every click.
+> **Starting a session? Read `HANDOFF.md` first** — current state, how to
+> verify a deploy, environment traps, and what to do next. (`HANDOFF-2026-09-15.md`
+> is the previous session's handoff, kept for its login-bug diagnosis.)
 
-Last updated: 24 September 2026 · `main` at `109f3b0`, deployed · production is
-**clancyhq.com** · migrations: 001–017 confirmed applied, **018 + 019 unverified**
+Last updated: 28 September 2026 · Batch 18 (`ff97d1a`) deployed · production is
+**clancyhq.com**, functions in **Singapore** (`sin1`, verified 28 Sep) ·
+migrations **001–020** applied — 019 + 020 verified by `020_verify.sql` (15/15
+on 28 Sep); 018 reported run by Jacky on 6 Sep but never independently checked
 
 ---
 
 ## Status in one paragraph
 
-Clancy HQ is built and live at **clancy-hq.vercel.app** (16 build batches,
-~55 commits, 19 migrations). It is a genuine two-sided product: Jacky's agency
+Clancy HQ is built and live at **clancyhq.com** (18 build batches,
+~60 commits, 20 migrations). Client workspaces now open on an **Overview**
+dashboard (Batch 18). It is a genuine two-sided product: Jacky's agency
 side (sales pipeline, client intake, three build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
 website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
@@ -85,16 +87,16 @@ Target submission is still the week of 9 Nov.
 
 ## OPEN ACTIONS FOR JACKY (do these first)
 
-0. **Re-run the stage-checklist smoke test (Batch 15).** The first attempt
-   failed because the checklist UI was invisible on the Clancy workspace —
-   fixed, along with a redesign: **Stages is now Workflow** (`/workflow`).
-   Check: on `/workflow`, add tasks under a stage and hit **Save workflow**
-   (one button now, no rival Save to click by mistake); move a record into
-   that stage; confirm the tasks appear on the record and an `n/m` pill shows
-   on the board card; tick a "blocks" item and confirm a **forward** move is
-   refused naming the task, while a **backward** move still works. Then try
-   "Add this stage's tasks" on a record that predates the checklist.
-   No migration needed — 019 already covers it.
+0. **Batch 18 — set your finish line, then smoke-test on real data.**
+   Workflow → **Finish line → Active** → Save workflow. Until then the Overview
+   treats *Renewal due* as done and counts every Active client as open work.
+   Then: (a) open the Overview and check the numbers look like your business;
+   (b) on a record with an unticked "blocks" item, change its Stage in the
+   **edit form** — it must refuse with *"Couldn't save: Finish first: …"* (this
+   save used to go straight through); (c) if SGCKL's first stage has a
+   checklist, a new signup on `/s/sgckl` should now arrive with those tasks.
+   020 passed 15/15 on a throwaway workspace; (b) and (c) are its first test on
+   real records.
 
 1. **Smoke-test the full Batch 11 broadcast — highest priority.** Automated
    email is live, but so far only a bare "test" (title + one word) has actually
@@ -131,6 +133,10 @@ Target submission is still the week of 9 Nov.
    rather than guessed.
 
 ### Done since last session
+- ~~Move the Vercel function region to Singapore~~ — **DONE 28 Sep, verified**:
+  `x-vercel-id` now reads `sin1::sin1` (was `sin1::iad1` — functions in
+  Washington, every query crossing the Pacific twice).
+- ~~Migration 020~~ — **DONE 28 Sep, verified 15/15** by `020_verify.sql`.
 - ~~Run migration 017~~ — **DONE**, run before the Batch 11 push. Migrations
   001–017 all applied.
 - ~~Run migrations 015 + 016~~ — **DONE, verified.** Broadcasts works; editable
@@ -198,10 +204,12 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
   feature now — works on any tier, doubles as a client-facing "your data is
   yours" feature and the PDPA portability answer; (b) upgrade to **Supabase
   Pro (~USD 25/mo)** the day the first client pays — daily backups +
-  point-in-time recovery; (c) optional third leg — a scheduled dump from
-  Supabase onto Jacky's new **UGREEN NAS** (backup target only, NOT a
-  production DB — see infra decisions below). Export is a strong candidate for
-  the next batch but is **not yet committed** (decide live).
+  point-in-time recovery; (c) a scheduled dump from Supabase onto the
+  **UGREEN NAS**, run by the **M4 Mac mini** (backup target only, NOT a
+  production DB — see infra decisions below). As of 28 Sep the recommended next
+  build is (c): nightly database + all three storage buckets → NAS, 14 daily /
+  8 weekly / 12 monthly copies, and an alert if a night fails. ~Half a day.
+  Mirror the NAS drive first — it is a single 10TB disk.
 - **Email deliverability from a plain Gmail address.** Automated email is live,
   but sends from `clancy.hq.ai@gmail.com` with no SPF/DKIM on a real sending
   domain, and Gmail caps ~500 recipients/day. Fine at current scale (a simple
@@ -244,6 +252,15 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
 
 ## OPEN DECISIONS (need Jacky's answer)
 
+- **Confirm the positioning drafted 21 Sep:** Clancy as a *curated operations
+  ERP for service SMEs* — businesses where work moves through 3+ steps and 2+
+  people touch each job (workshops, clinics, salons, contractors, tuition,
+  events, churches, agencies). Not a fit: high-volume retail/F&B (need POS),
+  manufacturing, stock-heavy distribution, accounting-led pain, solo operators.
+  Sales qualifier: a fit if yes to 3+ of — 3+ steps? 2+ people per job? can
+  name where jobs get lost? repeat/follow-up value? pain is coordination, not
+  books or stock? Drafted, not yet confirmed.
+
 - **Full-time gate number** — the monthly revenue at which leaving the MegaStar
   Arena Director role becomes rational. Proposed placeholder: 3 consecutive
   months at RM 18k MRR with churn under 3%. Not confirmed.
@@ -257,26 +274,28 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
 
 ---
 
-## NEXT BUILD CANDIDATES (next batch left OPEN — decide live in the terminal)
+## NEXT BUILD CANDIDATES (recommended order as of 28 Sep — confirm live)
 
-- **Export / backup (strong recommendation).** In-app, workspace-scoped export
-  (CSV per table + one JSON dump incl. `crm_config` and `sites.config`). Kills
-  the top risk, is a client-facing feature, and answers PDPA portability in one
-  build. ~half a day, likely no migration. Optionally pair with the scheduled
-  NAS dump. *Recommended first, but not committed.*
-- **UI/UX redesign** — `DESIGN_BRIEF.md` is written and ready to hand to a
-  design-focused conversation; implement whatever comes back.
-- **Calendar day/week views** (month view only today).
-- **Real alert delivery** for calendar events — alert lead-time + department
-  fields are captured and stored; email sending is now live, so this only needs
-  the **scheduled-jobs** half (cron) to actually fire.
-- **Booking engine** (build-plan phase 2) — currently booking is a WhatsApp
-  deep-link placeholder on client sites.
-- **Vertical template packs** — snapshot SGCKL's configuration as the first
-  reusable template so the next client starts pre-configured. Biggest lever on
-  delivery time.
-- **Export / backup feature** (see risks).
-- **Follow-up sequences** (phase 2, needs email).
+1. **Nightly backups → NAS** (Mac mini runs it). Closes the top risk. Rule for
+   anything on the home machines: **if a client depends on it, it runs in the
+   cloud; if only Jacky depends on it, it can run at home.**
+2. **Move Clancy's Claude Code sessions to the Mac mini.** This session ran on
+   the MacBook Air (M2, 8GB), which sleeps with the lid closed and takes Remote
+   Control with it; the mini stays on and holds the NAS.
+3. **Monday client report** — a scheduled check across every client workspace
+   (stuck records, overdue tasks, uncontacted leads, failed sends). Builds on
+   Batch 18's `stage_entered_at` / `stage_transitions`.
+4. **Rules engine** — curated, named automations picked per client (the
+   Workflow brief's automation wishlist says which first). **Not** a rule
+   builder: Dolibarr's workflow module is a checkbox list for a reason.
+5. **Workflow packs** — snapshot a client's stages + checklists + config as a
+   reusable pack. The lever that cuts hours per client, i.e. the route to the
+   full-time gate.
+6. **Time tracking** against records — closes the hours-per-client risk.
+7. Later / demand-gated: record linking + global search, audit trail (stage
+   history is already being recorded), calendar day/week views, alert delivery
+   (needs cron), booking engine, follow-up sequences, UI/UX redesign
+   (`DESIGN_BRIEF.md`), export feature, inventory.
 
 ---
 

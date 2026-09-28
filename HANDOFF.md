@@ -1,110 +1,196 @@
-# Clancy — terminal handoff
+# Clancy — handoff
 
-> One-time orientation for continuing Clancy from **Ghostty + Claude Code CLI**
-> (instead of the Claude desktop app). Written 5 Sep 2026. Once you're
-> comfortable driving from the terminal, the living docs below are the real
-> source of truth — this file just gets you launched.
+> **Read this first, then `PROGRESS.md`.** Updated 28 Sep 2026 after Batch 18.
+> This is the one current handoff; `HANDOFF-2026-09-15.md` is kept only for its
+> login-bug diagnosis and should not be followed for current state.
 
 ---
 
-## Launch
+## 1. Where things stand
+
+Clancy HQ is live at **clancyhq.com** (also `clancy-hq.vercel.app`). Next.js 16
+on Vercel, functions in **Singapore** since 28 Sep, Supabase in Singapore.
+18 build batches, migrations **001–020**. Two tenants: **Clancy** (own
+workspace, sales board) and **SGCKL** (a real KL church, site at `/s/sgckl`).
+**No paying client yet.** Clancy Sdn Bhd was incorporated 19 Sep. The company
+also sells an unrelated iOS app, **plancy** (`~/plancy`, own `HANDOFF.md`).
+
+Latest code: **Batch 18, `ff97d1a`** — the Overview dashboard, plus the stage
+rules moved into a database trigger. Full history: the build log in `CLAUDE.md`.
+
+---
+
+## 2. Starting a session
 
 ```bash
-cd ~/Desktop/Claude/crm-platform && claude
+cd ~/Desktop/Claude/crm-platform
+git pull --ff-only
+npm run typecheck && npm test      # expect: clean, 55 passed
 ```
 
-Claude auto-reads `CLAUDE.md` on start. **First thing to tell it each session:**
-"read PROGRESS.md, then tell me where we left off." That's the session handoff —
-current state, open actions, decisions, risks.
+If typecheck fails with **"Duplicate identifier" in `.next/types/… 2.ts`**, that
+is iCloud making conflict copies inside the build cache (the repo is on the
+Desktop, which iCloud syncs). Not a real error, and it recurs:
 
-Always run from `~/Desktop/Claude/crm-platform`, never the parent
-`~/Desktop/Claude`. A stray `npm install` in the parent once broke the Vercel
-build. (The shell cwd can reset between Claude's tool calls — this only matters
-for commands you run yourself.)
+```bash
+find .next -name "* 2.*" -delete
+```
 
----
-
-## The golden rules (unchanged — these are how Clancy is built)
-
-1. **Draft-first.** For any nontrivial batch, Claude plans in chat and waits for
-   your "go" before writing code. Hold it to this.
-2. **No database access.** Claude can't touch Supabase. It pastes SQL inline in
-   chat → you run it in the Supabase SQL Editor → the file also lands in
-   `supabase/` for history. **Run the SQL before the code that needs it deploys.**
-3. **`npm run typecheck` before every push.** Non-negotiable.
-4. **Push = production deploy.** Vercel auto-deploys `main`. Pushing is
-   permission-gated — Claude asks first. Nothing reaches SGCKL without your yes.
-5. **Product, not projects.** Every client request lands as reusable config or a
-   platform feature — never a bespoke fork. This is the rule that makes scale
-   possible.
+**Machines.** The desktop-app sessions run on a **MacBook Air (M2, 8GB)**,
+which sleeps when the lid closes — and Remote Control (enabled 25 Sep, so the
+session can be steered from the iPhone) stops with it. The **M4 Mac mini
+(32GB)** stays on and has the UGREEN NAS mounted; moving Clancy work there is
+queued in `PROGRESS.md`. On the MacBook Air, Node 24, git and Xcode tools all
+work. Section 9 lists traps hit on the machine the 15 Sep Ghostty session used.
 
 ---
 
-## What's different in the terminal vs the desktop app
+## 3. The rules (unchanged — this is how Clancy is built)
 
-- **Interactive slash-commands now work:** `/permissions`, `/config`, `/model`,
-  `/hooks`, `/fast`. These were blocked in the desktop app — in Ghostty they
-  open real dialogs.
-- **Install `gh`** so Claude can check Vercel deploy status and manage PRs:
-  ```bash
-  brew install gh && gh auth login
-  ```
-  (It's not installed yet — noticed this session when Claude couldn't read the
-  deploy status after a push.)
-- **Verify the toolchain** if anything acts up: `node -v` (was v24.16.0),
-  `npm -v` (11.13.0), `git status`.
-- **If `npm run typecheck` fails with "Duplicate identifier" errors in
-  `.next/types/…d 2.ts`** — that's iCloud sync making conflict copies inside
-  the build cache, not a real error. This recurs. Clear it with:
-  ```bash
-  find .next -name "* 2.*" -delete
-  ```
-  Your source tree is unaffected; only the gitignored `.next/` cache gets hit.
-- **Browser preview / Artifacts** may not be available the same way as the app.
-  For UI changes, `npm run dev` and check in your own browser.
+1. **Draft first.** For any nontrivial batch, plan in chat and wait for "go".
+2. **No database access for Claude.** SQL goes in chat and in `supabase/`;
+   Jacky runs it in the Supabase SQL editor. **The SQL runs before the code that
+   needs it deploys** — otherwise production errors on missing columns.
+3. **`npm run typecheck` and `npm test` before every push.**
+4. **Push to `main` = production deploy.** Permission-gated: ask first.
+5. **Product, not projects.** Every client request becomes reusable config or a
+   platform feature, never a one-client fork.
+6. **No in-product AI** in the client product (decided 7 Jul). Claude Code as
+   Jacky's build tool is fine and is the engine behind the brief → config loop.
+7. **No database CHECK-constraint enums** (the MegaStar CRM production gotcha).
 
 ---
 
-## Where things stand (5 Sep 2026)
+## 4. How to verify a deploy — read this, it was done wrong before
 
-Clancy HQ is live at **clancy-hq.vercel.app** — 11 build batches, 17 migrations,
-deploy green. Two live tenants: **Clancy** (own workspace) + **SGCKL** (real KL
-church, first client site at `/s/sgckl`). No paying client yet; entity not
-registered; brand not launched.
+**A signed-out 307 proves nothing.** `proxy.ts` redirects every signed-out
+request to `/login` *before* routing, so a route that doesn't exist also
+returns 307. `/overview` returned 307 before it was deployed. Earlier sessions
+claimed "the new route returns 307, so the new build is live" — that was never
+evidence.
 
-**Latest work (Batch 11):** broadcasts got file/image attachments, HTML email,
-and a per-workspace sign-off block. **Automated email is now live** (Gmail SMTP
-in Vercel) — broadcasts and invites send for real.
+What does work — the static-chunk fingerprint of `/login`, which changes with
+every build. Record it before pushing, then poll:
 
----
+```bash
+curl -s https://clancyhq.com/login | grep -oE '/_next/static/[^"]+' | sort -u | shasum | cut -c1-12
+```
 
-## Do these first (from PROGRESS.md — full detail there)
+Changed and stable across a few fetches = the new build is serving.
 
-1. **Smoke-test the full broadcast — top priority.** Email is live, but only a
-   bare "test" has actually been sent. The Batch 11 features (attachment,
-   in-message image, saved sign-off) have **never been sent for real.** Before
-   any congregation-wide send: mail yourself one with a PDF, a photo set to "in
-   message", and your sign-off; confirm all three land.
-2. **Set your workspace sign-off** if you haven't (Team → Workspace settings →
-   Email sign-off).
+**Function region:** `curl -sI https://clancyhq.com/ | grep -i x-vercel-id` —
+the second segment is where functions run. It must read `sin1::sin1`. `iad1`
+would mean every database query is crossing the Pacific again.
 
-**Next batch is left OPEN — decide it live.** Strong recommendation:
-**export / backup** (kills the top risk = no DB backups, doubles as a
-client-facing "your data is yours" feature + PDPA portability, ~half a day, no
-migration). Other candidates: UI/UX redesign (`DESIGN_BRIEF.md` is ready),
-calendar day/week views, real alert delivery (email half is done, needs cron).
+**Signed-in pages can't be checked from the terminal** — Claude has no login.
+Say plainly what was verified (typecheck, tests, build, the SQL verify script)
+and hand the signed-in check to Jacky with exact steps.
 
 ---
 
-## Decisions locked this session (don't relitigate — full reasoning in CLAUDE.md)
+## 5. The stage rules live in the database — don't re-add them in app code
 
-- **Stay on Supabase, not Neon** — Neon is Postgres-only; switching means
-  rebuilding auth + storage + every RLS policy.
-- **NAS = backup target, not production DB** — app is on Vercel; home-hosting
-  puts client sites behind home internet/power, and one drive is zero redundancy.
-- **Infra stays Clancy-owned, not per-client accounts** — client-owned breaks
-  multi-tenant and the template strategy. Data ownership is delivered by
-  registering each client's **domain in their name**, pointed at Clancy infra.
+Six code paths change a record's stage: the board dropdown, both edit forms,
+both create forms, and the website form's `submit_lead()` SQL. App-level hooks
+kept getting missed on some of them (three bugs in a row), so since migration
+020 a **trigger on `clients`** does all of it:
+
+- refuses a **forward** move past unfinished "must finish first" items, with
+  the message `Finish first: …` (backward moves are never blocked)
+- stamps `stage_entered_at` — only when the stage actually changes
+- writes a `stage_transitions` row
+- calls **`generate_stage_tasks()`**, the one implementation of checklist
+  generation; the "Add this stage's tasks" button calls the same function
+
+A trigger on `tasks` stamps `completed_at`. Any new stage-related rule belongs
+in that trigger, not in a server action. To prove a trigger change, extend
+`supabase/020_verify.sql` — it builds a throwaway workspace, exercises every
+rule, and rolls everything back; Jacky runs it and pastes the result.
+
+---
+
+## 6. Recently shipped
+
+| Batch | What |
+|---|---|
+| 16 | Workflow brief — clients describe their own process on the intake link |
+| 17 | Fix: `/workflow` silently wiped checklists (stale `useState` after a redirect) |
+| 18 | **Overview** dashboard (home for client workspaces), **finish line** on `/workflow`, stage rules in the database, `/home` decides every post-login landing |
+
+---
+
+## 7. What Jacky needs to do next
+
+Full list with detail in `PROGRESS.md` → *Open actions*. The top three:
+
+1. **Workflow → Finish line → Active**, then smoke-test Batch 18 on real data.
+2. **Send one real broadcast to yourself** — PDF, an image set to "in
+   message", and the sign-off. Still never done since Batch 11.
+3. **Supabase → Authentication → URL Configuration:** Site URL
+   `https://clancyhq.com`; Redirect URLs `https://clancyhq.com/auth/callback`,
+   `https://clancy-hq.vercel.app/auth/callback`, `http://localhost:3000/auth/callback`.
+   Without it, every Google login takes an extra hop via the marketing page.
+
+**Recommended next build:** nightly Supabase → NAS backups, run by the Mac mini.
+It closes the top risk on the whole project (there are no database backups).
+
+---
+
+## 8. Decided, and drafted
+
+**Decided — don't reopen:** stay on Supabase, not Neon · the NAS is a backup
+target, never a production database · infrastructure stays Clancy-owned, and
+clients own their *domain* instead · Overview is home for client workspaces ·
+stuck = amber from 7 days, red from 14 · the rules engine will be a curated
+list of named automations, not a rule builder.
+
+**The rule for the home machines:** if a client depends on it, it runs in the
+cloud; if only Jacky depends on it, it can run on the Mac mini.
+
+**Drafted, awaiting Jacky's confirmation:** positioning as a *curated operations
+ERP for service SMEs*, with a five-question sales qualifier — see `PROGRESS.md`
+→ *Open decisions*.
+
+---
+
+## 9. Environment traps from the 15 Sep Ghostty session
+
+None of these apply on the MacBook Air. They were hit on the machine the 15 Sep
+session ran on — check `which node`, `which git` and `git status` before
+trusting a failure there.
+
+- **macOS privacy block on `~/Desktop`.** After an agent update, every read
+  failed with `EPERM` and git reported *"Unable to read current working
+  directory"*. Fix: grant the terminal **Full Disk Access** again (toggle it off
+  and on), or move the repo off the Desktop.
+- **System Node was v16**; Next 16 needs 20+. A Node 22 lived at
+  `~/.local/node/bin/node`.
+- **`/usr/bin/git` failed** with an invalid developer path; `xcode-select --install`
+  fixes it, and Homebrew's `/usr/local/bin/git` worked meanwhile.
+- A stray `~/package-lock.json` once made Turbopack pick the home directory as
+  its root; `next.config.ts` now pins `turbopack.root`.
+
+---
+
+## 10. Gotchas that cost time
+
+- **Never commit a `package-lock.json` rewritten by a different npm version.**
+  It dropped the Linux-only native packages Vercel needs to build (reverted in
+  `1fc5dcb`). Check `git status` before committing.
+- **Run `npm` inside the repo**, never the parent folder — a stray install there
+  once broke the Vercel build.
+- **A Server Component `redirect()` looks like HTTP 200 in dev**, with the
+  target inside the streamed payload. Production gives a real 307.
+- **`useState(initial)` only seeds on mount.** After a same-page redirect React
+  reuses the component and keeps stale state. Key the component on the server
+  data (`WorkflowEditor`, the finish-line `<select>`).
+- **PostgREST `or()` filters:** quote values that contain `.` or `:` —
+  timestamps have both.
+- **PL/pgSQL:** `text[] || 'literal'` can parse as array + array literal and
+  fail; use `array_append()`.
+- **Four docs were once left uncommitted by a parallel session.** Before
+  committing, read `git diff` for anything you didn't write, and commit other
+  sessions' edits separately from your own.
 
 ---
 
@@ -112,9 +198,11 @@ calendar day/week views, real alert delivery (email half is done, needs cron).
 
 | File | What it's for |
 |---|---|
-| `PROGRESS.md` | **Read first every session.** Current state, open actions, decisions, risks. Update it at session end. |
-| `CLAUDE.md` | Canonical spec + full build history. Update when a decision changes. |
-| `OPERATIONS.md` | How the business runs, stage by stage (lifecycle, admin how-tos, infra map). |
-| `HANDOFF.md` | This file — one-time terminal orientation. |
-| `DESIGN_BRIEF.md` | Paste-ready UI/UX brief when you want a design pass. |
-| `supabase/*.sql` | Migration history (001–017). |
+| `HANDOFF.md` | This file — read first. |
+| `PROGRESS.md` | Current state, open actions, risks, open decisions, next builds. |
+| `CLAUDE.md` | Canonical spec and the full build history, batch by batch. |
+| `OPERATIONS.md` | How the business runs, stage by stage. |
+| `CLANCY_OVERVIEW.txt` | Whole-venture summary. |
+| `DESIGN_BRIEF.md` | Paste-ready brief for a UI/UX pass. |
+| `supabase/*.sql` | Migrations 001–020, plus `020_verify.sql`. |
+| `~/plancy/HANDOFF.md` | The separate iOS product. |
