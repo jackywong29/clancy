@@ -56,6 +56,11 @@ export interface CrmConfig {
   invite_subject?: string
   invite_message?: string
   signature?: EmailSignature
+  // The stage that means "done" for this workspace. Records at or past it
+  // count as finished on the Overview and never show as stuck. Unset = the
+  // last stage. (Clancy's own pipeline needs it: Active is success, and
+  // Renewal due comes after it.)
+  finish_stage_id?: string
 }
 
 export interface Organization {
@@ -221,6 +226,10 @@ export interface Task {
   // Set when the task was generated from a stage's checklist — used to keep
   // generation idempotent and to show per-stage progress on a record.
   origin_stage_id: string | null
+  // Stamped by a database trigger when the task is ticked done, cleared when
+  // it's reopened (migration 020). updated_at can't answer "when was this
+  // finished" — any later edit moves it.
+  completed_at: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -279,6 +288,10 @@ export interface Client {
   renewal_date: string | null
   notes: string | null
   custom: Record<string, string>
+  // When the record entered its CURRENT stage, set by a database trigger on
+  // every stage change (migration 020). Pre-020 rows were backfilled from
+  // updated_at, so they're approximate.
+  stage_entered_at: string | null
   created_at: string
   updated_at: string
 }

@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
+  Gauge,
   LayoutGrid,
   Plus,
   SquareCheck,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react'
 
 export const ICONS = {
+  overview: Gauge,
   board: LayoutGrid,
   add: Plus,
   tasks: SquareCheck,

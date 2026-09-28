@@ -75,7 +75,7 @@ export async function proxy(request: NextRequest) {
 
   if (user && pathname === '/login') {
     const url = request.nextUrl.clone()
-    url.pathname = '/pipeline'
+    url.pathname = '/home'
     return NextResponse.redirect(url)
   }
 

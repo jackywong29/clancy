@@ -105,6 +105,32 @@ export default async function WorkflowPage({
           </p>
         ) : (
           <form action={saveWorkflow}>
+            <div className="mb-4 flex flex-col gap-2 rounded-xl border border-ash/60 bg-carbon p-3 sm:flex-row sm:items-center">
+              <label htmlFor="finish_stage_id" className="shrink-0 text-sm font-medium">
+                Finish line
+              </label>
+              {/* Keyed on the saved value: an uncontrolled select keeps its old
+                  selection across a same-page redirect, which is how the
+                  editor's stale-state bug happened. */}
+              <select
+                key={m.crmConfig.finish_stage_id ?? 'default'}
+                id="finish_stage_id"
+                name="finish_stage_id"
+                defaultValue={m.crmConfig.finish_stage_id ?? ''}
+                className="rounded-lg border border-ash bg-graphite px-2 py-1.5 text-sm outline-none focus:border-violet"
+              >
+                <option value="">Last stage ({stageList[stageList.length - 1]?.name})</option>
+                {stageList.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-xs text-ivory/50">
+                The stage that means &ldquo;done.&rdquo; On the Overview, anything
+                here or later counts as finished and never shows as stuck.
+              </p>
+            </div>
             <WorkflowEditor
               key={serverSignature}
               name="workflow"

@@ -5,6 +5,7 @@ import { run } from './harness'
 
 import './dates.test'
 import './checklist.test'
+import './dashboard.test'
 import './audience.test'
 import './intake.test'
 import './proxy.test'

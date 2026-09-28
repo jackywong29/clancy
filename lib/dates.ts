@@ -18,6 +18,20 @@ export function klYearMonth(): string {
   return klToday().slice(0, 7)
 }
 
+// The instant the current Malaysian month began (1st, 00:00 MYT). Timestamps
+// in the database are UTC, so "this month" filters must compare against this
+// instant — not against a UTC month start, which is 8 hours late.
+export function klMonthStart(): Date {
+  return new Date(`${klYearMonth()}-01T00:00:00+08:00`)
+}
+
+// The Malaysian calendar date (YYYY-MM-DD) of a UTC timestamp.
+export function klDateOf(iso: string): string {
+  return new Date(new Date(iso).getTime() + KL_OFFSET_MS)
+    .toISOString()
+    .slice(0, 10)
+}
+
 // Add whole days to a YYYY-MM-DD string, returning YYYY-MM-DD. Parsed as UTC
 // midnight so the arithmetic can't be shifted by the server's own timezone.
 export function addDays(isoDate: string, days: number): string {

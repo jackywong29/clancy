@@ -21,16 +21,8 @@ import {
   renderBroadcastHtml,
   renderBroadcastText,
 } from '@/lib/broadcast-email'
-import {
-  parseChecklist,
-  generateStageTasks,
-  blockingTasksFor,
-} from '@/lib/checklist'
-import type {
-  BroadcastAttachment,
-  EmailSignature,
-  PipelineStage,
-} from '@/types/database'
+import { parseChecklist } from '@/lib/checklist'
+import type { BroadcastAttachment, EmailSignature } from '@/types/database'
 
 export async function signIn(formData: FormData) {
   const email = String(formData.get('email') ?? '').trim()
@@ -42,7 +34,7 @@ export async function signIn(formData: FormData) {
   if (error) {
     redirect('/login?error=1')
   }
-  redirect('/pipeline')
+  redirect('/home')
 }
 
 export async function signUp(formData: FormData) {
@@ -61,7 +53,7 @@ export async function signUp(formData: FormData) {
     redirect('/signup?error=1')
   }
   if (data.session) {
-    redirect('/pipeline')
+    redirect('/home')
   }
   redirect('/signup?sent=1')
 }
@@ -110,6 +102,7 @@ export async function addClient(formData: FormData) {
   }
 
   revalidatePath('/pipeline')
+  revalidatePath('/overview')
   redirect('/pipeline')
 }
 
@@ -144,6 +137,7 @@ export async function updateClient(formData: FormData) {
     .eq('id', clientId)
 
   revalidatePath('/pipeline')
+  revalidatePath('/overview')
   revalidatePath(`/clients/${clientId}`)
   redirect(
     `/clients/${clientId}?${
@@ -548,46 +542,24 @@ export async function addRecord(formData: FormData) {
     return v === '' ? null : v
   }
 
-  const stageId = optional('stage_id')
-  const { data: created, error } = await supabase
-    .from('clients')
-    .insert({
-      organization_id: organizationId,
-      company_name: name,
-      stage_id: stageId,
-      phone: optional('phone'),
-      email: optional('email'),
-      notes: optional('notes'),
-      custom: collectCustom(formData),
-    })
-    .select('id')
-    .single()
+  // The stage's checklist is created by the database trigger on insert
+  // (migration 020) — the same way for every path, including website signups.
+  const { error } = await supabase.from('clients').insert({
+    organization_id: organizationId,
+    company_name: name,
+    stage_id: optional('stage_id'),
+    phone: optional('phone'),
+    email: optional('email'),
+    notes: optional('notes'),
+    custom: collectCustom(formData),
+  })
 
   if (error) {
     redirect(`/records/new?error=1&msg=${encodeURIComponent(error.message)}`)
   }
 
-  // A record created straight into a stage gets that stage's checklist too,
-  // not just one that arrives by being moved.
-  if (created && stageId) {
-    const { data: stage } = await supabase
-      .from('pipeline_stages')
-      .select('id, checklist')
-      .eq('id', stageId)
-      .maybeSingle()
-    if (stage) {
-      const userId = (await getMembership()).userId
-      await generateStageTasks({
-        supabase,
-        organizationId,
-        clientId: created.id,
-        stage: stage as Pick<PipelineStage, 'id' | 'checklist'>,
-        userId,
-      })
-    }
-  }
-
   revalidatePath('/pipeline')
+  revalidatePath('/overview')
   revalidatePath('/tasks')
   redirect('/pipeline')
 }
@@ -616,6 +588,7 @@ export async function updateRecord(formData: FormData) {
     .eq('id', recordId)
 
   revalidatePath('/pipeline')
+  revalidatePath('/overview')
   revalidatePath(`/records/${recordId}`)
   redirect(
     `/records/${recordId}?${
@@ -791,7 +764,7 @@ export async function deleteEvent(formData: FormData) {
 }
 
 export async function moveClientStage(formData: FormData) {
-  const m = await requireEditorOrg()
+  await requireEditorOrg()
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
   const stageId = String(formData.get('stage_id') ?? '')
@@ -801,97 +774,45 @@ export async function moveClientStage(formData: FormData) {
     return
   }
 
-  const [{ data: client }, { data: stageRows }] = await Promise.all([
-    supabase.from('clients').select('stage_id').eq('id', clientId).maybeSingle(),
-    supabase.from('pipeline_stages').select('id, position, checklist'),
-  ])
-
-  const stages = (stageRows ?? []) as Pick<
-    PipelineStage,
-    'id' | 'position' | 'checklist'
-  >[]
-  const target = stages.find((s) => s.id === stageId)
-  const current = stages.find((s) => s.id === client?.stage_id)
-
-  // Blocking checklist items on the stage being LEFT hold a record back, but
-  // only from moving forward — sending a job back to an earlier stage has to
-  // stay possible even with work outstanding.
-  if (current && target && target.position > current.position) {
-    const outstanding = await blockingTasksFor(supabase, clientId, current)
-    if (outstanding.length > 0) {
-      redirect(
-        `/pipeline?error=1&msg=${encodeURIComponent(
-          `Finish first: ${outstanding.join(', ')}`
-        )}`
-      )
-    }
-  }
-
-  await supabase
+  // The rules — "must finish first" blocking, the stage clock, the history
+  // row and the new stage's checklist — all run in the database trigger now
+  // (migration 020), so the edit forms and website signups follow them too.
+  // A refused move comes back as the error, e.g. "Finish first: Take photos".
+  const { error } = await supabase
     .from('clients')
     .update({ stage_id: stageId, updated_at: new Date().toISOString() })
     .eq('id', clientId)
 
-  if (target) {
-    const { error } = await generateStageTasks({
-      supabase,
-      organizationId: m.orgId,
-      clientId,
-      stage: target,
-      userId: m.userId,
-    })
-    if (error) {
-      revalidatePath('/pipeline')
-      redirect(
-        `/pipeline?error=1&msg=${encodeURIComponent(
-          `Moved, but the stage checklist couldn't be created: ${error}`
-        )}`
-      )
-    }
-  }
-
   revalidatePath('/pipeline')
+  revalidatePath('/overview')
   revalidatePath('/tasks')
   revalidatePath(`/records/${clientId}`)
   revalidatePath(`/clients/${clientId}`)
+
+  if (error) {
+    redirect(`/pipeline?error=1&msg=${encodeURIComponent(error.message)}`)
+  }
 }
 
 // Pull in a stage's checklist for a record that was already sitting in the
 // stage before the checklist existed. Deliberately manual — auto-backfilling
 // would mass-create tasks across every record at once.
 export async function generateChecklistNow(formData: FormData) {
-  const m = await requireEditorOrg()
+  await requireEditorOrg()
   const supabase = await createClient()
   const recordId = String(formData.get('record_id') ?? '')
-
-  const { data: client } = await supabase
-    .from('clients')
-    .select('stage_id')
-    .eq('id', recordId)
-    .maybeSingle()
 
   // Clancy's own workspace shows client detail at /clients/[id]; client
   // workspaces use /records/[id]. Return the user to whichever they came from.
   const backTo = String(formData.get('back_to') ?? `/records/${recordId}`)
 
-  if (client?.stage_id) {
-    const { data: stage } = await supabase
-      .from('pipeline_stages')
-      .select('id, checklist')
-      .eq('id', client.stage_id)
-      .maybeSingle()
-    if (stage) {
-      const { error } = await generateStageTasks({
-        supabase,
-        organizationId: m.orgId,
-        clientId: recordId,
-        stage: stage as Pick<PipelineStage, 'id' | 'checklist'>,
-        userId: m.userId,
-      })
-      if (error) {
-        redirect(`${backTo}?error=1&msg=${encodeURIComponent(error)}`)
-      }
-    }
+  // Same function the stage trigger uses, so there's one implementation of
+  // checklist generation rather than a SQL one and a TypeScript one drifting.
+  const { error } = await supabase.rpc('generate_stage_tasks', {
+    p_client_id: recordId,
+  })
+  if (error) {
+    redirect(`${backTo}?error=1&msg=${encodeURIComponent(error.message)}`)
   }
 
   revalidatePath('/tasks')
@@ -904,7 +825,7 @@ export async function generateChecklistNow(formData: FormData) {
 // One save for the whole workflow — stage names, order, and every checklist.
 // Replaces the old per-card pair of rival Save buttons on /stages.
 export async function saveWorkflow(formData: FormData) {
-  await requireWorkspaceAdmin()
+  const m = await requireWorkspaceAdmin()
   const supabase = await createClient()
 
   let rows: { id: string; name: string; position: number; checklist: unknown }[]
@@ -954,8 +875,27 @@ export async function saveWorkflow(formData: FormData) {
     }
   }
 
+  // The finish line lives in crm_config, not on the stage rows. Only accept a
+  // stage that is actually in this workflow; blank clears it back to the
+  // default (the last stage).
+  const finishRaw = String(formData.get('finish_stage_id') ?? '').trim()
+  const finishStageId = clean.some((r) => r.id === finishRaw) ? finishRaw : ''
+  if (finishStageId !== (m.crmConfig.finish_stage_id ?? '')) {
+    const crm_config = { ...m.crmConfig }
+    if (finishStageId) crm_config.finish_stage_id = finishStageId
+    else delete crm_config.finish_stage_id
+    const { error } = await supabase
+      .from('organizations')
+      .update({ crm_config })
+      .eq('id', m.orgId)
+    if (error) {
+      redirect(`/workflow?error=1&msg=${encodeURIComponent(error.message)}`)
+    }
+  }
+
   revalidatePath('/workflow')
   revalidatePath('/pipeline')
+  revalidatePath('/overview')
   redirect('/workflow?saved=1')
 }
 

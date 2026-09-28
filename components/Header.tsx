@@ -50,6 +50,7 @@ export async function Header() {
   const isEditor = isWorkspaceAdmin || membership.role === 'editor'
 
   const navItems: NavItem[] = []
+  navItems.push({ href: '/overview', label: 'Overview', icon: 'overview' })
   navItems.push({
     href: '/pipeline',
     label: isClancy ? 'Pipeline' : 'Board',
@@ -114,7 +115,7 @@ export async function Header() {
             </>
           }
         />
-        <Link href="/pipeline" className="shrink-0">
+        <Link href="/home" className="shrink-0">
           <Wordmark />
         </Link>
         <nav className="hidden min-w-0 flex-1 items-center gap-4 overflow-x-auto whitespace-nowrap text-sm lg:flex">
