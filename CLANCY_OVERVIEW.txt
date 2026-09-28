@@ -1,7 +1,7 @@
 ================================================================================
 CLANCY — COMPLETE PROJECT OVERVIEW
 Master reference for expanding and scaling the business
-Last updated: 15 July 2026
+Last updated: 23 September 2026
 ================================================================================
 
 HOW TO USE THIS FILE
@@ -42,17 +42,21 @@ IMPORTANT WORDING DISCIPLINE
   to remove per-client AI running costs and AI liability. Never market AI
   features inside the client product.
 
-STATUS AS OF 15 JULY 2026
-  - Platform: built and live at clancy-hq.vercel.app (10 build batches,
-    ~40 commits, 16 database migrations)
+STATUS AS OF 19 SEPTEMBER 2026
+  - Platform: built and live, production at clancyhq.com (16 build batches,
+    ~55 commits, 19 database migrations). Automated email is live.
   - Live tenants: Clancy's own workspace + SGCKL (a Kuala Lumpur church) —
     first real client site, live at /s/sgckl
   - Revenue: no confirmed paying client yet — commercial terms with SGCKL
-    still to be formalised
+    still to be formalised. THIS IS THE OLDEST UNFINISHED ITEM ON THE VENTURE.
   - Brand: identity, logo, launch content all created; Instagram @clancy.hq
     and clancy.hq.ai@gmail.com secured; PUBLIC LAUNCH HAS NOT HAPPENED YET
-  - Company: not yet registered as a legal entity
-  - Founder time: ~1–2 days per week
+  - Company: CLANCY SDN BHD IS INCORPORATED (19 Sep 2026).
+    D-U-N-S 473263782 ISSUED 23 Sep 2026 — Apple Developer enrollment for
+    plancy is now reachable, pending Apple's own verification.
+  - Second product line: plancy, a paid iOS daily planner, ~70% built,
+    targeting App Store submission the week of 9 Nov 2026 (see §3B)
+  - Founder time: ~1–2 days per week, currently going mostly to plancy
 
 
 ================================================================================
@@ -84,6 +88,12 @@ STATUS AS OF 15 JULY 2026
 3. THE OFFER — WHAT A CLIENT ACTUALLY GETS
 ================================================================================
 
+  NOTE (19 Sep 2026): sections 3 to 6 describe the AGENCY line — websites,
+  CRM and the managed service. That is still the revenue business. Clancy now
+  also sells a consumer app on a completely different model; see §3B. Nothing
+  in the agency playbook below changes because of it.
+
+
   A) A PUBLIC WEBSITE
      Fully configurable per client, no bespoke code: theme (light/dark),
      custom colours, background image, curated Google fonts with per-text-type
@@ -110,6 +120,63 @@ STATUS AS OF 15 JULY 2026
   C) THE MANAGED SERVICE
      All updates, changes and maintenance handled personally by Jacky during
      the contract. Client requests are batched weekly, not on demand.
+
+
+================================================================================
+3B. THE SECOND PRODUCT LINE — plancy (added 16 Sep 2026)
+================================================================================
+
+  WHAT IT IS
+    plancy is a daily planner for one person, sold on the iPhone App Store at
+    US$4.99 paid once. Four things on one day's spine: tasks, a one-line-a-day
+    journal, captured ideas, and where the money went. No account, no server,
+    no subscription — everything lives in a SQLite file on the buyer's phone
+    and syncs through their own iCloud.
+
+    It is a native rebuild of the web planner Jacky already used daily
+    (~/daily-planner). The origin is the same as the CRM's: he built the thing
+    for himself first, it worked, and the product followed.
+
+  WHY IT EXISTS — THE STRATEGIC POINT
+    The agency line is capacity-bound. ~3-5 managed clients per part-time
+    founder; the ceiling is delivery hours, never software. plancy has the
+    opposite shape: real work up front, then it sells without consuming an
+    hour. It will not replace agency revenue — 500 units at US$4.99 is about
+    USD 2,100 after Apple's 15% — but it is the first thing Clancy sells that
+    does not trade time for money, and it puts a real consumer product under
+    the brand.
+
+  HOW IT DIFFERS FROM EVERYTHING IN §3-§6
+    Sold to strangers, not in person. No managed service, no lock-in, no
+    intake, no capacity math. Apple takes 15% (Small Business Program) and
+    owns the customer relationship. Support is email, not WhatsApp.
+
+  STATUS
+    ~70% built. Four tabs on real data, repeating tasks and bills, local
+    reminders, an opt-in morning nudge, a home screen widget you can tick
+    tasks from, Face ID lock, twelve accent colours. Confirmed working on
+    Jacky's own iPhone over the cable.
+    Still to do: onboarding (with import from the web planner), editing
+    finance entries, an accessibility pass, App Store material, and iCloud
+    sync — which cannot even be tested until the developer account exists.
+    Target: submitted for review the week of 9 Nov 2026.
+
+  BLOCKED ON
+    Nothing, as of 23 Sep 2026. D-U-N-S 473263782 is issued; what is left is
+    Apple's verification of the organization, which runs in parallel with
+    the remaining build work. Nothing in plancy's code ever waited on it.
+
+  THE RISK TO WATCH
+    Founder attention. Jacky has ~1-2 days a week for Clancy in total and
+    plancy is currently taking most of it, while SGCKL — the first live
+    client — still has no signed agreement and no agreed price. plancy is the
+    interesting work; SGCKL is the revenue. Do not let the App Store date eat
+    the first paying client.
+
+  FULL DETAIL LIVES ELSEWHERE — do not duplicate it here:
+    ~/plancy/HANDOFF.md ..... decisions, App Store state, what's next
+    ~/plancy/docs/ .......... PRD, Architecture, UX, Design System,
+                              Implementation Guide, Test Spec, Release Spec
 
 
 ================================================================================
@@ -394,7 +461,13 @@ CAPACITY MATH (this is the real constraint, not the software)
   COMMERCIAL
     [ ] Formalise SGCKL — agreement signed, pilot or full pricing, PDPA
         acknowledgment. Turn the first live client into the first paying one.
-    [ ] Register the company; move contracts and the Vercel project to it
+        STILL OPEN AS OF 19 SEP, AND NOW THE OLDEST ITEM ON THE LIST.
+    [x] Register the company — DONE 19 Sep 2026, Clancy Sdn Bhd
+    [ ] Move contracts and the Vercel project (still on a personal account
+        named "MSA") to the company now that it exists
+    [x] D-U-N-S number — DONE 23 Sep 2026, 473263782
+    [ ] Enrol Clancy Sdn Bhd in the Apple Developer Program (check the D&B
+        legal name matches the Sdn Bhd registration first)
     [ ] Set the full-time gate number (the MRR at which going full time is
         rational)
 
@@ -425,10 +498,19 @@ CAPACITY MATH (this is the real constraint, not the software)
     sales-proposal-template.md .... pitch → trial → close playbook
     DESIGN_BRIEF.md ............... UI/UX brief for design work
     CLANCY_OVERVIEW.txt ........... this file
-    supabase/*.sql ................ 16 database migrations (schema history)
+    PROGRESS.md ................... where things stand, read first each session
+    supabase/*.sql ................ 19 database migrations (schema history)
+
+  PLANCY (local: ~/plancy — separate repo, iOS app, see §3B)
+    HANDOFF.md .................... decisions, App Store state, what's next
+    AGENTS.md ..................... project notes and the rules that must hold
+    docs/ ......................... PRD, Architecture, UX, Design System,
+                                    Implementation Guide, Test Spec,
+                                    Release Spec (written 18 Sep 2026)
 
   INFRASTRUCTURE
-    App ........... clancy-hq.vercel.app (Vercel, auto-deploy from main)
+    App ........... clancyhq.com, production (Vercel, auto-deploy from main;
+                  clancy-hq.vercel.app still resolves)
     Database ...... Supabase project (own Clancy organisation, Singapore)
     Auth .......... Google sign-in + email/password
     Assets ........ Clancy logo and launch post images on the Desktop

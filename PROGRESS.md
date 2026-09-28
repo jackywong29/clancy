@@ -13,7 +13,7 @@
 > diagnosed login bug, and the open actions — chiefly moving the Vercel
 > function region to Singapore, which is worth ~10× on every click.
 
-Last updated: 15 September 2026 · `main` at `109f3b0`, deployed · production is
+Last updated: 24 September 2026 · `main` at `109f3b0`, deployed · production is
 **clancyhq.com** · migrations: 001–017 confirmed applied, **018 + 019 unverified**
 
 ---
@@ -29,7 +29,57 @@ real KL church — first client site at `/s/sgckl`). Latest deploy is green.
 **Automated email is now live** (Gmail SMTP configured in Vercel — verified
 with a simple send that landed in the main inbox as important). The app is
 **responsive** since Batch 12 (works at 360px, unchanged at desktop). No
-paying client yet; company not yet registered; brand not yet launched.
+paying client yet; brand not yet launched. **Clancy Sdn Bhd is now
+incorporated** (19 Sep 2026) — contracts can name the company.
+
+Since mid-September the venture has **two product lines**, not one. See the
+next section.
+
+---
+
+## SECOND PRODUCT LINE — plancy (iOS), added 16 Sep 2026
+
+Clancy now sells two different things, and they share nothing but the company
+and the domain. Keep them straight:
+
+| | **Clancy HQ** (this repo) | **plancy.** (`~/plancy`) |
+|---|---|---|
+| What | Websites + CRM for local KL businesses | A daily planner for one person |
+| Model | RM 1,200/mo managed, 12-month lock-in | US$4.99 once, paid before download |
+| Buyer | Small business owners, sold in person | Strangers on the App Store |
+| Delivery | Managed service, capacity-bound | Ships itself, capacity-free |
+| Stack | Next.js 16 · Supabase · Vercel | Expo SDK 57 · SQLite on the device |
+| Status | Live, 2 tenants, no paying client | ~70% built, target submission 9 Nov |
+
+**Why this matters strategically.** Clancy HQ is capacity-bound — 3–5 managed
+clients per part-time founder, and software is never the ceiling, delivery
+hours are. plancy has the opposite shape: it takes real work up front and then
+scales without consuming a single hour. It will not replace agency revenue
+(500 units at $4.99 is roughly US$2,100 after Apple's 15%), but it is the
+first thing Clancy sells that does not trade time for money, and it puts a
+real consumer product under the brand.
+
+**The risk to watch: founder attention.** Jacky has ~1–2 days a week for
+Clancy in total, and plancy is currently taking most of it. SGCKL still has no
+signed agreement and no agreed price — that is the *revenue* item, and it is
+slipping while plancy is built. Do not let the App Store date eat the first
+paying client.
+
+**Where plancy's status lives:** `~/plancy/HANDOFF.md` (decisions, App Store
+state, what's next) and `~/plancy/docs/` (seven specs written 18 Sep: PRD,
+Architecture, UX, Design System, Implementation Guide, Test Spec, Release
+Spec). Do not duplicate plancy's build detail into this file — link to it.
+
+**D-U-N-S 473263782 issued 23 Sep 2026; Apple enrolment deliberately ON HOLD
+since 24 Sep** while Jacky makes another round of product changes. Nothing is
+lost by waiting. When it resumes: confirm the legal name and address D&B holds
+against the D-U-N-S match the Sdn Bhd registration exactly first (the most
+common organization-enrolment rejection). Order is in `~/plancy/HANDOFF.md`.
+
+**plancy on 24 Sep:** every launch blocker in the code is done, and build 6 is
+on Jacky's iPhone with task notes, one global add button, Lock Screen widgets
+and drag-to-reorder anytime tasks. Next is tests, then App Store material.
+Target submission is still the week of 9 Nov.
 
 ---
 
@@ -162,9 +212,10 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
 - **Intra-workspace roles are enforced in the application layer**, not the
   database. The wall *between* client businesses IS database-enforced (RLS) and
   is solid. Harden roles to RLS before a client with adversarial-insider risk.
-- **No entity registered** — contracts would name Jacky personally. Also the
-  Vercel project still sits under a personal account named "MSA"; move it once
-  the company exists.
+- ~~**No entity registered**~~ — **resolved 19 Sep 2026: Clancy Sdn Bhd is
+  incorporated.** Two follow-ups remain: the Vercel project still sits under a
+  personal account named "MSA" and should move to the company, and the SGCKL
+  agreement should be issued in the company's name, not Jacky's.
 - **PDPA** applies (storing clients' customers' data on their behalf).
 - **Hours-per-client is not being tracked** — the number that drives the
   full-time gate and the hiring trigger. Start logging.

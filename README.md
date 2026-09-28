@@ -4,7 +4,7 @@
 
 Clancy gives a small business two things from a single account: their **public website** and their **internal CRM**. Both are configuration, not custom code — which is what makes one codebase serve every client.
 
-Live: [clancy-hq.vercel.app](https://clancy-hq.vercel.app)
+Live: [clancyhq.com](https://clancyhq.com) (also reachable at clancy-hq.vercel.app)
 
 ---
 
