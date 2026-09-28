@@ -12,10 +12,20 @@
 > verify a deploy, environment traps, and what to do next. (`HANDOFF-2026-09-15.md`
 > is the previous session's handoff, kept for its login-bug diagnosis.)
 
-Last updated: 28 September 2026 · Batch 18 (`ff97d1a`) deployed · production is
+Last updated: 28 September 2026 · Batch 19 pushed · production is
 **clancyhq.com**, functions in **Singapore** (`sin1`, verified 28 Sep) ·
 migrations **001–020** applied — 019 + 020 verified by `020_verify.sql` (15/15
 on 28 Sep); 018 reported run by Jacky on 6 Sep but never independently checked
+
+> **⚠️ MIGRATION 021 IS NOT YET RUN.** `supabase/021_security_hardening.sql`
+> ships in this push but has not been applied to production. Two things stay
+> broken until it is: changing a member's role on **Team** (it calls the new
+> `set_member_role()`), and the new **Regenerate link** button on a client's
+> intake tab (`regenerate_intake_token()`). Both now report an error rather
+> than failing silently. Run the migration in the Supabase SQL editor, then
+> run `supabase/021_verify.sql` and expect **ALL 32 CHECKS PASSED**. Read the
+> two WARNING blocks first: section 4 prints a cross-workspace reference
+> report and every count should be zero on real data.
 
 ---
 

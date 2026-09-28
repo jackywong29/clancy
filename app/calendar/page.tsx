@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { deleteEvent } from '@/lib/actions'
 import { Header } from '@/components/Header'
-import { getMembership, hasRole } from '@/lib/permissions'
+import { getMembership, hasRole, taskDepartmentFilter } from '@/lib/permissions'
 import { expandEvents } from '@/lib/recurrence'
 import { klNow, klToday } from '@/lib/dates'
 import { EventForm } from '@/components/calendar/EventForm'
@@ -26,7 +26,7 @@ const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 export default async function CalendarPage({
   searchParams,
 }: {
-  searchParams: Promise<{ m?: string }>
+  searchParams: Promise<{ m?: string; error?: string; msg?: string }>
 }) {
   const flags = await searchParams
   const m = await getMembership()
@@ -47,6 +47,17 @@ export default async function CalendarPage({
   const startOffset = (new Date(year, month - 1, 1).getDay() + 6) % 7
   const today = klToday()
 
+  // Task due-date markers obey the same department scoping as /tasks: the
+  // predicate is in the query, so a non-admin is never sent another
+  // department's due dates.
+  const deptFilter = taskDepartmentFilter(m)
+  const taskSelect = supabase
+    .from('tasks')
+    .select('*')
+    .gte('due_date', firstDay)
+    .lte('due_date', lastDay)
+    .neq('status', 'done')
+
   const [{ data: events }, { data: tasks }, { data: records }] =
     await Promise.all([
       supabase
@@ -54,12 +65,7 @@ export default async function CalendarPage({
         .select('*')
         .lte('starts_on', lastDay)
         .order('starts_on'),
-      supabase
-        .from('tasks')
-        .select('*')
-        .gte('due_date', firstDay)
-        .lte('due_date', lastDay)
-        .neq('status', 'done'),
+      deptFilter ? taskSelect.or(deptFilter) : taskSelect,
       supabase.from('clients').select('id, company_name').order('company_name'),
     ])
 
@@ -106,6 +112,12 @@ export default async function CalendarPage({
             </Link>
           </div>
         </div>
+
+        {flags.error && (
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
+            Couldn&apos;t delete that event{flags.msg ? `: ${flags.msg}` : '.'}
+          </p>
+        )}
 
         <div className="grid grid-cols-7 gap-px overflow-hidden rounded-xl border border-ash/60 bg-ash/40">
           {WEEKDAYS.map((d) => (

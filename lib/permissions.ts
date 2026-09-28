@@ -100,6 +100,33 @@ export async function requireWorkspaceAdmin(): Promise<Membership> {
   return m
 }
 
+// Departments scope task visibility for non-admins: a member sees shared
+// (department-less) tasks plus their own department's, and an admin sees
+// everything. `null` means "no restriction".
+//
+// Returned as a PostgREST or() filter so the predicate is applied by the
+// database on every task query, rather than by a post-fetch filter on one
+// page — the invariant is that a task outside the caller's department is
+// neither readable nor writable, not merely hidden.
+export function taskDepartmentFilter(m: Membership): string | null {
+  if (m.role === 'admin') return null
+  if (!m.department) return 'department.is.null'
+  // PostgREST treats . and : as reserved inside or(), so the value is quoted;
+  // a stray double quote would close it early, so it is stripped.
+  const value = m.department.replace(/"/g, '')
+  return `department.is.null,department.eq."${value}"`
+}
+
+// The same rule against a single row, for mutations that resolve a task by id.
+// One predicate, two call shapes — the display filter and the write check must
+// never be able to disagree.
+export function canAccessTaskDepartment(
+  m: Membership,
+  department: string | null
+): boolean {
+  return m.role === 'admin' || department === null || department === m.department
+}
+
 export function roleLabel(config: CrmConfig, role: WorkspaceRole): string {
   const defaults: Record<WorkspaceRole, string> = {
     viewer: 'Staff',

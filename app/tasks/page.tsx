@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { addTask, updateTaskStatus, deleteTask } from '@/lib/actions'
 import { Header } from '@/components/Header'
-import { getMembership, hasRole } from '@/lib/permissions'
+import { getMembership, hasRole, taskDepartmentFilter } from '@/lib/permissions'
 import { klToday } from '@/lib/dates'
 import type { Client, Profile, Task, TaskStatus } from '@/types/database'
 
@@ -14,7 +14,12 @@ const STATUS_META: Record<TaskStatus, { label: string; next?: TaskStatus; nextLa
   done: { label: 'Done', next: 'pending', nextLabel: 'Reopen' },
 }
 
-export default async function TasksPage() {
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string; msg?: string }>
+}) {
+  const flags = await searchParams
   const m = await getMembership()
   const canEdit = hasRole(m, 'editor')
   const departments = m.crmConfig.departments ?? []
@@ -22,11 +27,15 @@ export default async function TasksPage() {
     departments.find((d) => d.key === key)?.name ?? null
   const supabase = await createClient()
 
+  // Department scoping is a predicate on the query, not a filter over rows the
+  // server already returned: a non-admin must not receive another
+  // department's tasks at all. Null means admin — everything.
+  const deptFilter = taskDepartmentFilter(m)
+  const taskSelect = supabase.from('tasks').select('*')
+
   const [{ data: tasks }, { data: members }, { data: records }] =
     await Promise.all([
-      supabase
-        .from('tasks')
-        .select('*')
+      (deptFilter ? taskSelect.or(deptFilter) : taskSelect)
         .order('due_date', { ascending: true, nullsFirst: false })
         .order('created_at', { ascending: false }),
       supabase.from('profiles').select('id, full_name, email'),
@@ -36,13 +45,7 @@ export default async function TasksPage() {
         .order('company_name'),
     ])
 
-  const allTasks = (tasks ?? []) as Task[]
-  const taskList =
-    m.role === 'admin'
-      ? allTasks
-      : allTasks.filter(
-          (t) => t.department === null || t.department === m.department
-        )
+  const taskList = (tasks ?? []) as Task[]
   const memberList = (members ?? []) as Pick<Profile, 'id' | 'full_name' | 'email'>[]
   const recordList = (records ?? []) as Pick<Client, 'id' | 'company_name'>[]
 
@@ -65,6 +68,12 @@ export default async function TasksPage() {
         <p className="mb-6 text-sm text-ivory/60">
           Everything the team needs to do, in one list.
         </p>
+
+        {flags.error && (
+          <p className="mb-4 rounded-lg bg-red-950/40 px-3 py-2 text-sm text-red-400">
+            Couldn&apos;t update that task{flags.msg ? `: ${flags.msg}` : '.'}
+          </p>
+        )}
 
         {canEdit && (
         <form

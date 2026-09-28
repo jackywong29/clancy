@@ -1,5 +1,5 @@
 import 'server-only'
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient } from '@/lib/supabase/server'
 
 // Signed URLs for private-bucket files, reused across renders.
 //
@@ -8,37 +8,48 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 // cache miss, meaning the preview re-downloaded the full image each time you
 // opened a broadcast. Reusing a still-valid URL makes the image cacheable.
 //
-// Keyed by bucket + path, not by user: a signed URL authorises an object, and
-// the caller has already passed RLS on the row that names the path (and the
-// paths themselves are organization-scoped). The store is per server instance
-// and bounded; a miss just mints a new URL.
+// The cache key carries the caller's organization. A signed URL is an
+// unauthenticated bearer capability, and a cache hit returns before
+// createSignedUrls — which is the only point where storage RLS is evaluated.
+// A key of bucket + path alone is therefore shared by every tenant served by
+// the same server instance, so one org's hit could hand back a token minted
+// under another org's session. Scoping the key to orgId keeps the invariant
+// that a URL is only ever reused by the organization it was minted for; a miss
+// just mints a new one under the caller's own session and RLS decides.
+//
+// The store is per server instance and bounded.
 
-const DEFAULT_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days, as before
-// Stop handing out a URL a day before it dies, so nothing expires mid-view.
-const SAFETY_MARGIN_MS = 24 * 60 * 60 * 1000
+const DEFAULT_TTL_SECONDS = 15 * 60 // 15 minutes: long enough to render a page
+// Stop handing out a URL shortly before it dies, so nothing expires mid-view.
+// Proportional to the lifetime, because a fixed margin larger than a short TTL
+// would mark every entry stale on arrival and defeat the cache entirely.
+const MAX_SAFETY_MARGIN_MS = 5 * 60 * 1000
 const MAX_ENTRIES = 500
 
 const store = new Map<string, { url: string; expiresAt: number }>()
 
 export async function signedUrls(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  supabase: SupabaseClient<any>,
   bucket: string,
   paths: string[],
+  orgId: string,
   ttlSeconds: number = DEFAULT_TTL_SECONDS
 ): Promise<Record<string, string>> {
   const now = Date.now()
   const urls: Record<string, string> = {}
   const missing: string[] = []
+  const margin = Math.min(MAX_SAFETY_MARGIN_MS, ttlSeconds * 100) // 10% of TTL
+
+  const keyFor = (path: string) => `${orgId}/${bucket}/${path}`
 
   for (const path of paths) {
-    const hit = store.get(`${bucket}/${path}`)
-    if (hit && hit.expiresAt - SAFETY_MARGIN_MS > now) urls[path] = hit.url
+    const hit = store.get(keyFor(path))
+    if (hit && hit.expiresAt - margin > now) urls[path] = hit.url
     else missing.push(path)
   }
 
   if (missing.length === 0) return urls
 
+  const supabase = await createClient()
   const { data } = await supabase.storage
     .from(bucket)
     .createSignedUrls(missing, ttlSeconds)
@@ -47,7 +58,7 @@ export async function signedUrls(
     if (!entry.signedUrl) return
     const path = missing[i]
     urls[path] = entry.signedUrl
-    store.set(`${bucket}/${path}`, {
+    store.set(keyFor(path), {
       url: entry.signedUrl,
       expiresAt: now + ttlSeconds * 1000,
     })

@@ -18,7 +18,11 @@ import { Paperclip } from 'lucide-react'
 import type { Broadcast, BroadcastAttachment } from '@/types/database'
 
 const BATCH_SIZE = 40
-const LINK_TTL_SECONDS = 60 * 60 * 24 * 7 // 7 days, same as intake brief links
+// A signed URL is an unauthenticated bearer capability. The on-screen preview
+// only needs one to outlive the render, so it takes the module default. The
+// mailto: fallback puts them in a message someone may open tomorrow, so that
+// path — and only that path — asks for a day.
+const FALLBACK_LINK_TTL_SECONDS = 60 * 60 * 24
 
 export default async function BroadcastDetailPage({
   params,
@@ -47,16 +51,17 @@ export default async function BroadcastDetailPage({
   // Both depend on the broadcast but not on each other. The bucket is private,
   // so the on-screen preview and the mail-app fallback links need signed URLs
   // (sending doesn't — that path downloads the bytes server-side). Still-valid
-  // URLs are reused from lib/signed-urls, so an image opened twice comes from
-  // browser cache instead of being re-downloaded under a fresh token.
+  // URLs are reused from lib/signed-urls, per organization, so an image opened
+  // twice comes from browser cache instead of a fresh token.
+  const automated = isEmailConfigured()
   const [audienceRecipients, signedByPath] = await Promise.all([
     resolveAudience(supabase, broadcast.audience),
     files.length > 0
       ? signedUrls(
-          supabase,
           'broadcast-files',
           files.map((f) => f.path),
-          LINK_TTL_SECONDS
+          m.orgId,
+          automated ? undefined : FALLBACK_LINK_TTL_SECONDS
         )
       : Promise.resolve({} as Record<string, string>),
   ])
@@ -69,7 +74,6 @@ export default async function BroadcastDetailPage({
   const customSet = new Set(
     (broadcast.custom_recipients ?? []).map((e) => e.toLowerCase())
   )
-  const automated = isEmailConfigured()
 
   const previewHtml = renderBroadcastHtml({
     subject: broadcast.subject,

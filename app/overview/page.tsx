@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { getMembership, hasRole } from '@/lib/permissions'
+import { getMembership, hasRole, taskDepartmentFilter } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { recordLabel } from '@/lib/crm'
 import { klDateOf, klMonthStart, klToday } from '@/lib/dates'
@@ -46,12 +46,19 @@ export default async function OverviewPage() {
     supabase
       .from('clients')
       .select('id, company_name, stage_id, stage_entered_at, created_at, updated_at, source'),
-    supabase
-      .from('tasks')
-      .select('status, due_date, department, completed_at')
-      // Quoted: PostgREST treats . and : as reserved inside or(), and an ISO
-      // timestamp contains both.
-      .or(`status.neq.done,completed_at.gte."${weekAgo}"`),
+    (() => {
+      // Department scoping lives in the query, not only in the aggregation, so
+      // rows a member may not see never leave the database. buildDashboard
+      // applies the same rule again over whatever comes back.
+      const q = supabase
+        .from('tasks')
+        .select('status, due_date, department, completed_at')
+        // Quoted: PostgREST treats . and : as reserved inside or(), and an ISO
+        // timestamp contains both.
+        .or(`status.neq.done,completed_at.gte."${weekAgo}"`)
+      const dept = taskDepartmentFilter(m)
+      return dept ? q.or(dept) : q
+    })(),
     supabase
       .from('stage_transitions')
       .select('client_id, to_stage_id, at')

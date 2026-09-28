@@ -1,8 +1,10 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { saveIntake, requireOrg } from '@/lib/actions'
+import { saveIntake, regenerateIntakeToken } from '@/lib/actions'
+import { getMembership, hasRole } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
+import { ConfirmForm } from '@/components/ConfirmForm'
 import { CopyButton } from '@/components/CopyButton'
 import { SubmitButton } from '@/components/SubmitButton'
 import { ServiceListEditor } from '@/components/intake/ServiceListEditor'
@@ -12,6 +14,7 @@ import { FileUploadField } from '@/components/intake/FileUploadField'
 import {
   INTAKE_SECTIONS,
   intakeProgress,
+  mergeIntakeData,
   type IntakeData,
   type IntakeField,
 } from '@/lib/intake'
@@ -81,11 +84,18 @@ export default async function IntakePage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ saved?: string; error?: string; msg?: string }>
+  searchParams: Promise<{
+    saved?: string
+    rotated?: string
+    error?: string
+    msg?: string
+  }>
 }) {
   const { id } = await params
   const flags = await searchParams
-  const orgId = await requireOrg()
+  const m = await getMembership()
+  const orgId = m.orgId
+  const canEdit = hasRole(m, 'editor')
   const supabase = await createClient()
 
   const [{ data: clientRow }, { data: intakeRow }] = await Promise.all([
@@ -97,7 +107,9 @@ export default async function IntakePage({
     notFound()
   }
   const client = clientRow as Client
-  const data: IntakeData = (intakeRow as Intake | null)?.data ?? {}
+  const data: IntakeData = mergeIntakeData(
+    (intakeRow as Intake | null)?.data ?? {}
+  )
   const progress = intakeProgress(data)
 
   return (
@@ -117,11 +129,27 @@ export default async function IntakePage({
               overwritten, only added to.
             </p>
           </div>
-          <CopyButton
-            text={`https://clancy-hq.vercel.app/i/${client.intake_token}`}
-            label="Copy client link"
-            variant="outline"
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <CopyButton
+              text={`https://clancy-hq.vercel.app/i/${client.intake_token}`}
+              label="Copy client link"
+              variant="outline"
+            />
+            {canEdit && (
+              <ConfirmForm
+                action={regenerateIntakeToken}
+                message={`Regenerate the link for ${client.company_name}? The link you already sent them stops working immediately and you'll need to send the new one.`}
+              >
+                <input type="hidden" name="client_id" value={client.id} />
+                <SubmitButton
+                  className="rounded-lg border border-ash px-3 py-2 text-sm hover:border-violet hover:text-violet sm:py-1.5"
+                  pendingText="Regenerating…"
+                >
+                  Regenerate link
+                </SubmitButton>
+              </ConfirmForm>
+            )}
+          </div>
         </div>
 
         <details className="mb-4 rounded-xl border border-ash/60 bg-carbon/50 p-4 text-sm text-ivory/80 sm:p-6">
@@ -179,6 +207,12 @@ export default async function IntakePage({
         {flags.saved && (
           <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
             Saved.
+          </p>
+        )}
+        {flags.rotated && (
+          <p className="mb-4 rounded-lg bg-violet/10 px-3 py-2 text-sm text-violet">
+            New client link generated — the previous one no longer works. Copy
+            it above and send it to them.
           </p>
         )}
         {flags.error && (

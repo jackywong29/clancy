@@ -50,6 +50,13 @@ export const FONTS: FontDef[] = [
 
 const DEFAULT_STACK = "'Inter', system-ui, sans-serif"
 
+// A custom family name is typed by hand and then interpolated into a CSS
+// font-family stack and into the Google Fonts query string. Google Fonts
+// family names are letters, digits and spaces, so anything else is not a
+// family name — a quote or semicolon would close the quoted stack and append
+// further declarations. Invalid values fall back to the default sans.
+const CUSTOM_FAMILY = /^[A-Za-z0-9 ]{1,40}$/
+
 // Resolve a site's font config into a Google Fonts family to load and a
 // CSS font-family stack to apply. Falls back to the default sans.
 export function resolveFont(font?: string, custom?: string): {
@@ -58,7 +65,9 @@ export function resolveFont(font?: string, custom?: string): {
 } {
   if (font === 'custom' && custom?.trim()) {
     const family = custom.trim()
-    return { google: family, stack: `'${family}', system-ui, sans-serif` }
+    if (CUSTOM_FAMILY.test(family)) {
+      return { google: family, stack: `'${family}', system-ui, sans-serif` }
+    }
   }
   const def = FONTS.find((f) => f.key === font)
   if (def) return { google: def.google, stack: def.stack }
@@ -74,7 +83,10 @@ export function googleFontHref(family: string): string {
 export function googleFontsHref(families: string[]): string {
   const uniq = Array.from(new Set(families.filter(Boolean)))
   const spec = uniq
-    .map((f) => `family=${f.replace(/ /g, '+')}:wght@400;500;600;700`)
+    .map(
+      (f) =>
+        `family=${encodeURIComponent(f).replace(/%20/g, '+')}:wght@400;500;600;700`
+    )
     .join('&')
   return `https://fonts.googleapis.com/css2?${spec}&display=swap`
 }

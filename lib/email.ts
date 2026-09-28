@@ -1,3 +1,4 @@
+import 'server-only'
 import nodemailer from 'nodemailer'
 
 // Automated email via the Clancy Gmail account (clancy.hq.ai@gmail.com).
@@ -13,6 +14,16 @@ export function isEmailConfigured(): boolean {
 // Gmail rejects messages over 25MB. We cap below that so the base64 encoding
 // overhead (~33%) can't push a legal-looking upload over the real limit.
 export const MAX_ATTACHMENT_BYTES = 18 * 1024 * 1024
+
+// SMTP headers are line-delimited, so a CR or LF inside a value ends the
+// header and starts a new one — the display name and the subject are the two
+// values here that carry user-controlled text. Strip the delimiters (and the
+// quoting/angle-bracket characters that would break out of the From phrase)
+// rather than depending on the mail library to normalise them for us, and cap
+// the name so a long value cannot push the header past what servers accept.
+const MAX_FROM_NAME_CHARS = 78
+
+const HEADER_BREAKS = /[\r\n]+/g
 
 export interface MailAttachment {
   filename: string
@@ -42,6 +53,15 @@ export async function sendEmail({
   if (!isEmailConfigured()) {
     return { ok: false, error: 'Email is not configured' }
   }
+
+  const displayName =
+    (fromName || 'Clancy')
+      .replace(/["<>\\]/g, '')
+      .replace(HEADER_BREAKS, ' ')
+      .trim()
+      .slice(0, MAX_FROM_NAME_CHARS)
+      .trim() || 'Clancy'
+  const safeSubject = subject.replace(HEADER_BREAKS, ' ')
   try {
     const transporter = nodemailer.createTransport({
       service: 'gmail',
@@ -54,10 +74,10 @@ export async function sendEmail({
       // Gmail SMTP always sends *from* the authenticated account; the display
       // name is the only part we control, so a broadcast can at least read as
       // the client's business rather than "Clancy".
-      from: `${(fromName || 'Clancy').replace(/["<>\\]/g, '')} <${process.env.GMAIL_USER}>`,
+      from: `${displayName} <${process.env.GMAIL_USER}>`,
       to: to && to.length > 0 ? to : process.env.GMAIL_USER,
       bcc,
-      subject,
+      subject: safeSubject,
       text,
       html,
       attachments,

@@ -6,6 +6,7 @@ import { ClientTabs } from '@/components/ClientTabs'
 import { CopyButton } from '@/components/CopyButton'
 import {
   buildWorkflowBrief,
+  mergeIntakeData,
   parseWorkflowSteps,
   type IntakeData,
 } from '@/lib/intake'
@@ -35,7 +36,9 @@ export default async function WorkflowBriefPage({
     notFound()
   }
   const client = clientRow as Client
-  const data: IntakeData = (intakeRow as Intake | null)?.data ?? {}
+  const data: IntakeData = mergeIntakeData(
+    (intakeRow as Intake | null)?.data ?? {}
+  )
   const config = ((orgRow as Pick<Organization, 'crm_config'> | null)
     ?.crm_config ?? {}) as CrmConfig
   const brief = buildWorkflowBrief(client, data, config)

@@ -31,6 +31,35 @@ export interface IntakeSection {
 
 export type IntakeData = Record<string, string>
 
+// Answers submitted by the client through /i/<token> are stored namespaced
+// under this reserved top-level key, one layer below the staff answers, so an
+// anonymous write can never overwrite what Jacky recorded at the same
+// "<section>.<field>" key. It is not a section key — every real key contains a
+// dot — so it can never collide with a field.
+export const RESERVED_CLIENT_KEY = '_client'
+
+// Flatten a stored intake row into the single map the app reads. Staff answers
+// win on conflict; a blank staff answer falls back to the client's, so leaving
+// a field empty still surfaces what they typed. Rows written before the client
+// layer existed carry no reserved key and pass through unchanged, and the
+// reserved key itself never leaks out as a field.
+export function mergeIntakeData(raw: IntakeData | null | undefined): IntakeData {
+  if (!raw) return {}
+  const merged: IntakeData = {}
+  const nested = (raw as Record<string, unknown>)[RESERVED_CLIENT_KEY]
+  if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+    for (const [key, value] of Object.entries(nested)) {
+      if (typeof value === 'string') merged[key] = value
+    }
+  }
+  for (const [key, value] of Object.entries(raw)) {
+    if (key === RESERVED_CLIENT_KEY || typeof value !== 'string') continue
+    if (value.trim() === '' && merged[key] !== undefined) continue
+    merged[key] = value
+  }
+  return merged
+}
+
 export interface ServiceRow {
   name: string
   price: string
@@ -218,7 +247,8 @@ export function fieldFilled(field: IntakeField, raw: string | undefined): boolea
   return true
 }
 
-export function intakeProgress(data: IntakeData) {
+export function intakeProgress(stored: IntakeData) {
+  const data = mergeIntakeData(stored)
   let filled = 0
   let total = 0
   const blockingMissing: string[] = []
@@ -237,21 +267,26 @@ export function intakeProgress(data: IntakeData) {
   return { filled, total, percent: Math.round((filled / total) * 100), blockingMissing }
 }
 
-const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24 * 7
+// File links are pasted into a brief that leaves the app, so they are a bearer
+// capability living outside the trust boundary the bucket's org-prefix policy
+// enforces. A day is enough for Claude to pull the files down; a week was not
+// a lifetime anyone was watching.
+const SIGNED_URL_TTL_SECONDS = 60 * 60 * 24
 
 export async function buildBrief(
   client: Client,
-  data: IntakeData,
+  stored: IntakeData,
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: SupabaseClient<any>
 ): Promise<string> {
+  const data = mergeIntakeData(stored)
   const progress = intakeProgress(data)
   const lines: string[] = []
 
   lines.push(`# Build brief — ${client.company_name}`)
   lines.push('')
   lines.push(
-    `Generated ${new Date().toISOString().slice(0, 10)} from Clancy HQ. File links are valid for 7 days.`
+    `Generated ${new Date().toISOString().slice(0, 10)} from Clancy HQ. File links are valid for 24 hours.`
   )
   lines.push('')
   lines.push('## Client record')
@@ -349,9 +384,10 @@ export const CLIENT_FACING_KEYS = new Set(
 // guessed workflow is worse than an admitted gap.
 export function buildWorkflowBrief(
   client: Client,
-  data: IntakeData,
+  stored: IntakeData,
   config: CrmConfig
 ): string {
+  const data = mergeIntakeData(stored)
   const lines: string[] = []
   const get = (k: string) => (data[k] ?? '').trim()
   const steps = parseWorkflowSteps(data['workflow.pipeline_steps'])
@@ -458,9 +494,10 @@ export function buildWorkflowBrief(
 
 export function buildCrmBrief(
   client: Client,
-  data: IntakeData,
+  stored: IntakeData,
   config: CrmConfig
 ): string {
+  const data = mergeIntakeData(stored)
   const lines: string[] = []
   const get = (k: string) => (data[k] ?? '').trim()
 

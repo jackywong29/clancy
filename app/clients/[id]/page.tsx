@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { updateClient, deleteClient, requireOrg } from '@/lib/actions'
+import { updateClient, deleteClient } from '@/lib/actions'
+import { getMembership, taskDepartmentFilter } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { ClientTabs } from '@/components/ClientTabs'
 import { StageChecklist } from '@/components/StageChecklist'
@@ -20,7 +21,7 @@ export default async function ClientDetailPage({
 }) {
   const { id } = await params
   const flags = await searchParams
-  await requireOrg()
+  const m = await getMembership()
   const supabase = await createClient()
 
   const [{ data: clientRow }, { data: stages }] = await Promise.all([
@@ -38,15 +39,23 @@ export default async function ClientDetailPage({
   const stageList = (stages ?? []) as PipelineStage[]
 
   // Checklist for the stage this client currently sits in. Clancy's own sales
-  // pipeline gets the same SOP layer as a client workspace.
+  // pipeline gets the same SOP layer as a client workspace. Tasks are
+  // department-scoped for non-admins in the query itself, so a member never
+  // receives another department's work.
   const currentStage = stageList.find((s) => s.id === client.stage_id)
-  const { data: stageTaskRows } = currentStage
-    ? await supabase
+  const deptFilter = taskDepartmentFilter(m)
+  const stageTaskQuery = currentStage
+    ? supabase
         .from('tasks')
         .select('*')
         .eq('client_id', client.id)
         .eq('origin_stage_id', currentStage.id)
-        .order('created_at', { ascending: true })
+    : null
+  const { data: stageTaskRows } = stageTaskQuery
+    ? await (deptFilter
+        ? stageTaskQuery.or(deptFilter)
+        : stageTaskQuery
+      ).order('created_at', { ascending: true })
     : { data: [] }
   const stageTasks = (stageTaskRows ?? []) as Task[]
 

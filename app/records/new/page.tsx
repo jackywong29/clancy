@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { addRecord, requireOrg } from '@/lib/actions'
+import { addRecord } from '@/lib/actions'
+import { requireEditorOrg } from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { RecordFields } from '@/components/RecordFields'
 import { recordLabel } from '@/lib/crm'
@@ -12,7 +13,9 @@ export default async function NewRecordPage({
   searchParams: Promise<{ error?: string; msg?: string }>
 }) {
   const flags = await searchParams
-  const orgId = await requireOrg()
+  // Creating a record is an editor capability; a viewer never reaches the
+  // form rather than being refused after filling it in.
+  const { orgId } = await requireEditorOrg()
   const supabase = await createClient()
 
   const [{ data: orgRow }, { data: stages }] = await Promise.all([

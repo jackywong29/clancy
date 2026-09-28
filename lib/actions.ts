@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import {
+  canAccessTaskDepartment,
   getMembership,
   requireEditorOrg,
   requireWorkspaceAdmin,
@@ -108,7 +109,7 @@ export async function addClient(formData: FormData) {
 
 export async function updateClient(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const clientId = String(formData.get('client_id') ?? '')
   const optional = (name: string) => {
@@ -135,6 +136,7 @@ export async function updateClient(formData: FormData) {
       updated_at: new Date().toISOString(),
     })
     .eq('id', clientId)
+    .eq('organization_id', m.orgId)
 
   revalidatePath('/pipeline')
   revalidatePath('/overview')
@@ -151,6 +153,22 @@ export async function saveIntake(formData: FormData) {
   const organizationId = (await requireEditorOrg()).orgId
 
   const clientId = String(formData.get('client_id') ?? '')
+
+  // The client id arrives in the form, so confirm the row is one of this
+  // workspace's before writing an intake against it.
+  const { data: owner } = await supabase
+    .from('clients')
+    .select('id')
+    .eq('id', clientId)
+    .eq('organization_id', organizationId)
+    .maybeSingle()
+
+  if (!owner) {
+    redirect(
+      '/pipeline?error=1&msg=That%20client%20is%20not%20in%20your%20workspace'
+    )
+  }
+
   const data: Record<string, string> = {}
   for (const [key, value] of formData.entries()) {
     if (key.includes('.') && typeof value === 'string') {
@@ -177,13 +195,54 @@ export async function saveIntake(formData: FormData) {
   )
 }
 
-export async function deleteClient(formData: FormData) {
+// /i/<token> is a bearer link: the token both identifies and authorizes, so a
+// forwarded link keeps working until it is replaced. Rotating it is the only
+// revocation there is. The org check lives in the RPC, which mints the new
+// token in the database rather than trusting one from the client.
+export async function regenerateIntakeToken(formData: FormData) {
   const supabase = await createClient()
   await requireEditorOrg()
 
   const clientId = String(formData.get('client_id') ?? '')
+  if (!clientId) {
+    redirect('/pipeline')
+  }
+
+  const { error } = await supabase.rpc('regenerate_intake_token', {
+    p_client_id: clientId,
+  })
+
+  revalidatePath(`/clients/${clientId}/intake`)
+  redirect(
+    `/clients/${clientId}/intake?${
+      error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'rotated=1'
+    }`
+  )
+}
+
+export async function deleteClient(formData: FormData) {
+  const supabase = await createClient()
+  const m = await requireEditorOrg()
+
+  const clientId = String(formData.get('client_id') ?? '')
   if (clientId) {
-    await supabase.from('clients').delete().eq('id', clientId)
+    const { data, error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', clientId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    // A delete that matched nothing is a permission failure, not a success —
+    // reporting it as one is how a silently-ignored mutation stays invisible.
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/clients/${clientId}?error=1&msg=${encodeURIComponent(
+          error?.message ??
+            "That client isn't in your workspace, or you don't have permission to delete it."
+        )}`
+      )
+    }
   }
 
   revalidatePath('/pipeline')
@@ -192,13 +251,14 @@ export async function deleteClient(formData: FormData) {
 
 export async function addStage(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = (await requireEditorOrg()).orgId
+  const organizationId = (await requireWorkspaceAdmin()).orgId
 
   const name = String(formData.get('name') ?? '').trim()
   if (name) {
     const { data: last } = await supabase
       .from('pipeline_stages')
       .select('position')
+      .eq('organization_id', organizationId)
       .order('position', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -215,29 +275,9 @@ export async function addStage(formData: FormData) {
   redirect('/workflow')
 }
 
-export async function updateStage(formData: FormData) {
-  const supabase = await createClient()
-  await requireEditorOrg()
-
-  const stageId = String(formData.get('stage_id') ?? '')
-  const name = String(formData.get('name') ?? '').trim()
-  const position = Number(formData.get('position') ?? 0)
-
-  if (stageId && name) {
-    await supabase
-      .from('pipeline_stages')
-      .update({ name, position })
-      .eq('id', stageId)
-  }
-
-  revalidatePath('/workflow')
-  revalidatePath('/pipeline')
-  redirect('/workflow?saved=1')
-}
-
 export async function deleteStage(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireWorkspaceAdmin()
 
   const stageId = String(formData.get('stage_id') ?? '')
   if (stageId) {
@@ -245,11 +285,16 @@ export async function deleteStage(formData: FormData) {
       .from('clients')
       .select('id', { count: 'exact', head: true })
       .eq('stage_id', stageId)
+      .eq('organization_id', m.orgId)
 
     if ((count ?? 0) > 0) {
       redirect(`/workflow?error=in-use&count=${count}`)
     }
-    await supabase.from('pipeline_stages').delete().eq('id', stageId)
+    await supabase
+      .from('pipeline_stages')
+      .delete()
+      .eq('id', stageId)
+      .eq('organization_id', m.orgId)
   }
 
   revalidatePath('/workflow')
@@ -534,7 +579,7 @@ function collectCustom(formData: FormData): Record<string, string> {
 
 export async function addRecord(formData: FormData) {
   const supabase = await createClient()
-  const organizationId = await requireOrg()
+  const organizationId = (await requireEditorOrg()).orgId
 
   const name = String(formData.get('name') ?? '').trim()
   const optional = (n: string) => {
@@ -566,7 +611,7 @@ export async function addRecord(formData: FormData) {
 
 export async function updateRecord(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  const m = await requireEditorOrg()
 
   const recordId = String(formData.get('record_id') ?? '')
   const optional = (n: string) => {
@@ -586,6 +631,7 @@ export async function updateRecord(formData: FormData) {
       updated_at: new Date().toISOString(),
     })
     .eq('id', recordId)
+    .eq('organization_id', m.orgId)
 
   revalidatePath('/pipeline')
   revalidatePath('/overview')
@@ -599,11 +645,26 @@ export async function updateRecord(formData: FormData) {
 
 export async function deleteRecord(formData: FormData) {
   const supabase = await createClient()
-  await requireOrg()
+  const m = await requireEditorOrg()
 
   const recordId = String(formData.get('record_id') ?? '')
   if (recordId) {
-    await supabase.from('clients').delete().eq('id', recordId)
+    const { data, error } = await supabase
+      .from('clients')
+      .delete()
+      .eq('id', recordId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    // A delete that matched nothing is a permission failure, not a success.
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/records/${recordId}?error=1&msg=${encodeURIComponent(
+          error?.message ??
+            "That record isn't in your workspace, or you don't have permission to delete it."
+        )}`
+      )
+    }
   }
   revalidatePath('/pipeline')
   redirect('/pipeline')
@@ -678,21 +739,42 @@ export async function addTask(formData: FormData) {
 
 export async function updateTaskStatus(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const taskId = String(formData.get('task_id') ?? '')
   const status = String(formData.get('status') ?? '')
+
+  // Ticking a checklist item off a record's page should update that page and
+  // the board pill, not just /tasks — and errors belong on the page the tick
+  // came from.
+  const recordId = String(formData.get('record_id') ?? '')
+  const back = recordId ? `/records/${recordId}` : '/tasks'
+
   if (taskId && ['pending', 'in_progress', 'done'].includes(status)) {
+    // The task must belong to the caller's workspace, and to a department the
+    // caller is in scope for: department scoping is an access rule, not a
+    // display preference, so it is re-checked on the write.
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('department')
+      .eq('id', taskId)
+      .eq('organization_id', m.orgId)
+      .maybeSingle()
+
+    if (!task || !canAccessTaskDepartment(m, task.department)) {
+      redirect(
+        `${back}?error=1&msg=${encodeURIComponent("That task isn't yours to change.")}`
+      )
+    }
+
     await supabase
       .from('tasks')
       .update({ status, updated_at: new Date().toISOString() })
       .eq('id', taskId)
+      .eq('organization_id', m.orgId)
   }
   revalidatePath('/tasks')
 
-  // Ticking a checklist item off a record's page should update that page and
-  // the board pill, not just /tasks.
-  const recordId = String(formData.get('record_id') ?? '')
   if (recordId) {
     revalidatePath('/pipeline')
     revalidatePath(`/records/${recordId}`)
@@ -701,11 +783,37 @@ export async function updateTaskStatus(formData: FormData) {
 
 export async function deleteTask(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const taskId = String(formData.get('task_id') ?? '')
   if (taskId) {
-    await supabase.from('tasks').delete().eq('id', taskId)
+    const { data: task } = await supabase
+      .from('tasks')
+      .select('department')
+      .eq('id', taskId)
+      .eq('organization_id', m.orgId)
+      .maybeSingle()
+
+    if (!task || !canAccessTaskDepartment(m, task.department)) {
+      redirect(
+        `/tasks?error=1&msg=${encodeURIComponent("That task isn't yours to delete.")}`
+      )
+    }
+
+    const { data, error } = await supabase
+      .from('tasks')
+      .delete()
+      .eq('id', taskId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/tasks?error=1&msg=${encodeURIComponent(
+          error?.message ?? "That task couldn't be deleted."
+        )}`
+      )
+    }
   }
   revalidatePath('/tasks')
 }
@@ -754,17 +862,31 @@ export async function addEvent(formData: FormData) {
 
 export async function deleteEvent(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const eventId = String(formData.get('event_id') ?? '')
   if (eventId) {
-    await supabase.from('events').delete().eq('id', eventId)
+    const { data, error } = await supabase
+      .from('events')
+      .delete()
+      .eq('id', eventId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    // A delete that matched nothing is a permission failure, not a success.
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/calendar?error=1&msg=${encodeURIComponent(
+          error?.message ?? "That event isn't in your workspace."
+        )}`
+      )
+    }
   }
   revalidatePath('/calendar')
 }
 
 export async function moveClientStage(formData: FormData) {
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
   const supabase = await createClient()
   const clientId = String(formData.get('client_id') ?? '')
   const stageId = String(formData.get('stage_id') ?? '')
@@ -782,6 +904,7 @@ export async function moveClientStage(formData: FormData) {
     .from('clients')
     .update({ stage_id: stageId, updated_at: new Date().toISOString() })
     .eq('id', clientId)
+    .eq('organization_id', m.orgId)
 
   revalidatePath('/pipeline')
   revalidatePath('/overview')
@@ -804,7 +927,12 @@ export async function generateChecklistNow(formData: FormData) {
 
   // Clancy's own workspace shows client detail at /clients/[id]; client
   // workspaces use /records/[id]. Return the user to whichever they came from.
-  const backTo = String(formData.get('back_to') ?? `/records/${recordId}`)
+  // Only an in-app destination is accepted: the value rides in the payload,
+  // so anything that is not one of these two record pages falls back.
+  const requested = String(formData.get('back_to') ?? '')
+  const backTo = /^\/(records|clients)\/[0-9a-fA-F-]{36}$/.test(requested)
+    ? requested
+    : `/records/${recordId}`
 
   // Same function the stage trigger uses, so there's one implementation of
   // checklist generation rather than a SQL one and a TypeScript one drifting.
@@ -926,13 +1054,22 @@ export async function updateMember(formData: FormData) {
     redirect('/team?error=1&msg=Not%20in%20your%20workspace')
   }
 
-  await supabase
-    .from('profiles')
-    .update({ role, department })
-    .eq('id', profileId)
+  // The role change goes through a definer RPC: the only UPDATE policy on
+  // profiles is platform-admin-only, so a workspace admin's write here
+  // matched zero rows and reported success. The RPC is the enforcement point
+  // (caller must be an admin of the target's org, target must not be a
+  // platform admin, role must be one of the three keys) and its error is
+  // surfaced rather than swallowed.
+  const { error } = await supabase.rpc('set_member_role', {
+    p_profile_id: profileId,
+    p_role: role,
+    p_department: department,
+  })
 
   revalidatePath('/team')
-  redirect('/team?saved=1')
+  redirect(
+    `/team?${error ? `error=1&msg=${encodeURIComponent(error.message)}` : 'saved=1'}`
+  )
 }
 
 export async function addInvite(formData: FormData) {
@@ -981,11 +1118,25 @@ export async function addInvite(formData: FormData) {
 
 export async function removeInvite(formData: FormData) {
   const supabase = await createClient()
-  await requireWorkspaceAdmin()
+  const m = await requireWorkspaceAdmin()
 
   const inviteId = String(formData.get('invite_id') ?? '')
   if (inviteId) {
-    await supabase.from('org_invites').delete().eq('id', inviteId)
+    const { data, error } = await supabase
+      .from('org_invites')
+      .delete()
+      .eq('id', inviteId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    // A delete that matched nothing is a permission failure, not a success.
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/team?error=1&msg=${encodeURIComponent(
+          error?.message ?? "That invite isn't in your workspace."
+        )}`
+      )
+    }
   }
   revalidatePath('/team')
 }
@@ -1087,10 +1238,14 @@ export async function markAllNotificationsRead() {
 }
 
 // Attachment metadata arrives from the browser as JSON, so validate the shape
-// rather than trusting it. `path` is re-checked against the caller's org
-// prefix — storage RLS would block a foreign read anyway, but failing here
-// gives a clear error instead of a silent empty attachment.
-function parseAttachments(raw: FormDataEntryValue | null): BroadcastAttachment[] {
+// rather than trusting it. The paths are minted client-side and shipped in a
+// hidden input, so every one must sit under the caller's own org prefix —
+// storage RLS would block a foreign read anyway, but the row must not be
+// allowed to name someone else's object in the first place.
+function parseAttachments(
+  raw: FormDataEntryValue | null,
+  orgId: string
+): BroadcastAttachment[] {
   try {
     const value = JSON.parse(String(raw ?? '[]'))
     if (!Array.isArray(value)) return []
@@ -1100,7 +1255,9 @@ function parseAttachments(raw: FormDataEntryValue | null): BroadcastAttachment[]
           Boolean(a) &&
           typeof a.name === 'string' &&
           typeof a.path === 'string' &&
-          typeof a.size === 'number'
+          typeof a.size === 'number' &&
+          a.path.startsWith(`${orgId}/`) &&
+          !a.path.split('/').includes('..')
       )
       .map((a) => ({
         name: a.name,
@@ -1121,7 +1278,7 @@ export async function createBroadcast(formData: FormData) {
   const subject = String(formData.get('subject') ?? '').trim()
   const body = String(formData.get('body') ?? '').trim()
   const audience = String(formData.get('audience') ?? 'all')
-  const attachments = parseAttachments(formData.get('attachments'))
+  const attachments = parseAttachments(formData.get('attachments'), m.orgId)
   const { valid: customRecipients, invalid } = parseEmailList(
     String(formData.get('custom_recipients') ?? '')
   )
@@ -1180,14 +1337,25 @@ export async function createBroadcast(formData: FormData) {
 
 export async function markBroadcastSent(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const broadcastId = String(formData.get('broadcast_id') ?? '')
   if (broadcastId) {
-    await supabase
+    const { data, error } = await supabase
       .from('broadcasts')
       .update({ status: 'sent' })
       .eq('id', broadcastId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    // An update that matched nothing is a permission failure, not a success.
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/broadcasts?error=1&msg=${encodeURIComponent(
+          error?.message ?? "That broadcast isn't in your workspace."
+        )}`
+      )
+    }
   }
   revalidatePath('/broadcasts')
   redirect('/broadcasts?saved=1')
@@ -1195,11 +1363,25 @@ export async function markBroadcastSent(formData: FormData) {
 
 export async function deleteBroadcast(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const broadcastId = String(formData.get('broadcast_id') ?? '')
   if (broadcastId) {
-    await supabase.from('broadcasts').delete().eq('id', broadcastId)
+    const { data, error } = await supabase
+      .from('broadcasts')
+      .delete()
+      .eq('id', broadcastId)
+      .eq('organization_id', m.orgId)
+      .select('id')
+
+    // A delete that matched nothing is a permission failure, not a success.
+    if (error || !data || data.length === 0) {
+      redirect(
+        `/broadcasts?error=1&msg=${encodeURIComponent(
+          error?.message ?? "That broadcast isn't in your workspace."
+        )}`
+      )
+    }
   }
   revalidatePath('/broadcasts')
   redirect('/broadcasts')
@@ -1247,15 +1429,41 @@ export async function updateLanding(formData: FormData) {
   )
 }
 
+// The sign-off logo is embedded as an attachment so it renders in clients that
+// block remote images by default (Outlook, and Gmail with images off). It is
+// always an object in this project's own `site-assets` bucket — the site and
+// team editors are the only way to set it — so the bytes are read through the
+// storage client under the caller's session rather than fetched by URL: a
+// server-side fetch of a config-supplied URL follows redirects to anything the
+// server can reach, and the result would leave in an email. Anything that is
+// not a site-assets object gets no embed and the template falls back to the
+// remote <img src>.
+const SITE_ASSET_OBJECT = /\/storage\/v1\/object\/(?:public\/|sign\/)?site-assets\/(.+)$/
+
+function siteAssetPath(raw: string): string | null {
+  let url: URL
+  try {
+    url = new URL(raw)
+  } catch {
+    return null
+  }
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null
+  const match = SITE_ASSET_OBJECT.exec(url.pathname)
+  if (!match) return null
+  const path = decodeURIComponent(match[1])
+  return path && !path.split('/').includes('..') ? path : null
+}
+
 export async function sendBroadcastNow(formData: FormData) {
   const supabase = await createClient()
-  await requireEditorOrg()
+  const m = await requireEditorOrg()
 
   const broadcastId = String(formData.get('broadcast_id') ?? '')
   const { data: broadcastRow } = await supabase
     .from('broadcasts')
     .select('*')
     .eq('id', broadcastId)
+    .eq('organization_id', m.orgId)
     .maybeSingle()
 
   if (!broadcastRow) {
@@ -1307,25 +1515,20 @@ export async function sendBroadcastNow(formData: FormData) {
     if (cid) inlineImages.push({ src: `cid:${cid}`, alt: file.name })
   }
 
-  // The signature logo is embedded too, so it renders in clients that block
-  // remote images by default (Outlook, and Gmail with images off).
-  // Only http(s) — the URL comes from workspace config, and a server-side
-  // fetch of an arbitrary scheme/host is a needless hole to leave open.
   let logoCid: string | undefined
-  if (signature?.logo_url && /^https?:\/\//i.test(signature.logo_url)) {
-    try {
-      const res = await fetch(signature.logo_url)
-      if (res.ok) {
-        logoCid = 'clancy-signature-logo'
-        attachments.push({
-          filename: 'logo',
-          content: Buffer.from(await res.arrayBuffer()),
-          contentType: res.headers.get('content-type') ?? 'image/png',
-          cid: logoCid,
-        })
-      }
-    } catch {
-      // Fall back to the remote <img src> in the template.
+  const logoPath = signature?.logo_url ? siteAssetPath(signature.logo_url) : null
+  if (logoPath) {
+    const { data: logoBlob } = await supabase.storage
+      .from('site-assets')
+      .download(logoPath)
+    if (logoBlob && logoBlob.size <= MAX_ATTACHMENT_BYTES) {
+      logoCid = 'clancy-signature-logo'
+      attachments.push({
+        filename: 'logo',
+        content: Buffer.from(await logoBlob.arrayBuffer()),
+        contentType: logoBlob.type || 'image/png',
+        cid: logoCid,
+      })
     }
   }
 
@@ -1360,6 +1563,7 @@ export async function sendBroadcastNow(formData: FormData) {
     .from('broadcasts')
     .update({ status: 'sent', recipient_count: emails.length })
     .eq('id', broadcastId)
+    .eq('organization_id', m.orgId)
 
   revalidatePath('/broadcasts')
   redirect('/broadcasts?saved=1')

@@ -1,7 +1,12 @@
 import Link from 'next/link'
 import { notFound, redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { updateRecord, deleteRecord, requireOrg } from '@/lib/actions'
+import { updateRecord, deleteRecord } from '@/lib/actions'
+import {
+  getMembership,
+  hasRole,
+  taskDepartmentFilter,
+} from '@/lib/permissions'
 import { Header } from '@/components/Header'
 import { RecordFields } from '@/components/RecordFields'
 import { ConfirmForm } from '@/components/ConfirmForm'
@@ -24,7 +29,9 @@ export default async function RecordDetailPage({
 }) {
   const { id } = await params
   const flags = await searchParams
-  const orgId = await requireOrg()
+  const m = await getMembership()
+  const orgId = m.orgId
+  const canEdit = hasRole(m, 'editor')
   const supabase = await createClient()
 
   const [{ data: orgRow }, { data: recordRow }, { data: stages }] =
@@ -44,16 +51,24 @@ export default async function RecordDetailPage({
   const record = recordRow as Client
   const config = (org?.crm_config ?? {}) as CrmConfig
 
-  // Checklist for the stage this record is currently sitting in.
+  // Checklist for the stage this record is currently sitting in. Tasks are
+  // department-scoped for non-admins in the query itself, so a viewer never
+  // receives another department's work.
   const stageList = (stages ?? []) as PipelineStage[]
   const currentStage = stageList.find((s) => s.id === record.stage_id)
-  const { data: stageTaskRows } = currentStage
-    ? await supabase
+  const deptFilter = taskDepartmentFilter(m)
+  const stageTaskQuery = currentStage
+    ? supabase
         .from('tasks')
         .select('*')
         .eq('client_id', record.id)
         .eq('origin_stage_id', currentStage.id)
-        .order('created_at', { ascending: true })
+    : null
+  const { data: stageTaskRows } = stageTaskQuery
+    ? await (deptFilter
+        ? stageTaskQuery.or(deptFilter)
+        : stageTaskQuery
+      ).order('created_at', { ascending: true })
     : { data: [] }
 
   const stageTasks = (stageTaskRows ?? []) as Task[]
@@ -86,35 +101,50 @@ export default async function RecordDetailPage({
           tasks={stageTasks}
         />
 
-        <form action={updateRecord} className="space-y-4">
-          <input type="hidden" name="record_id" value={record.id} />
-          <RecordFields
-            config={config}
-            stages={(stages ?? []) as PipelineStage[]}
-            record={record}
-          />
-          <button
-            type="submit"
-            className="w-full rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:w-auto"
-          >
-            Save changes
-          </button>
-        </form>
+        {canEdit ? (
+          <>
+            <form action={updateRecord} className="space-y-4">
+              <input type="hidden" name="record_id" value={record.id} />
+              <RecordFields
+                config={config}
+                stages={(stages ?? []) as PipelineStage[]}
+                record={record}
+              />
+              <button
+                type="submit"
+                className="w-full rounded-lg bg-violet-deep px-5 py-2.5 text-sm font-medium text-white hover:bg-violet sm:w-auto"
+              >
+                Save changes
+              </button>
+            </form>
 
-        <div className="mt-10 border-t border-ash/60 pt-6">
-          <ConfirmForm
-            action={deleteRecord}
-            message={`Delete ${record.company_name}? This can't be undone.`}
-          >
-            <input type="hidden" name="record_id" value={record.id} />
-            <button
-              type="submit"
-              className="w-full rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400 sm:w-auto"
-            >
-              Delete {recordLabel(config).toLowerCase()}
-            </button>
-          </ConfirmForm>
-        </div>
+            <div className="mt-10 border-t border-ash/60 pt-6">
+              <ConfirmForm
+                action={deleteRecord}
+                message={`Delete ${record.company_name}? This can't be undone.`}
+              >
+                <input type="hidden" name="record_id" value={record.id} />
+                <button
+                  type="submit"
+                  className="w-full rounded-lg border border-red-950 px-4 py-2 text-sm text-red-400 hover:border-red-400 sm:w-auto"
+                >
+                  Delete {recordLabel(config).toLowerCase()}
+                </button>
+              </ConfirmForm>
+            </div>
+          </>
+        ) : (
+          // Viewers read the record but hold no write permission, so the save
+          // and delete controls are not rendered at all rather than shown and
+          // then refused by the action.
+          <fieldset disabled className="space-y-4">
+            <RecordFields
+              config={config}
+              stages={(stages ?? []) as PipelineStage[]}
+              record={record}
+            />
+          </fieldset>
+        )}
       </main>
     </div>
   )

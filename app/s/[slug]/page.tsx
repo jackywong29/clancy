@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import type { CSSProperties } from 'react'
 import { resolveFont, googleFontsHref, typeFont } from '@/lib/fonts'
 import { resolveSectionOrder } from '@/lib/sections'
+import { safeUrl, safeEmail } from '@/lib/safe-url'
 import { submitLeadForm } from '@/lib/actions'
 import type {
   Site,
@@ -105,7 +106,7 @@ const DEFAULT_EMAIL_MSG =
 function contactHref(config: SiteConfig, name: string, service: string) {
   const vars = { name, service }
   if (config.contact_method === 'email') {
-    const email = config.contact_email?.trim()
+    const email = safeEmail(config.contact_email)
     if (!email) return null
     const subject = fillTemplate(
       config.email_subject?.trim() || DEFAULT_EMAIL_SUBJECT,
@@ -169,11 +170,14 @@ export default async function ClientSitePage({
   const bookLabel = config.book_label?.trim() || 'Book now'
   const serviceBookLabel = config.service_book_label?.trim() || 'Book this'
   const logoCentered = config.logo_position === 'center'
-  const contactEmail = config.contact_email?.trim()
+  const contactEmail = safeEmail(config.contact_email)
   const book = contactHref(config, name, '')
 
   // Background + palette resolution: image > custom colour > theme.
-  const bgImage = config.bg_image_url?.trim()
+  // Every config-supplied URL below goes through safeUrl: these values are
+  // typed into the site editor and then interpolated into CSS url() values
+  // and link targets, where React's escaping does not reach.
+  const bgImage = safeUrl(config.bg_image_url)
   const bgColor = config.bg_color?.trim()
   let c: Palette
   if (bgImage) {
@@ -235,10 +239,17 @@ export default async function ClientSitePage({
 
   const services = (config.services ?? []).filter((s) => s.name.trim() !== '')
   const faq = (config.faq ?? []).filter((f) => f.q.trim() !== '')
-  const socials = (config.socials ?? []).filter((s) => s.url.trim() !== '')
-  const gallery = (config.gallery ?? []).filter((u) => u.trim() !== '')
-  const heroImage = config.hero_image_url?.trim()
-  const aboutImage = config.about_image_url?.trim()
+  const socials = (config.socials ?? []).flatMap((s) => {
+    const url = safeUrl(s.url)
+    return url ? [{ ...s, url }] : []
+  })
+  const gallery = (config.gallery ?? [])
+    .map((u) => safeUrl(u))
+    .filter((u): u is string => u !== null)
+  const heroImage = safeUrl(config.hero_image_url)
+  const aboutImage = safeUrl(config.about_image_url)
+  const logoUrl = safeUrl(config.logo_url)
+  const faviconUrl = safeUrl(config.favicon_url)
   const hasAbout = !!(
     config.about_title?.trim() ||
     config.about_body?.trim() ||
@@ -267,9 +278,7 @@ export default async function ClientSitePage({
     >
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link rel="stylesheet" href={fontHref} />
-      {config.favicon_url?.trim() && (
-        <link rel="icon" href={config.favicon_url} />
-      )}
+      {faviconUrl && <link rel="icon" href={faviconUrl} />}
 
       {bgImage && (
         <>
@@ -298,10 +307,10 @@ export default async function ClientSitePage({
           }`}
         >
           <div className="flex min-w-0 items-center gap-3">
-            {config.logo_url ? (
+            {logoUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={config.logo_url}
+                src={logoUrl}
                 alt={`${name} logo`}
                 className="h-10 w-10 max-w-full shrink-0 rounded-lg object-contain"
               />
