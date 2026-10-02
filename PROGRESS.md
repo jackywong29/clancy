@@ -103,7 +103,9 @@ Target submission is still the week of 9 Nov.
    (`8be97a7`) was pushed on **28 Sep by Ivan Cheah** (GitHub `IvanCYX`), not
    from a session with Jacky, and is **live**. Migration 021 still needs running
    — see the ⚠️ block at the top for what is broken until it is. Before running:
-   (a) Jacky confirms who Ivan is and that his access to the repo is intended;
+   (a) ~~Jacky confirms who Ivan is and that his access to the repo is
+   intended~~ **confirmed 2 Oct:** Ivan is a developer Jacky gave access to
+   (GitHub shows write access);
    (b) a session reviews `supabase/021_security_hardening.sql` — 1,100 lines
    that change sign-up, invites and the website form. Batch 19 is not yet in
    the `CLAUDE.md` build log.
