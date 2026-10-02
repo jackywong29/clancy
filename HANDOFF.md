@@ -31,25 +31,21 @@ An **App Store version of Clancy** was discussed 28 Sep – 1 Oct and is
 ## 2. Starting a session
 
 ```bash
-cd ~/Desktop/Claude/crm-platform
+cd ~/Developer/Claude/crm-platform
 git pull --ff-only
 npm run typecheck && npm test      # expect: clean, 55 passed
 ```
 
-If typecheck fails with **"Duplicate identifier" in `.next/types/… 2.ts`**, that
-is iCloud making conflict copies inside the build cache (the repo is on the
-Desktop, which iCloud syncs). Not a real error, and it recurs:
-
-```bash
-find .next -name "* 2.*" -delete
-```
-
-**Machines.** The desktop-app sessions run on a **MacBook Air (M2, 8GB)**,
-which sleeps when the lid closes — and Remote Control (enabled 25 Sep, so the
-session can be steered from the iPhone) stops with it. The **M4 Mac mini
-(32GB)** stays on and has the UGREEN NAS mounted; moving Clancy work there is
-queued in `PROGRESS.md`. On the MacBook Air, Node 24, git and Xcode tools all
-work. Section 9 lists traps hit on the machine the 15 Sep Ghostty session used.
+**Machines.** Since 2 Oct the desktop-app sessions run on the **M4 Mac mini
+(32GB)**, which stays on, has the UGREEN NAS mounted, and keeps Remote Control
+(steer sessions from the iPhone) available. The Mac user is `clancy`, so the
+repo is at `/Users/clancy/Developer/Claude/crm-platform`. Node 24 LTS is the
+nodejs.org install at `/usr/local/bin/node` (no Homebrew Node, on purpose);
+git, `gh` and Xcode 27 all work. The **MacBook Air** is Jacky's personal Mac
+again. The repo used to sit on the Air's Desktop, where iCloud made `" 2"`
+conflict copies inside `.next/`; `~/Developer` is outside iCloud, so that
+"Duplicate identifier" typecheck failure shouldn't come back. Section 9 lists
+traps hit on the machine the 15 Sep Ghostty session used.
 
 ---
 
@@ -163,8 +159,8 @@ ERP for service SMEs*, with a five-question sales qualifier — see `PROGRESS.md
 
 ## 9. Environment traps from the 15 Sep Ghostty session
 
-None of these apply on the MacBook Air. They were hit on the machine the 15 Sep
-session ran on — check `which node`, `which git` and `git status` before
+None of these apply on the Mac mini (nor did they on the MacBook Air). They
+were hit on the machine the 15 Sep session ran on — check `which node`, `which git` and `git status` before
 trusting a failure there.
 
 - **macOS privacy block on `~/Desktop`.** After an agent update, every read

@@ -306,9 +306,9 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
 1. **Nightly backups → NAS** (Mac mini runs it). Closes the top risk. Rule for
    anything on the home machines: **if a client depends on it, it runs in the
    cloud; if only Jacky depends on it, it can run at home.**
-2. **Move Clancy's Claude Code sessions to the Mac mini.** This session ran on
-   the MacBook Air (M2, 8GB), which sleeps with the lid closed and takes Remote
-   Control with it; the mini stays on and holds the NAS.
+2. ~~**Move Clancy's Claude Code sessions to the Mac mini.**~~ **Done 2 Oct.**
+   Sessions now run on the M4 Mac mini from `~/Developer/Claude`; the MacBook
+   Air is Jacky's personal Mac again. See `HANDOFF.md` §2.
 3. **Monday client report** — a scheduled check across every client workspace
    (stuck records, overdue tasks, uncontacted leads, failed sends). Builds on
    Batch 18's `stage_entered_at` / `stage_transitions`.
@@ -450,7 +450,7 @@ provides — system Python is 3.9.6 and was left untouched).
 - **No in-product AI** for clients (decided 7 Jul 2026). Don't re-suggest it.
 - **No CHECK-constraint enums** in the database (the recurring MegaStar CRM
   production gotcha).
-- Run npm commands from `~/Desktop/Claude/crm-platform` — the shell cwd resets
+- Run npm commands from `~/Developer/Claude/crm-platform` — the shell cwd resets
   between calls, and a stray `npm install` in the parent folder once broke the
   Vercel build.
 
