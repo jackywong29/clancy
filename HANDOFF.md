@@ -10,13 +10,21 @@
 
 Clancy HQ is live at **clancyhq.com** (also `clancy-hq.vercel.app`). Next.js 16
 on Vercel, functions in **Singapore** since 28 Sep, Supabase in Singapore.
-18 build batches, migrations **001–020**. Two tenants: **Clancy** (own
-workspace, sales board) and **SGCKL** (a real KL church, site at `/s/sgckl`).
-**No paying client yet.** Clancy Sdn Bhd was incorporated 19 Sep. The company
-also sells an unrelated iOS app, **plancy** (`~/plancy`, own `HANDOFF.md`).
+19 build batches, migrations **001–020 applied, 021 pending**. Two tenants:
+**Clancy** (own workspace, sales board) and **SGCKL** — a **test tenant, not a
+client** (a KL church site at `/s/sgckl`). **No paying client yet.** Clancy Sdn
+Bhd was incorporated 19 Sep. The company also sells an unrelated iOS app,
+**plancy** (`~/plancy`, own `HANDOFF.md`).
 
-Latest code: **Batch 18, `ff97d1a`** — the Overview dashboard, plus the stage
-rules moved into a database trigger. Full history: the build log in `CLAUDE.md`.
+Latest code: **Batch 19, `8be97a7`** — tenancy and permission invariants,
+pushed 28 Sep by Ivan Cheah and live. **Its migration 021 has not been
+confirmed run** — read the ⚠️ block at the top of `PROGRESS.md` and open
+action 0 before anything else. Before that, Batch 18 (`ff97d1a`): the
+Overview dashboard plus the stage rules moved into a database trigger. Full
+history: the build log in `CLAUDE.md` (Batch 19 not yet logged there).
+
+An **App Store version of Clancy** was discussed 28 Sep – 1 Oct and is
+**parked** as a future idea — see *PARKED IDEA* in `PROGRESS.md`.
 
 ---
 

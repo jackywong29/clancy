@@ -12,7 +12,8 @@
 > verify a deploy, environment traps, and what to do next. (`HANDOFF-2026-09-15.md`
 > is the previous session's handoff, kept for its login-bug diagnosis.)
 
-Last updated: 28 September 2026 · Batch 19 pushed · production is
+Last updated: 2 October 2026 · Batch 19 pushed and **live** (its security
+headers are served, checked 2 Oct) · production is
 **clancyhq.com**, functions in **Singapore** (`sin1`, verified 28 Sep) ·
 migrations **001–020** applied — 019 + 020 verified by `020_verify.sql` (15/15
 on 28 Sep); 018 reported run by Jacky on 6 Sep but never independently checked
@@ -36,8 +37,10 @@ Clancy HQ is built and live at **clancyhq.com** (18 build batches,
 dashboard (Batch 18). It is a genuine two-sided product: Jacky's agency
 side (sales pipeline, client intake, three build briefs) and per-client workspaces
 (configurable records, stages, tasks, calendar, people, broadcasts, team/roles,
-website editor). Two live tenants: **Clancy** (own workspace) and **SGCKL** (a
-real KL church — first client site at `/s/sgckl`). Latest deploy is green.
+website editor). Two tenants: **Clancy** (own workspace) and **SGCKL**, which is
+a **test tenant, not a client** (a KL church site at `/s/sgckl`, built to
+exercise the platform — Jacky, 28 Sep: "SGCKL is just a test so ignore it").
+Latest deploy is green.
 **Automated email is now live** (Gmail SMTP configured in Vercel — verified
 with a simple send that landed in the main inbox as important). The app is
 **responsive** since Batch 12 (works at 360px, unchanged at desktop). No
@@ -72,10 +75,9 @@ first thing Clancy sells that does not trade time for money, and it puts a
 real consumer product under the brand.
 
 **The risk to watch: founder attention.** Jacky has ~1–2 days a week for
-Clancy in total, and plancy is currently taking most of it. SGCKL still has no
-signed agreement and no agreed price — that is the *revenue* item, and it is
-slipping while plancy is built. Do not let the App Store date eat the first
-paying client.
+Clancy in total, and plancy is currently taking most of it. Clancy HQ still has
+no paying client — finding the first one is the *revenue* item, and it slips
+while plancy is built. Do not let the App Store date eat it.
 
 **Where plancy's status lives:** `~/plancy/HANDOFF.md` (decisions, App Store
 state, what's next) and `~/plancy/docs/` (seven specs written 18 Sep: PRD,
@@ -97,7 +99,16 @@ Target submission is still the week of 9 Nov.
 
 ## OPEN ACTIONS FOR JACKY (do these first)
 
-0. **Batch 18 — set your finish line, then smoke-test on real data.**
+0. **Batch 19 — confirm who pushed it, then review and run 021.** Batch 19
+   (`8be97a7`) was pushed on **28 Sep by Ivan Cheah** (GitHub `IvanCYX`), not
+   from a session with Jacky, and is **live**. Migration 021 still needs running
+   — see the ⚠️ block at the top for what is broken until it is. Before running:
+   (a) Jacky confirms who Ivan is and that his access to the repo is intended;
+   (b) a session reviews `supabase/021_security_hardening.sql` — 1,100 lines
+   that change sign-up, invites and the website form. Batch 19 is not yet in
+   the `CLAUDE.md` build log.
+
+0b. **Batch 18 — set your finish line, then smoke-test on real data.**
    Workflow → **Finish line → Active** → Save workflow. Until then the Overview
    treats *Renewal due* as done and counts every Active client as open work.
    Then: (a) open the Overview and check the numbers look like your business;
@@ -232,8 +243,15 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
   is solid. Harden roles to RLS before a client with adversarial-insider risk.
 - ~~**No entity registered**~~ — **resolved 19 Sep 2026: Clancy Sdn Bhd is
   incorporated.** Two follow-ups remain: the Vercel project still sits under a
-  personal account named "MSA" and should move to the company, and the SGCKL
-  agreement should be issued in the company's name, not Jacky's.
+  personal account named "MSA" and should move to the company (onto a Pro
+  team — see the next risk), and client agreements should be issued in the
+  company's name, not Jacky's.
+- **Vercel's Hobby plan forbids commercial use.** Vercel's fair-use guidelines
+  (checked 30 Sep 2026): Hobby is "restricted to non-commercial personal use
+  only", and commercial use includes being paid to build or host the site.
+  Move the project to a **Pro** team under Clancy Sdn Bhd (US$20/mo) before the
+  first client pays — the same day as Supabase Pro (US$25/mo). Together about
+  RM 200/mo.
 - **PDPA** applies (storing clients' customers' data on their behalf).
 - **Hours-per-client is not being tracked** — the number that drives the
   full-time gate and the hiring trigger. Start logging.
@@ -274,11 +292,10 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
 - **Full-time gate number** — the monthly revenue at which leaving the MegaStar
   Arena Director role becomes rational. Proposed placeholder: 3 consecutive
   months at RM 18k MRR with churn under 3%. Not confirmed.
-- **SGCKL commercial terms** — live client, no agreement or pricing agreed.
-  Pilot rate (RM 600/mo) or full (RM 1,200/mo)?
-- **Vertical #1** — the plan says car workshops, but the first real client is a
-  church. Churches look like a stronger vertical (recurring events, retention
-  pipelines, weekly comms, tight referral networks). Worth reconsidering.
+- **Vertical #1** — the plan says car workshops; the only other tenant so far is
+  a church (SGCKL, a test). Churches may be a strong vertical (recurring events,
+  retention pipelines, weekly comms, tight referral networks). Worth
+  reconsidering once there is a real client conversation.
 - **clancy.my** — not registered. Needed for credibility, email deliverability,
   and to move off Gmail SMTP to a proper email API.
 
@@ -306,6 +323,91 @@ self-contained Node 22 lives at `~/.local/node/bin/node` — run
    history is already being recorded), calendar day/week views, alert delivery
    (needs cron), booking engine, follow-up sequences, UI/UX redesign
    (`DESIGN_BRIEF.md`), export feature, inventory.
+
+---
+
+## PARKED IDEA — Clancy on the App Store (discussed 28 Sep – 1 Oct 2026)
+
+**Status: a thought for the future, not on the roadmap** (Jacky, 2 Oct). Pick it
+up only if Clancy is going to be published on the App Store. Nothing here is
+built; the points marked *agreed* are Jacky's answers during the discussion.
+
+**The idea.** Clients agree terms in person; Clancy is then ready as an
+**operations ERP** (operations only — accounting, payroll and e-Invoice are
+connected to, never built). Staff work anywhere through a Clancy app on the
+iOS and macOS App Store: download, sign in with an account Clancy authorises,
+fill in the intake, and get a system curated for the business.
+
+**Two tiers (agreed).**
+
+| | Starter — free, self-serve | Tailored — paid, priced per client |
+|---|---|---|
+| Set up by | The owner, ~5 minutes | Clancy, from the full intake |
+| Board | 1 board, up to 6 steps | Unlimited steps; industry modules as built |
+| Fields | Standard + 3 of their own | Unlimited |
+| Team | Up to 5 people, Admin or Member | Unlimited, custom roles + departments |
+| Tasks, calendar, Overview | Yes | Yes |
+| Stage checklists, "must finish first" | No | Yes |
+| Automations, broadcasts, website + form | No | Yes |
+| Changes | They make them | Clancy makes them |
+
+- Starter is open to **any business**; Tailored is sold to **service
+  businesses** where work moves through 3+ steps and 2+ people.
+- **Tailoring is requested by email** (agreed). Upgrading keeps the same
+  workspace and data; Starter answers pre-fill the full intake.
+- Every Starter signup should appear on Clancy's own sales board as a lead.
+
+**Apple's rules that shape it** (App Review Guidelines, checked 28–30 Sep 2026):
+- **No upgrade buttons or payment links inside the app** outside the US
+  storefront (3.1.1, 3.1.3). The app is free with no prices; showing the plan
+  ("Starter · 3 of 5 people") and a Help contact is fine. Clancy **may** email
+  users about Tailored outside the app (3.1.3), so the upgrade path is an
+  opt-in email series plus a Tailored page on the website.
+- **Not a wrapped website** (4.2): the app needs app-only value — push
+  notifications above all (new website signup, tasks due, jobs stuck).
+- **Account deletion inside the app** (5.1.1(v)), a **demo account** for review
+  (2.1), and business-app sign-in is exempt from the Sign in with Apple
+  requirement (4.8).
+- Terms of Service + Privacy Policy before public signup (Starter users store
+  their own customers' data — PDPA).
+
+**Starter setup questions** (six screens, each answer sets something up):
+1. Business name, type (Repairs & servicing · Health & beauty · Education &
+   tuition · Events & venues · Professional services · Trades & construction ·
+   Community & church · Other), team size → workspace name + suggestions.
+2. "Each piece of work is a…" (Job/Order/Project/Booking/Case/Enquiry/own word)
+   and "You do it for…" (Customers/Clients/Patients/Students/Members) → the
+   words used across the app.
+3. Steps, pre-filled by type (3–6, editable), and "which step means done" →
+   the board and the Overview finish line.
+4. What they note down (phone, email, address, due date, value, reference, how
+   they found you, notes) + up to 3 own fields → the record form and cards.
+5. Invite up to 4 people as Admin or Member (optional).
+6. Ready: the board with one sample job and three first things to do.
+
+**What would have to exist first:**
+- Roles enforced in the database, not the app layer — an app talking to
+  Supabase directly would otherwise skip viewer/editor checks (Batch 19 starts
+  this with `set_member_role()`).
+- A "Create workspace" action (workspaces are made by SQL today).
+- A **setup file**: one document describing a workspace's whole system,
+  applied in one click — Starter packs and Tailored builds both produce one.
+- Apple organization enrolment for Clancy Sdn Bhd, shared with plancy
+  (D-U-N-S 473263782).
+
+**Shape of the build.** One Expo app like plancy, for iPhone, also listed on
+the Mac App Store for Apple-silicon Macs ("Designed for iPhone"). In the app:
+Overview, board, records, tasks, calendar, inbox, notifications, Setup. Stays
+on the web: Workflow, Customize, site editor, Team, broadcast compose. A
+cheaper first step needing no App Store: make clancyhq.com installable (icon,
+full screen, web push — ~1–2 days). Rough size of the whole thing: 20–30
+working days.
+
+**Hosting if it ever scales.** Stay on Vercel Pro + Supabase Pro. The planned
+way out is **self-hosted Supabase + Coolify on a Singapore server** (keeps all
+the code, auth, storage and RLS), practised first on the Mac mini; revisit if
+hosting passes ~RM 1,000/mo or a client needs data kept in Malaysia. Serving
+live clients from the Mac mini or NAS stays a no.
 
 ---
 
