@@ -12,3 +12,6 @@ next-env.d.ts
 
 # graphify knowledge graph output (regenerate with: graphify update .)
 graphify-out/
+
+# claude-security scan output (reports stay local, never committed)
+CLAUDE-SECURITY-2*/
