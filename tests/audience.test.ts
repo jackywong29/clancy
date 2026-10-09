@@ -78,6 +78,20 @@ test('mergeRecipients dedupes within the typed list too', () => {
   assert.deepStrictEqual(merged, [{ name: 'a@b.com', email: 'a@b.com' }])
 })
 
+// Security review #3: a stored email is free text, and the mailer expands
+// "a@b.com, x@evil.test" into two envelope recipients.
+test('mergeRecipients drops a stored email that would expand into more recipients', () => {
+  const merged = mergeRecipients(
+    [
+      { name: 'Ah Meng', email: 'meng@shop.com, attacker@evil.test' },
+      { name: 'Quoted', email: '"x,y"@evil.test' },
+      { name: 'Siew Ling', email: ' ling@shop.com ' },
+    ],
+    ['typed@example.com; other@evil.test']
+  )
+  assert.deepStrictEqual(merged, [{ name: 'Siew Ling', email: 'ling@shop.com' }])
+})
+
 test('audienceLabel names each audience with the workspace record label', () => {
   assert.strictEqual(
     audienceLabel('all', config, noStage, noDept),

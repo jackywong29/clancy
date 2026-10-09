@@ -1,5 +1,6 @@
 import 'server-only'
 import nodemailer from 'nodemailer'
+import { safeEmail } from '@/lib/safe-url'
 
 // Automated email via the Clancy Gmail account (clancy.hq.ai@gmail.com).
 // Configured with two env vars: GMAIL_USER + GMAIL_APP_PASSWORD (a Google
@@ -52,6 +53,14 @@ export async function sendEmail({
 }): Promise<{ ok: boolean; error?: string }> {
   if (!isEmailConfigured()) {
     return { ok: false, error: 'Email is not configured' }
+  }
+
+  // The mailer parses each entry as an address LIST, so one entry holding
+  // "a@b.com, c@d.com" becomes two recipients. Refuse anything that is not a
+  // single plain address rather than letting it expand.
+  const unsafe = [...(to ?? []), ...(bcc ?? [])].find((a) => safeEmail(a) !== a)
+  if (unsafe !== undefined) {
+    return { ok: false, error: `Not a valid recipient address: ${unsafe.slice(0, 80)}` }
   }
 
   const displayName =

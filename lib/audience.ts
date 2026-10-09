@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { CrmConfig, WorkspaceRole } from '@/types/database'
 import { roleLabel } from '@/lib/permissions'
+import { safeEmail } from '@/lib/safe-url'
 
 export interface AudienceRecipient {
   name: string
@@ -94,19 +95,32 @@ export function parseEmailList(raw: string): {
 
 // Audience recipients win over typed ones, so a person who is both a record
 // and a typed address keeps their real name and is only emailed once.
+//
+// Every address must be one plain address (safeEmail). Record and profile
+// emails are free text, and the mailer expands a value like
+// "a@b.com, someone@else.test" into two envelope recipients — so a malformed
+// stored email is dropped here, before the count, the review page or the send.
 export function mergeRecipients(
   audienceRecipients: AudienceRecipient[],
   customEmails: string[]
 ): AudienceRecipient[] {
-  const seen = new Set(audienceRecipients.map((r) => r.email.toLowerCase()))
-  const extras: AudienceRecipient[] = []
-  for (const email of customEmails) {
+  const seen = new Set<string>()
+  const merged: AudienceRecipient[] = []
+  for (const r of audienceRecipients) {
+    const email = safeEmail(r.email)
+    if (!email) continue
+    seen.add(email.toLowerCase())
+    merged.push({ ...r, email })
+  }
+  for (const raw of customEmails) {
+    const email = safeEmail(raw)
+    if (!email) continue
     const key = email.toLowerCase()
     if (seen.has(key)) continue
     seen.add(key)
-    extras.push({ name: email, email })
+    merged.push({ name: email, email })
   }
-  return [...audienceRecipients, ...extras]
+  return merged
 }
 
 export function audienceLabel(

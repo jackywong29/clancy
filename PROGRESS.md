@@ -28,6 +28,31 @@ on 28 Sep); 018 reported run by Jacky on 6 Sep but never independently checked
 > two WARNING blocks first: section 4 prints a cross-workspace reference
 > report and every count should be zero on real data.
 
+> **⚠️ MIGRATION 022 IS NOT YET RUN — run it straight after 021.**
+> Security review (9 Oct 2026, report kept outside the repo) found 12 issues;
+> 021 closes seven of them. This push adds the rest:
+> - **`supabase/022_write_role_rls.sql`** — workspace roles enforced by RLS,
+>   not just the app. Viewers become read-only at the database (they could
+>   previously write anything in their workspace via PostgREST with the public
+>   anon key). Records/intakes/tasks/events/broadcasts need editor+, stages and
+>   sites need admin. `auth_role()` now maps `owner` → admin like the app does;
+>   `generate_stage_tasks()` refuses viewers. Ends with a report: expect **no
+>   WARNING** — one names a stray policy that would bypass the role rules.
+>   Verified on a throwaway Postgres 16 with Supabase stubs: 47/47 role checks
+>   (viewer / editor / owner-as-admin / other workspace / anon), idempotent,
+>   website form still creates the record + its checklist, and `schema.sql`
+>   built from scratch matches schema + 022 exactly.
+> - **Packages:** nodemailer 9.1.1 → 10.0.16 (5 advisories), next 16.3.3 →
+>   16.4.0; `npm audit --omit=dev` is clean. Dev-only eslint chain remains.
+>   Both need Node 20+ — this Mac has Node 16, so `npm run build` only runs on
+>   Vercel. **Smoke-test a live broadcast after deploy** (major mailer bump).
+> - **Recipient injection:** a stored email such as `a@b.com, x@evil.test` is
+>   dropped by `mergeRecipients()` (count, review page and send all agree), and
+>   `sendEmail()` refuses any entry that isn't one plain address.
+> - **Still open:** CSP is Report-Only — do the console-watch pass described
+>   in `next.config.ts` before enforcing it. Storage uploads remain
+>   org-scoped but role-agnostic; task department scoping stays app-only.
+
 ---
 
 ## Status in one paragraph

@@ -1,4 +1,4 @@
--- Clancy — current schema (last updated with migration 021, 2026-09-28)
+-- Clancy — current schema (last updated with migration 022, 2026-10-09)
 --
 -- WHAT THIS FILE IS: the whole database in its present shape, as one
 -- from-scratch build. It is the reference for "what does the database look
@@ -271,6 +271,8 @@ as $$
 $$;
 
 -- Platform admins read as 'admin' in every workspace they are switched into.
+-- Normalised exactly as normalizeRole() in lib/permissions.ts: 'owner' is an
+-- admin, anything unknown is a viewer.
 create or replace function public.auth_role()
 returns text
 language sql
@@ -279,7 +281,12 @@ security definer
 set search_path = public
 as $$
   select coalesce(
-    (select case when is_platform_admin then 'admin' else role end
+    (select case
+       when is_platform_admin then 'admin'
+       when role in ('admin', 'owner') then 'admin'
+       when role = 'editor' then 'editor'
+       else 'viewer'
+     end
      from public.profiles where id = auth.uid()),
     'viewer'
   );
@@ -341,25 +348,84 @@ create policy "platform admin updates profiles" on public.profiles
 create policy "org members read stages" on public.pipeline_stages
   for select using (organization_id = public.auth_org_id());
 
-create policy "org members write stages" on public.pipeline_stages
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+-- Writes carry the role the app requires on the same path (migration 022):
+-- stages and sites are admin-only; records, intakes, tasks, events and
+-- broadcasts need editor or admin. Viewers are read-only.
+create policy "admins insert stages" on public.pipeline_stages
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id() and public.auth_role() = 'admin');
 
-create policy "org members manage clients" on public.clients
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+create policy "admins update stages" on public.pipeline_stages
+  for update to authenticated
+  using (organization_id = public.auth_org_id() and public.auth_role() = 'admin')
+  with check (organization_id = public.auth_org_id() and public.auth_role() = 'admin');
 
-create policy "org members manage intakes" on public.intakes
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+create policy "admins delete stages" on public.pipeline_stages
+  for delete to authenticated
+  using (organization_id = public.auth_org_id() and public.auth_role() = 'admin');
+
+create policy "org members read clients" on public.clients
+  for select to authenticated
+  using (organization_id = public.auth_org_id());
+
+create policy "editors insert clients" on public.clients
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors update clients" on public.clients
+  for update to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'))
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors delete clients" on public.clients
+  for delete to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'));
+
+create policy "org members read intakes" on public.intakes
+  for select to authenticated
+  using (organization_id = public.auth_org_id());
+
+create policy "editors insert intakes" on public.intakes
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors update intakes" on public.intakes
+  for update to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'))
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors delete intakes" on public.intakes
+  for delete to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'));
 
 -- Anonymous visitors read a published site; /s/<slug> depends on it.
 create policy "public can read published sites" on public.sites
   for select using (published = true);
 
-create policy "org members manage sites" on public.sites
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+create policy "org members read sites" on public.sites
+  for select to authenticated
+  using (organization_id = public.auth_org_id());
+
+create policy "admins insert sites" on public.sites
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id() and public.auth_role() = 'admin');
+
+create policy "admins update sites" on public.sites
+  for update to authenticated
+  using (organization_id = public.auth_org_id() and public.auth_role() = 'admin')
+  with check (organization_id = public.auth_org_id() and public.auth_role() = 'admin');
+
+create policy "admins delete sites" on public.sites
+  for delete to authenticated
+  using (organization_id = public.auth_org_id() and public.auth_role() = 'admin');
 
 create policy "platform admin manages sites" on public.sites
   for all using (public.is_platform_admin())
@@ -382,17 +448,68 @@ create policy "org members update notifications" on public.notifications
   for update using (organization_id = public.auth_org_id())
   with check (organization_id = public.auth_org_id());
 
-create policy "org members manage tasks" on public.tasks
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+create policy "org members read tasks" on public.tasks
+  for select to authenticated
+  using (organization_id = public.auth_org_id());
 
-create policy "org members manage events" on public.events
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+create policy "editors insert tasks" on public.tasks
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
 
-create policy "org members manage broadcasts" on public.broadcasts
-  for all using (organization_id = public.auth_org_id())
-  with check (organization_id = public.auth_org_id());
+create policy "editors update tasks" on public.tasks
+  for update to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'))
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors delete tasks" on public.tasks
+  for delete to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'));
+
+create policy "org members read events" on public.events
+  for select to authenticated
+  using (organization_id = public.auth_org_id());
+
+create policy "editors insert events" on public.events
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors update events" on public.events
+  for update to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'))
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors delete events" on public.events
+  for delete to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'));
+
+create policy "org members read broadcasts" on public.broadcasts
+  for select to authenticated
+  using (organization_id = public.auth_org_id());
+
+create policy "editors insert broadcasts" on public.broadcasts
+  for insert to authenticated
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors update broadcasts" on public.broadcasts
+  for update to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'))
+  with check (organization_id = public.auth_org_id()
+              and public.auth_role() in ('editor', 'admin'));
+
+create policy "editors delete broadcasts" on public.broadcasts
+  for delete to authenticated
+  using (organization_id = public.auth_org_id()
+         and public.auth_role() in ('editor', 'admin'));
 
 create policy "org members read stage transitions" on public.stage_transitions
   for select using (organization_id = public.auth_org_id());
@@ -967,11 +1084,16 @@ begin
 
   -- Reached two ways: from the trigger, and as an RPC from the "Add this
   -- stage's tasks" button. As an RPC it runs as the signed-in user, who may
-  -- only touch their own workspace. (auth.uid() is null only when the website
-  -- form's submit_lead() fires the trigger; anon cannot call this directly.)
-  if auth.uid() is not null
-     and v_client.organization_id is distinct from public.auth_org_id() then
-    raise exception 'Not allowed';
+  -- only touch their own workspace, and only as an editor or admin.
+  -- (auth.uid() is null only when the website form's submit_lead() fires the
+  -- trigger; anon cannot call this directly.)
+  if auth.uid() is not null then
+    if v_client.organization_id is distinct from public.auth_org_id() then
+      raise exception 'Not allowed';
+    end if;
+    if public.auth_role() not in ('editor', 'admin') then
+      raise exception 'Not allowed: editors and admins only';
+    end if;
   end if;
 
   -- The stage must belong to the record's own workspace.
