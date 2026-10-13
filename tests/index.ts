@@ -9,5 +9,6 @@ import './dashboard.test'
 import './audience.test'
 import './intake.test'
 import './proxy.test'
+import './plancy-pages.test'
 
 void run()

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isPublicPath } from '@/lib/public-paths'
 import { sessionExpiryFrom } from '@/lib/session-cookie'
 
 // Runs on every request that isn't a static asset — including RSC payloads and
@@ -59,15 +60,7 @@ export async function proxy(request: NextRequest) {
 
   const { data: { user } } = await supabase.auth.getUser()
 
-  if (
-    !user &&
-    pathname !== '/' &&
-    !pathname.startsWith('/login') &&
-    !pathname.startsWith('/signup') &&
-    !pathname.startsWith('/auth') &&
-    !pathname.startsWith('/s/') &&
-    !pathname.startsWith('/i/')
-  ) {
+  if (!user && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
