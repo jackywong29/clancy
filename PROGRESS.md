@@ -89,7 +89,7 @@ and the domain. Keep them straight:
 | Buyer | Small business owners, sold in person | Strangers on the App Store |
 | Delivery | Managed service, capacity-bound | Ships itself, capacity-free |
 | Stack | Next.js 16 · Supabase · Vercel | Expo SDK 57 · SQLite on the device |
-| Status | Live, 2 tenants, no paying client | ~70% built, target submission 9 Nov |
+| Status | Live, 2 tenants, no paying client | Build 9 on Jacky's iPhone (15 Oct), target submission 9 Nov |
 
 **Why this matters strategically.** Clancy HQ is capacity-bound — 3–5 managed
 clients per part-time founder, and software is never the ceiling, delivery
@@ -119,6 +119,25 @@ common organization-enrolment rejection). Order is in `~/plancy/HANDOFF.md`.
 on Jacky's iPhone with task notes, one global add button, Lock Screen widgets
 and drag-to-reorder anytime tasks. Next is tests, then App Store material.
 Target submission is still the week of 9 Nov.
+
+**13–15 Oct — this repo now serves plancy's public pages.**
+`/plancy/privacy` and `/plancy/support` (plancy's App Store Privacy Policy
+and Support URLs) live in `app/plancy/`, rendered from Markdown in
+`content/plancy/` that `~/plancy/scripts/legal-pages.mjs` copies in; edit the
+text in the plancy repo, not here. Signed-out access comes from
+`lib/public-paths.ts` (proxy.ts's allowlist, now tested). Shipped a98e157.
+
+**Homepage redesign — waiting on Jacky's pick.** Three drafts, each with
+clear Clancy and plancy paths: https://claude.ai/artifact/Y2eWaBmgCDtjA7ybMyq88S
+(A "two doors", B "one board" — a live job board as the hero, C "one letter
+apart"). Claude leans B for winning business clients, A if both products
+weigh the same. Whichever wins should also inform the client-site template.
+**The live homepage's plancy card says plancy "syncs through your own
+iCloud" — false** (no sync is built; plancy's privacy policy says nothing
+leaves the phone). It's DB copy in the `clancy-home` site row: fix it at
+Sites → Clancy homepage, or with the redesign. The homepage footer line still
+needs "Clancy Sdn Bhd", the SSM number and support@clancyhq.com (Apple looks
+at the seller's site during enrolment).
 
 ---
 
