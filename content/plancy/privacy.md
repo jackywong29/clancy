@@ -1,8 +1,8 @@
 # plancy privacy policy
 
-Effective 6 October 2026
+Effective 30 October 2026
 
-plancy is made by Clancy Sdn Bhd (“Clancy”, “we”), a company in Malaysia. This policy explains what happens to your information when you use plancy on your iPhone.
+plancy is made by Clancy Sdn. Bhd. (“Clancy”, “we”), a company registered in Malaysia under number 202501050621 (1652029-H). This policy explains what happens to your information when you use plancy on your iPhone.
 
 The short version: everything you put into plancy stays on your device. We don’t collect it, we can’t see it, and we never sell or share it.
 
@@ -52,4 +52,4 @@ If a future version of plancy changes any of this — for example, by syncing be
 
 ## Contact
 
-Questions about this policy, or about plancy: support@clancyhq.com. Clancy Sdn Bhd, Malaysia.
+Questions about this policy, or about plancy: support@clancyhq.com. Clancy Sdn. Bhd., Malaysia, company registration no. 202501050621 (1652029-H).

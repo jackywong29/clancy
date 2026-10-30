@@ -1,6 +1,7 @@
 # plancy support
 
-plancy is a daily planner for iPhone, made by Clancy Sdn Bhd. If something
+plancy is a daily planner for iPhone, made by Clancy Sdn. Bhd., a Malaysian
+company (registration no. 202501050621 (1652029-H)). If something
 isn't working, or you have an idea, email
 [support@clancyhq.com](mailto:support@clancyhq.com). Put the
 version number from Settings → About in your message so we know which build

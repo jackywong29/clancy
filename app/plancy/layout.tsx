@@ -19,7 +19,7 @@ export default function PlancyLayout({ children }: Readonly<{ children: React.Re
           <Link href="/plancy/support">Support</Link>
           <a href="mailto:support@clancyhq.com">support@clancyhq.com</a>
         </nav>
-        <p>© 2026 Clancy Sdn Bhd</p>
+        <p>© 2026 Clancy Sdn. Bhd. · Company registration no. 202501050621 (1652029-H)</p>
       </footer>
     </div>
   )
